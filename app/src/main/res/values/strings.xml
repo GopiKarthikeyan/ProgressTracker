@@ -1,3 +1,18 @@
 <resources>
-    <string name="app_name">ProgressTracker</string>
+    <string name="app_name">Hypertrophy</string>
+    <string name="nav_today">Today</string>
+    <string name="nav_routine">Routine</string>
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_settings">Settings</string>
+
+    <string name="onboarding_notifications_title">Notifications</string>
+    <string name="onboarding_notifications_body">Rest timers and session reminders need permission to notify you. You can change this later in system settings.</string>
+    <string name="onboarding_notifications_action">Allow notifications</string>
+
+    <string name="onboarding_battery_title">Keep timers running</string>
+    <string name="onboarding_battery_body">Android can pause this app while a workout timer is on screen. Exempt it from battery optimization so rest and transition timers keep running.</string>
+    <string name="onboarding_battery_manufacturer">Some phones add their own background-app restrictions in device settings. Turn those off for this app.</string>
+    <string name="onboarding_battery_action">Exempt from battery optimization</string>
+    <string name="onboarding_battery_exempt">Battery optimization is already off for this app.</string>
+    <string name="onboarding_battery_continue">Continue</string>
 </resources>

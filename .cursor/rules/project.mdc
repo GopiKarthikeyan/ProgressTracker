@@ -1,0 +1,40 @@
+---
+description: Hypertrophy app constraints for every change
+alwaysApply: true
+---
+
+# Project rules
+
+Before coding, list the files you will create or change and wait for an OK.
+
+Finish every task by running `./gradlew assembleDebug testDebugUnitTest` and fixing all errors.
+
+Never use `fallbackToDestructiveMigration`. Every schema change gets a version bump, a `Migration`, and a migration test.
+
+```kotlin
+@Database(version = 2, exportSchema = true)
+abstract class AppDatabase : RoomDatabase()
+
+val MIGRATION_1_2 = object : Migration(1, 2) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE session ADD COLUMN note TEXT NOT NULL DEFAULT ''")
+    }
+}
+```
+
+The domain layer is pure Kotlin (no `android.*` imports). Time comes only from an injected `java.time.Clock`.
+
+Every engine and use case gets unit tests.
+
+ViewModels expose one `StateFlow<UiState>` plus `onEvent(Event)` (MVI).
+
+```kotlin
+val uiState: StateFlow<SessionUiState>
+fun onEvent(event: SessionEvent)
+```
+
+Never hardcode exercise names. Everything is data-driven.
+
+kg only. Network is allowed only in `WeatherRepository`, and failures are silent.
+
+Workout screens: minimum 72dp touch targets, and no swipe-only or long-press-only critical actions.
