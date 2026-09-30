@@ -23,4 +23,7 @@ interface MediaDao {
 
     @Query("DELETE FROM media_item WHERE id = :id")
     suspend fun delete(id: Long)
+
+    @Query("SELECT exerciseId FROM media_item WHERE exerciseId IS NOT NULL")
+    suspend fun referencedExerciseIds(): List<Long>
 }

@@ -1,5 +1,6 @@
 package com.forge.hypertrophy.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -24,4 +25,5 @@ data class CardioPlanEntity(
     val type: CardioType,
     val targetDistanceM: Int?,
     val isOptional: Boolean,
+    @ColumnInfo(defaultValue = "''") val label: String = "",
 )

@@ -59,4 +59,6 @@ data class RoutineSlotEntity(
     val targetSkillStepId: Long?,
     val progressionRule: ProgressionRule,
     val incrementOverrideKg: Double?,
+    val notes: String? = null,
+    val holdTargetMaxSec: Int? = null,
 )

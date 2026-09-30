@@ -21,6 +21,8 @@ interface RoutineRepository {
 
     suspend fun deleteDay(id: Long)
 
+    suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>)
+
     fun observeChecklist(dayId: Long): Flow<List<ChecklistItemEntity>>
 
     suspend fun insertChecklist(item: ChecklistItemEntity): Long
@@ -38,6 +40,8 @@ interface RoutineRepository {
     suspend fun updateSlot(slot: RoutineSlotEntity)
 
     suspend fun deleteSlot(id: Long)
+
+    suspend fun reorderSlots(dayId: Long, orderedSlotIds: List<Long>)
 
     fun observeAlternatives(slotId: Long): Flow<List<SlotAlternativeEntity>>
 
@@ -64,6 +68,9 @@ class RoomRoutineRepository @Inject constructor(
 
     override suspend fun deleteDay(id: Long) = routineDao.deleteDay(id)
 
+    override suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>) =
+        routineDao.reorderDays(programId, orderedDayIds)
+
     override fun observeChecklist(dayId: Long): Flow<List<ChecklistItemEntity>> = routineDao.observeChecklist(dayId)
 
     override suspend fun insertChecklist(item: ChecklistItemEntity): Long = routineDao.insertChecklist(item)
@@ -81,6 +88,9 @@ class RoomRoutineRepository @Inject constructor(
     override suspend fun updateSlot(slot: RoutineSlotEntity) = routineDao.updateSlot(slot)
 
     override suspend fun deleteSlot(id: Long) = routineDao.deleteSlot(id)
+
+    override suspend fun reorderSlots(dayId: Long, orderedSlotIds: List<Long>) =
+        routineDao.reorderSlots(dayId, orderedSlotIds)
 
     override fun observeAlternatives(slotId: Long): Flow<List<SlotAlternativeEntity>> =
         routineDao.observeAlternatives(slotId)

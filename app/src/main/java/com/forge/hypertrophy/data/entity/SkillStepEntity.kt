@@ -22,6 +22,7 @@ data class SkillStepEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val skillId: Long,
     val sortOrder: Int,
+    @ColumnInfo(defaultValue = "''") val name: String = "",
     @ColumnInfo(defaultValue = "12") val stage1TotalSec: Int = 12,
     @ColumnInfo(defaultValue = "15") val stage2TotalLowSec: Int = 15,
     @ColumnInfo(defaultValue = "18") val stage2TotalHighSec: Int = 18,

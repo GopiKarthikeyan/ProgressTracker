@@ -24,6 +24,8 @@ interface SkillRepository {
 
     fun observeSteps(skillId: Long): Flow<List<SkillStepEntity>>
 
+    suspend fun getSteps(skillId: Long): List<SkillStepEntity>
+
     suspend fun insertStep(step: SkillStepEntity): Long
 
     suspend fun updateStep(step: SkillStepEntity)
@@ -55,6 +57,8 @@ class RoomSkillRepository @Inject constructor(
     override suspend fun delete(id: Long) = skillDao.delete(id)
 
     override fun observeSteps(skillId: Long): Flow<List<SkillStepEntity>> = skillDao.observeSteps(skillId)
+
+    override suspend fun getSteps(skillId: Long): List<SkillStepEntity> = skillDao.getSteps(skillId)
 
     override suspend fun insertStep(step: SkillStepEntity): Long = skillDao.insertStep(step)
 

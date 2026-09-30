@@ -24,4 +24,6 @@ data class SlotPrescription(
     val targetSkillStepId: Long? = null,
     val progressionRule: ProgressionRule,
     val incrementOverrideKg: Double? = null,
+    val holdTargetMaxSec: Int? = null,
+    val notes: String? = null,
 )

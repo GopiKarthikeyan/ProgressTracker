@@ -32,6 +32,9 @@ interface SessionDao {
     @Query("SELECT * FROM session_slot WHERE sessionId = :sessionId ORDER BY id")
     fun observeSlots(sessionId: Long): Flow<List<SessionSlotEntity>>
 
+    @Query("SELECT * FROM session_slot")
+    suspend fun allSlots(): List<SessionSlotEntity>
+
     @Insert
     suspend fun insertSlot(slot: SessionSlotEntity): Long
 

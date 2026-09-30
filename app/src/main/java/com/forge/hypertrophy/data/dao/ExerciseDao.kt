@@ -16,6 +16,12 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercise WHERE id = :id")
     suspend fun get(id: Long): ExerciseEntity?
 
+    @Query("SELECT * FROM exercise ORDER BY id")
+    suspend fun all(): List<ExerciseEntity>
+
+    @Query("SELECT * FROM exercise WHERE id IN (:ids)")
+    suspend fun getAll(ids: List<Long>): List<ExerciseEntity>
+
     @Insert
     suspend fun insert(exercise: ExerciseEntity): Long
 

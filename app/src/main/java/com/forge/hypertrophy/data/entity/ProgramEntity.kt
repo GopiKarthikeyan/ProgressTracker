@@ -1,5 +1,6 @@
 package com.forge.hypertrophy.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.forge.hypertrophy.domain.model.ScheduleMode
@@ -13,4 +14,5 @@ data class ProgramEntity(
     val rollingSequence: Int,
     val deloadActive: Boolean,
     val deloadStartedOn: LocalDate?,
+    @ColumnInfo(defaultValue = "0") val isActive: Boolean = false,
 )

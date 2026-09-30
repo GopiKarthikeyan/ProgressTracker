@@ -302,6 +302,8 @@ internal class DaoFixture(
         targetSkillStepId = slot.targetSkillStepId,
         progressionRule = slot.progressionRule,
         incrementOverrideKg = slot.incrementOverrideKg,
+        holdTargetMaxSec = slot.holdTargetMaxSec,
+        notes = slot.notes,
     )
 
     companion object {

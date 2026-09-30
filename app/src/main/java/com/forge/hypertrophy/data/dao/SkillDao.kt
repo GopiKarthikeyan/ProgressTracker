@@ -19,6 +19,9 @@ interface SkillDao {
     @Query("SELECT * FROM skill WHERE id = :id")
     suspend fun get(id: Long): SkillEntity?
 
+    @Query("SELECT * FROM skill ORDER BY id")
+    suspend fun all(): List<SkillEntity>
+
     @Insert
     suspend fun insert(skill: SkillEntity): Long
 
@@ -33,6 +36,12 @@ interface SkillDao {
 
     @Query("SELECT * FROM skill_step WHERE skillId = :skillId ORDER BY sortOrder")
     fun observeSteps(skillId: Long): Flow<List<SkillStepEntity>>
+
+    @Query("SELECT * FROM skill_step WHERE skillId = :skillId ORDER BY sortOrder")
+    suspend fun getSteps(skillId: Long): List<SkillStepEntity>
+
+    @Query("SELECT * FROM skill_step WHERE id IN (:ids)")
+    suspend fun stepsByIds(ids: List<Long>): List<SkillStepEntity>
 
     @Insert
     suspend fun insertStep(step: SkillStepEntity): Long

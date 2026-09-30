@@ -21,7 +21,10 @@ data class RoutineDayEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val programId: Long,
     val label: String,
+    /** ISO weekday number: Monday is 1 and Sunday is 7. Null on a rolling program. */
     val dayOfWeek: Int?,
     val sequenceIndex: Int,
     val isRest: Boolean,
+    val prepDurationMin: Int? = null,
+    val cooldownDurationMin: Int? = null,
 )

@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "ecd9e4e1691b1f1782399bc97cc41e72",
+    "identityHash": "1be1e778b3592170867cd011bdd993e6",
     "entities": [
       {
         "tableName": "program",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `scheduleMode` TEXT NOT NULL, `rollingSequence` INTEGER NOT NULL, `deloadActive` INTEGER NOT NULL, `deloadStartedOn` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `scheduleMode` TEXT NOT NULL, `rollingSequence` INTEGER NOT NULL, `deloadActive` INTEGER NOT NULL, `deloadStartedOn` TEXT, `isActive` INTEGER NOT NULL DEFAULT 0)",
         "fields": [
           {
             "fieldPath": "id",
@@ -42,6 +42,13 @@
             "fieldPath": "deloadStartedOn",
             "columnName": "deloadStartedOn",
             "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
           }
         ],
         "primaryKey": {
@@ -181,7 +188,7 @@
       },
       {
         "tableName": "skill_step",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `skillId` INTEGER NOT NULL, `sortOrder` INTEGER NOT NULL, `stage1TotalSec` INTEGER NOT NULL DEFAULT 12, `stage2TotalLowSec` INTEGER NOT NULL DEFAULT 15, `stage2TotalHighSec` INTEGER NOT NULL DEFAULT 18, `stage3UnbrokenSec` INTEGER NOT NULL DEFAULT 10, FOREIGN KEY(`skillId`) REFERENCES `skill`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `skillId` INTEGER NOT NULL, `sortOrder` INTEGER NOT NULL, `name` TEXT NOT NULL DEFAULT '', `stage1TotalSec` INTEGER NOT NULL DEFAULT 12, `stage2TotalLowSec` INTEGER NOT NULL DEFAULT 15, `stage2TotalHighSec` INTEGER NOT NULL DEFAULT 18, `stage3UnbrokenSec` INTEGER NOT NULL DEFAULT 10, FOREIGN KEY(`skillId`) REFERENCES `skill`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -200,6 +207,13 @@
             "columnName": "sortOrder",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
           },
           {
             "fieldPath": "stage1TotalSec",
@@ -349,7 +363,7 @@
       },
       {
         "tableName": "routine_day",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `programId` INTEGER NOT NULL, `label` TEXT NOT NULL, `dayOfWeek` INTEGER, `sequenceIndex` INTEGER NOT NULL, `isRest` INTEGER NOT NULL, FOREIGN KEY(`programId`) REFERENCES `program`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `programId` INTEGER NOT NULL, `label` TEXT NOT NULL, `dayOfWeek` INTEGER, `sequenceIndex` INTEGER NOT NULL, `isRest` INTEGER NOT NULL, `prepDurationMin` INTEGER, `cooldownDurationMin` INTEGER, FOREIGN KEY(`programId`) REFERENCES `program`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -385,6 +399,16 @@
             "columnName": "isRest",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "prepDurationMin",
+            "columnName": "prepDurationMin",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cooldownDurationMin",
+            "columnName": "cooldownDurationMin",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -490,7 +514,7 @@
       },
       {
         "tableName": "routine_slot",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `dayId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `category` TEXT NOT NULL, `sortOrder` INTEGER NOT NULL, `supersetGroup` INTEGER, `metricType` TEXT NOT NULL, `setsMin` INTEGER NOT NULL, `setsMax` INTEGER NOT NULL, `repsLow` INTEGER, `repsHigh` INTEGER, `isAmrap` INTEGER NOT NULL, `holdTargetSec` INTEGER, `blockDurationSec` INTEGER, `restMinSec` INTEGER, `restMaxSec` INTEGER, `restAsNeeded` INTEGER NOT NULL, `isOptional` INTEGER NOT NULL, `skipReasonLabel` TEXT, `targetSkillStepId` INTEGER, `progressionRule` TEXT NOT NULL, `incrementOverrideKg` REAL, FOREIGN KEY(`dayId`) REFERENCES `routine_day`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercise`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`targetSkillStepId`) REFERENCES `skill_step`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `dayId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `category` TEXT NOT NULL, `sortOrder` INTEGER NOT NULL, `supersetGroup` INTEGER, `metricType` TEXT NOT NULL, `setsMin` INTEGER NOT NULL, `setsMax` INTEGER NOT NULL, `repsLow` INTEGER, `repsHigh` INTEGER, `isAmrap` INTEGER NOT NULL, `holdTargetSec` INTEGER, `blockDurationSec` INTEGER, `restMinSec` INTEGER, `restMaxSec` INTEGER, `restAsNeeded` INTEGER NOT NULL, `isOptional` INTEGER NOT NULL, `skipReasonLabel` TEXT, `targetSkillStepId` INTEGER, `progressionRule` TEXT NOT NULL, `incrementOverrideKg` REAL, `notes` TEXT, `holdTargetMaxSec` INTEGER, FOREIGN KEY(`dayId`) REFERENCES `routine_day`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercise`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT , FOREIGN KEY(`targetSkillStepId`) REFERENCES `skill_step`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
         "fields": [
           {
             "fieldPath": "id",
@@ -613,6 +637,16 @@
             "fieldPath": "incrementOverrideKg",
             "columnName": "incrementOverrideKg",
             "affinity": "REAL"
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "holdTargetMaxSec",
+            "columnName": "holdTargetMaxSec",
+            "affinity": "INTEGER"
           }
         ],
         "primaryKey": {
@@ -762,7 +796,7 @@
       },
       {
         "tableName": "cardio_plan",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `dayId` INTEGER NOT NULL, `type` TEXT NOT NULL, `targetDistanceM` INTEGER, `isOptional` INTEGER NOT NULL, FOREIGN KEY(`dayId`) REFERENCES `routine_day`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `dayId` INTEGER NOT NULL, `type` TEXT NOT NULL, `targetDistanceM` INTEGER, `isOptional` INTEGER NOT NULL, `label` TEXT NOT NULL DEFAULT '', FOREIGN KEY(`dayId`) REFERENCES `routine_day`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -792,6 +826,13 @@
             "columnName": "isOptional",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "label",
+            "columnName": "label",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
           }
         ],
         "primaryKey": {
@@ -1510,7 +1551,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ecd9e4e1691b1f1782399bc97cc41e72')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1be1e778b3592170867cd011bdd993e6')"
     ]
   }
 }
