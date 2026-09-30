@@ -98,6 +98,38 @@
 - The Quick Settings tile starts the timer service correctly from a locked or cold state.
 - The weekly review uses the domain calculators.
 
+## Phase 10
+- Spoken counts and chimes never overlap; AudioFocus is abandoned after each cue.
+- The tempo metronome keeps time from elapsedRealtime, with no cumulative drift across a set.
+- A tempo field missing from ProgramJson imports cleanly (backward compatible).
+- The mic chip needs no press-and-hold; recording auto-stops at 60s; RECORD_AUDIO requested only at first use.
+- On-device recognition only; a missing recognizer is handled gracefully.
+- VoiceMemo rows and files stay in sync on delete; memos are included in backup and restore.
+
+## Phase 11
+- Bodyweight lookup uses the latest entry on or before the session date, never a later one.
+- Relative metrics show "unavailable" instead of wrong numbers when bodyweight is missing.
+- Relative PRs are detected correctly during a weight cut (tested).
+- Recomposition thresholds are unit-tested at their boundaries.
+- Measurement charts have empty states.
+
+## Phase 12
+- The demo never renders during an active set.
+- One pooled ExoPlayer, released with the screen; no leaks when scrolling the library.
+- Demo copies are muted 480p and stored separately; replacing a demo deletes the old file.
+- Photo Picker is used (no storage permission).
+- referenceUrl is only ever opened via external intent; the app makes no network call.
+- Demos are included in backup and restore.
+
+## Phase 13
+- The model is bundled in assets; no network or Google Play Services dependency (grep).
+- Analysis runs only during active hold slots, off the main thread, and stops when the slot ends.
+- The state machine is unit-tested with landmark fixtures: clean hold, jitter within grace, a real break, tracking loss.
+- The detected time always goes through the confirmation dialog.
+- An unsupported camera use-case combination is handled with a clear fallback.
+- The feature is fully disabled when the Settings toggle is off.
+- Also produce a manual test script: front lever and planche at each tier, poor lighting, bar blocking the body, baggy clothing.
+
 ## Full-app audit
 
 Run once after Phase 5, before the first real gym session.
