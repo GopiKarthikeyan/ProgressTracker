@@ -1,0 +1,2779 @@
+{
+    "schemaVersion": 1,
+    "program": {
+      "name": "Calisthenics & Hypertrophy — 6-Day Protocol",
+      "sourceVersion": "v11"
+    },
+    "defaults": {
+      "transitionRestSec": 120,
+      "barWeightKg": 20.0,
+      "plateInventoryKg": [
+        20.0,
+        10.0,
+        5.0,
+        2.5,
+        1.25
+      ]
+    },
+    "skills": [
+      {
+        "key": "front_lever",
+        "name": "Front Lever",
+        "initialStepKey": "front_lever_tuck",
+        "steps": [
+          {
+            "key": "front_lever_tuck",
+            "name": "Tuck",
+            "order": 0,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "front_lever_adv_tuck",
+            "name": "Advanced Tuck",
+            "order": 1,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "front_lever_one_leg",
+            "name": "One-Leg",
+            "order": 2,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "front_lever_straddle",
+            "name": "Straddle",
+            "order": 3,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "front_lever_full",
+            "name": "Full",
+            "order": 4,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          }
+        ]
+      },
+      {
+        "key": "planche",
+        "name": "Planche",
+        "initialStepKey": "planche_tuck",
+        "steps": [
+          {
+            "key": "planche_tuck",
+            "name": "Tuck",
+            "order": 0,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "planche_adv_tuck",
+            "name": "Advanced Tuck",
+            "order": 1,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "planche_straddle",
+            "name": "Straddle",
+            "order": 2,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "planche_full",
+            "name": "Full",
+            "order": 3,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          }
+        ]
+      },
+      {
+        "key": "l_sit",
+        "name": "L-Sit",
+        "initialStepKey": "l_sit_tuck",
+        "steps": [
+          {
+            "key": "l_sit_tuck",
+            "name": "Tuck L-Sit",
+            "order": 0,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "l_sit_one_leg",
+            "name": "One-Leg L-Sit",
+            "order": 1,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "l_sit_full",
+            "name": "Full L-Sit",
+            "order": 2,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          },
+          {
+            "key": "l_sit_advanced",
+            "name": "Advanced L-Sit",
+            "order": 3,
+            "stage1TotalSec": 12,
+            "stage2TotalMinSec": 15,
+            "stage2TotalMaxSec": 18,
+            "masteryUnbrokenSec": 10
+          }
+        ]
+      }
+    ],
+    "exercises": [
+      {
+        "key": "handstand_practice",
+        "name": "Handstand Practice",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "SHOULDERS_FRONT"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS",
+          "CORE"
+        ],
+        "setupNotes": "Stop before fatigue."
+      },
+      {
+        "key": "bb_deadlift",
+        "name": "Barbell Deadlift",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "HAMSTRINGS",
+          "GLUTES",
+          "LOWER_BACK"
+        ],
+        "secondaryMuscles": [
+          "BACK_UPPER",
+          "FOREARMS",
+          "QUADS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "pistol_squat",
+        "name": "Pistol Squat",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": true,
+        "skillKey": null,
+        "primaryMuscles": [
+          "QUADS",
+          "GLUTES"
+        ],
+        "secondaryMuscles": [
+          "CORE"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "bb_front_squat",
+        "name": "Barbell Front Squat",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "QUADS"
+        ],
+        "secondaryMuscles": [
+          "GLUTES",
+          "CORE",
+          "BACK_UPPER"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "hamstring_curl",
+        "name": "Hamstring Curl",
+        "equipment": "MACHINE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "HAMSTRINGS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "db_lateral_raise",
+        "name": "DB Lateral Raise",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "SHOULDERS_SIDE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "seated_calf_raise",
+        "name": "Seated Calf Raise",
+        "equipment": "MACHINE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CALVES"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "ab_rollout",
+        "name": "Ab Rollout",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "pallof_press",
+        "name": "Pallof Press",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": true,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": "Hold per side."
+      },
+      {
+        "key": "muscle_up",
+        "name": "Muscle-up",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_LATS",
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [
+          "CHEST",
+          "BICEPS",
+          "CORE"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "front_lever",
+        "name": "Front Lever",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": "front_lever",
+        "primaryMuscles": [
+          "BACK_LATS",
+          "CORE"
+        ],
+        "secondaryMuscles": [
+          "SHOULDERS_REAR",
+          "BICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "weighted_pull_up",
+        "name": "Weighted Pull-up",
+        "equipment": "WEIGHTED_BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_LATS"
+        ],
+        "secondaryMuscles": [
+          "BICEPS",
+          "BACK_UPPER",
+          "FOREARMS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "bb_row",
+        "name": "Barbell Row",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_UPPER",
+          "BACK_LATS"
+        ],
+        "secondaryMuscles": [
+          "BICEPS",
+          "SHOULDERS_REAR",
+          "LOWER_BACK"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "vgrip_lat_pulldown",
+        "name": "V-Grip Lat Pulldown",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_LATS"
+        ],
+        "secondaryMuscles": [
+          "BICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "db_high_pull",
+        "name": "DB High Pull (Rear Delts)",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "SHOULDERS_REAR",
+          "BACK_UPPER"
+        ],
+        "secondaryMuscles": [
+          "BICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "db_cross_hammer_curl",
+        "name": "DB Cross Hammer Curl",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BICEPS",
+          "FOREARMS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "face_pull",
+        "name": "Face Pull",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "SHOULDERS_REAR",
+          "BACK_UPPER"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "toes_to_bar",
+        "name": "Hanging Toes-to-Bar",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [
+          "FOREARMS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "dragon_flag_negative",
+        "name": "Dragon Flag Negative",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "planche",
+        "name": "Planche",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": "planche",
+        "primaryMuscles": [
+          "SHOULDERS_FRONT",
+          "CORE"
+        ],
+        "secondaryMuscles": [
+          "CHEST",
+          "TRICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "pseudo_planche_push_up",
+        "name": "Pseudo Planche Push-up",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST",
+          "SHOULDERS_FRONT"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS",
+          "CORE"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "incline_db_press",
+        "name": "Incline DB Press",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST",
+          "SHOULDERS_FRONT"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "flat_db_press",
+        "name": "Flat DB Press",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS",
+          "SHOULDERS_FRONT"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "bodyweight_dip",
+        "name": "Bodyweight Dip",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST",
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [
+          "SHOULDERS_FRONT"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "db_floor_fly",
+        "name": "DB Floor Fly",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "tricep_pushdown",
+        "name": "Tricep Pushdown",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "lying_db_extension",
+        "name": "Lying DB Extension",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "hollow_body_hold",
+        "name": "Hollow Body Hold",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "l_sit",
+        "name": "L-Sit",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": "l_sit",
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "oap_practice",
+        "name": "One-Arm Pull-up Practice",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": true,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_LATS",
+          "BICEPS"
+        ],
+        "secondaryMuscles": [
+          "FOREARMS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "seated_cable_row",
+        "name": "Seated Cable Row",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_UPPER",
+          "BACK_LATS"
+        ],
+        "secondaryMuscles": [
+          "BICEPS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "chest_supported_db_row",
+        "name": "Chest-Supported DB Row",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_UPPER",
+          "BACK_LATS"
+        ],
+        "secondaryMuscles": [
+          "BICEPS",
+          "SHOULDERS_REAR"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "straight_arm_pushdown",
+        "name": "Straight-Arm Pushdown",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BACK_LATS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "db_spider_curl",
+        "name": "DB Spider Curl",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "BICEPS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "reverse_ez_curl",
+        "name": "Reverse EZ-Bar Curl",
+        "equipment": "EZ_BAR",
+        "barWeightKg": 10.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "FOREARMS"
+        ],
+        "secondaryMuscles": [
+          "BICEPS"
+        ],
+        "setupNotes": "Set bar weight to your gym's EZ bar."
+      },
+      {
+        "key": "windshield_wiper",
+        "name": "Windshield Wiper",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "hanging_leg_raise",
+        "name": "Hanging Leg Raise",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [
+          "FOREARMS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "bb_back_squat",
+        "name": "Barbell Back Squat",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "QUADS",
+          "GLUTES"
+        ],
+        "secondaryMuscles": [
+          "ADDUCTORS",
+          "LOWER_BACK",
+          "CORE"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "romanian_deadlift",
+        "name": "Romanian Deadlift",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "HAMSTRINGS",
+          "GLUTES"
+        ],
+        "secondaryMuscles": [
+          "LOWER_BACK",
+          "FOREARMS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "bb_overhead_press",
+        "name": "Barbell Overhead Press",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "SHOULDERS_FRONT"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS",
+          "SHOULDERS_SIDE",
+          "CORE"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "adductor_machine",
+        "name": "Adductor Machine",
+        "equipment": "MACHINE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "ADDUCTORS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "weighted_standing_calf_raise",
+        "name": "Weighted Standing Calf Raise",
+        "equipment": "MACHINE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CALVES"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "weighted_russian_twist",
+        "name": "Weighted Russian Twist",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": "20 reps total, not per side."
+      },
+      {
+        "key": "weighted_dip",
+        "name": "Weighted Dip",
+        "equipment": "WEIGHTED_BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST",
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [
+          "SHOULDERS_FRONT"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "bb_bench_press",
+        "name": "Barbell Bench Press",
+        "equipment": "BARBELL",
+        "barWeightKg": 20.0,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS",
+          "SHOULDERS_FRONT"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "seated_db_ohp",
+        "name": "Seated DB Overhead Press",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "SHOULDERS_FRONT"
+        ],
+        "secondaryMuscles": [
+          "TRICEPS",
+          "SHOULDERS_SIDE"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "high_to_low_crossover",
+        "name": "High-to-Low Cable Crossover",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CHEST"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "pjr_pullover",
+        "name": "PJR Pullover",
+        "equipment": "DUMBBELL",
+        "barWeightKg": null,
+        "loadIncrementKg": 2.5,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [
+          "BACK_LATS"
+        ],
+        "setupNotes": null
+      },
+      {
+        "key": "cable_tricep_pushaway",
+        "name": "Cable Tricep Pushaway",
+        "equipment": "CABLE",
+        "barWeightKg": null,
+        "loadIncrementKg": 5.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "TRICEPS"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      },
+      {
+        "key": "hollow_body_rock",
+        "name": "Hollow Body Rock",
+        "equipment": "BODYWEIGHT",
+        "barWeightKg": null,
+        "loadIncrementKg": 0.0,
+        "isUnilateral": false,
+        "skillKey": null,
+        "primaryMuscles": [
+          "CORE"
+        ],
+        "secondaryMuscles": [],
+        "setupNotes": null
+      }
+    ],
+    "days": [
+      {
+        "key": "mon",
+        "label": "Legs, Shoulders & Balance",
+        "dayOfWeek": "MONDAY",
+        "sequenceIndex": 0,
+        "isRest": false,
+        "prep": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Wrist Rocks",
+              "reps": 10,
+              "seconds": null
+            },
+            {
+              "text": "90/90 Hip Swaps",
+              "reps": 10,
+              "seconds": null
+            },
+            {
+              "text": "Active Ankle Dorsiflexion",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "cooldown": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Couch Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Pigeon Pose",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Passive Dead Hang",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "slots": [
+          {
+            "key": "mon_skill",
+            "exerciseKey": "handstand_practice",
+            "category": "SKILL",
+            "metricType": "TIMED_BLOCK",
+            "setsMin": 1,
+            "setsMax": 1,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": 600,
+            "restMinSec": null,
+            "restMaxSec": null,
+            "restAsNeeded": true,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 0
+          },
+          {
+            "key": "mon_c1",
+            "exerciseKey": "bb_deadlift",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 5,
+            "repsHigh": 5,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 240,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": 5.0,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 1
+          },
+          {
+            "key": "mon_c2",
+            "exerciseKey": "pistol_squat",
+            "category": "COMPOUND",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 6,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 2
+          },
+          {
+            "key": "mon_c3",
+            "exerciseKey": "bb_front_squat",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 3
+          },
+          {
+            "key": "mon_i1",
+            "exerciseKey": "hamstring_curl",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 4
+          },
+          {
+            "key": "mon_i2",
+            "exerciseKey": "db_lateral_raise",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 12,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 5
+          },
+          {
+            "key": "mon_i3",
+            "exerciseKey": "seated_calf_raise",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 12,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 6
+          },
+          {
+            "key": "mon_core_a1",
+            "exerciseKey": "ab_rollout",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 15,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 7
+          },
+          {
+            "key": "mon_core_a2",
+            "exerciseKey": "pallof_press",
+            "category": "CORE",
+            "metricType": "HOLD",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": 45,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 8
+          }
+        ],
+        "cardio": []
+      },
+      {
+        "key": "tue",
+        "label": "Pull (Vertical), Lever & Scapula",
+        "dayOfWeek": "TUESDAY",
+        "sequenceIndex": 1,
+        "isRest": false,
+        "prep": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "False-Grip Hangs",
+              "reps": null,
+              "seconds": 30
+            },
+            {
+              "text": "Scapular Pull-ups",
+              "reps": 10,
+              "seconds": null
+            },
+            {
+              "text": "Band Pull-aparts",
+              "reps": 15,
+              "seconds": null
+            }
+          ]
+        },
+        "cooldown": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Lat Wall Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Wall Bicep/Pec Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Forearm Flexor Release",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "slots": [
+          {
+            "key": "tue_s1",
+            "exerciseKey": "muscle_up",
+            "category": "SKILL",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 3,
+            "repsHigh": 4,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 0
+          },
+          {
+            "key": "tue_s2",
+            "exerciseKey": "front_lever",
+            "category": "SKILL",
+            "metricType": "HOLD_OR_REPS",
+            "setsMin": 4,
+            "setsMax": 4,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 120,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": "High-quality holds or raises.",
+            "order": 1
+          },
+          {
+            "key": "tue_c1",
+            "exerciseKey": "weighted_pull_up",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 5,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 2
+          },
+          {
+            "key": "tue_c2",
+            "exerciseKey": "bb_row",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 3
+          },
+          {
+            "key": "tue_c3",
+            "exerciseKey": "vgrip_lat_pulldown",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 2,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 120,
+            "restAsNeeded": false,
+            "isOptional": true,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 4
+          },
+          {
+            "key": "tue_i1",
+            "exerciseKey": "db_high_pull",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 5
+          },
+          {
+            "key": "tue_i2",
+            "exerciseKey": "db_cross_hammer_curl",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 6
+          },
+          {
+            "key": "tue_i3",
+            "exerciseKey": "face_pull",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 12,
+            "repsHigh": 15,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 7
+          },
+          {
+            "key": "tue_core_a1",
+            "exerciseKey": "toes_to_bar",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 8
+          },
+          {
+            "key": "tue_core_a2",
+            "exerciseKey": "dragon_flag_negative",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 5,
+            "repsHigh": 5,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 9
+          }
+        ],
+        "cardio": [
+          {
+            "type": "INTERVALS",
+            "label": "Outdoor Intervals (Sprints)",
+            "targetDistanceM": null,
+            "isOptional": true
+          }
+        ]
+      },
+      {
+        "key": "wed",
+        "label": "Push & Planche",
+        "dayOfWeek": "WEDNESDAY",
+        "sequenceIndex": 2,
+        "isRest": false,
+        "prep": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Planche Leans (3 × 10s)",
+              "reps": null,
+              "seconds": 10
+            },
+            {
+              "text": "First-Knuckle Push-ups",
+              "reps": 10,
+              "seconds": null
+            },
+            {
+              "text": "Band External Rotations",
+              "reps": 15,
+              "seconds": null
+            }
+          ]
+        },
+        "cooldown": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Doorway Pec Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Anterior Delt Release",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Seated Pancake Straddle",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "slots": [
+          {
+            "key": "wed_skill",
+            "exerciseKey": "planche",
+            "category": "SKILL",
+            "metricType": "HOLD",
+            "setsMin": 4,
+            "setsMax": 5,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": "Tuck / Advanced Tuck holds.",
+            "order": 0
+          },
+          {
+            "key": "wed_c1",
+            "exerciseKey": "pseudo_planche_push_up",
+            "category": "COMPOUND",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 6,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 1
+          },
+          {
+            "key": "wed_c2",
+            "exerciseKey": "incline_db_press",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 2
+          },
+          {
+            "key": "wed_c3",
+            "exerciseKey": "flat_db_press",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 2,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 120,
+            "restAsNeeded": false,
+            "isOptional": true,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [
+              "bodyweight_dip"
+            ],
+            "notes": null,
+            "order": 3
+          },
+          {
+            "key": "wed_i1",
+            "exerciseKey": "db_floor_fly",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 4
+          },
+          {
+            "key": "wed_i2",
+            "exerciseKey": "tricep_pushdown",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 5
+          },
+          {
+            "key": "wed_i3",
+            "exerciseKey": "lying_db_extension",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 6
+          },
+          {
+            "key": "wed_core_a1",
+            "exerciseKey": "hollow_body_hold",
+            "category": "CORE",
+            "metricType": "HOLD",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": 60,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 7
+          },
+          {
+            "key": "wed_core_a2",
+            "exerciseKey": "l_sit",
+            "category": "CORE",
+            "metricType": "HOLD",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": 15,
+            "holdTargetMaxSec": 20,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": "l_sit_tuck",
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 8
+          }
+        ],
+        "cardio": [
+          {
+            "type": "JOG",
+            "label": "Outdoor 2km Jog (Conversational Pace)",
+            "targetDistanceM": 2000,
+            "isOptional": false
+          }
+        ]
+      },
+      {
+        "key": "thu",
+        "label": "Pull (Horizontal) & OAP Maintenance",
+        "dayOfWeek": "THURSDAY",
+        "sequenceIndex": 3,
+        "isRest": false,
+        "prep": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Active Scapular Shrugs",
+              "reps": 15,
+              "seconds": null
+            },
+            {
+              "text": "Light Bicep Isometrics",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Wrist Extensions",
+              "reps": 10,
+              "seconds": null
+            }
+          ]
+        },
+        "cooldown": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Brachioradialis Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Deep Lat Overhead Stretch",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "slots": [
+          {
+            "key": "thu_s1",
+            "exerciseKey": "muscle_up",
+            "category": "SKILL",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 3,
+            "repsHigh": 4,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 0
+          },
+          {
+            "key": "thu_s2",
+            "exerciseKey": "front_lever",
+            "category": "SKILL",
+            "metricType": "HOLD_OR_REPS",
+            "setsMin": 4,
+            "setsMax": 4,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 120,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": "High-quality holds or raises.",
+            "order": 1
+          },
+          {
+            "key": "thu_s3",
+            "exerciseKey": "oap_practice",
+            "category": "SKILL",
+            "metricType": "HOLD_OR_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": "Did GTG today",
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 2
+          },
+          {
+            "key": "thu_c1",
+            "exerciseKey": "weighted_pull_up",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 3
+          },
+          {
+            "key": "thu_c2",
+            "exerciseKey": "seated_cable_row",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 4
+          },
+          {
+            "key": "thu_c3",
+            "exerciseKey": "chest_supported_db_row",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 2,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 120,
+            "restAsNeeded": false,
+            "isOptional": true,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 5
+          },
+          {
+            "key": "thu_i1",
+            "exerciseKey": "straight_arm_pushdown",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 6
+          },
+          {
+            "key": "thu_i2",
+            "exerciseKey": "db_spider_curl",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 7
+          },
+          {
+            "key": "thu_i3",
+            "exerciseKey": "reverse_ez_curl",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 12,
+            "repsHigh": 15,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 8
+          },
+          {
+            "key": "thu_core_a1",
+            "exerciseKey": "windshield_wiper",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 9
+          },
+          {
+            "key": "thu_core_a2",
+            "exerciseKey": "hanging_leg_raise",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 10
+          }
+        ],
+        "cardio": []
+      },
+      {
+        "key": "fri",
+        "label": "Legs, Shoulders & Heavy Hinge",
+        "dayOfWeek": "FRIDAY",
+        "sequenceIndex": 4,
+        "isRest": false,
+        "prep": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Dynamic Hamstring Sweeps",
+              "reps": 15,
+              "seconds": null
+            },
+            {
+              "text": "Glute Bridges",
+              "reps": 15,
+              "seconds": null
+            },
+            {
+              "text": "Banded Shoulder Dislocates",
+              "reps": 15,
+              "seconds": null
+            }
+          ]
+        },
+        "cooldown": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Seated Pike Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Child's Pose",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Straddle Stretch",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "slots": [
+          {
+            "key": "fri_skill",
+            "exerciseKey": "handstand_practice",
+            "category": "SKILL",
+            "metricType": "TIMED_BLOCK",
+            "setsMin": 1,
+            "setsMax": 1,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": 600,
+            "restMinSec": null,
+            "restMaxSec": null,
+            "restAsNeeded": true,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 0
+          },
+          {
+            "key": "fri_c1",
+            "exerciseKey": "bb_back_squat",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 240,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": 5.0,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 1
+          },
+          {
+            "key": "fri_c2",
+            "exerciseKey": "romanian_deadlift",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": 5.0,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 2
+          },
+          {
+            "key": "fri_c3",
+            "exerciseKey": "bb_overhead_press",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 3
+          },
+          {
+            "key": "fri_i1",
+            "exerciseKey": "adductor_machine",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 4
+          },
+          {
+            "key": "fri_i2",
+            "exerciseKey": "db_lateral_raise",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 5
+          },
+          {
+            "key": "fri_i3",
+            "exerciseKey": "weighted_standing_calf_raise",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 6
+          },
+          {
+            "key": "fri_core_a1",
+            "exerciseKey": "ab_rollout",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 15,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 7
+          },
+          {
+            "key": "fri_core_a2",
+            "exerciseKey": "weighted_russian_twist",
+            "category": "CORE",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 20,
+            "repsHigh": 20,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 8
+          }
+        ],
+        "cardio": []
+      },
+      {
+        "key": "sat",
+        "label": "Push & Heavy Dips",
+        "dayOfWeek": "SATURDAY",
+        "sequenceIndex": 5,
+        "isRest": false,
+        "prep": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Crab Reaches",
+              "reps": 10,
+              "seconds": null
+            },
+            {
+              "text": "Wrist Rocks",
+              "reps": 10,
+              "seconds": null
+            },
+            {
+              "text": "Scapular Push-ups",
+              "reps": 10,
+              "seconds": null
+            }
+          ]
+        },
+        "cooldown": {
+          "durationMin": 5,
+          "items": [
+            {
+              "text": "Pec Minor Wall Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Overhead Tricep Stretch",
+              "reps": null,
+              "seconds": null
+            },
+            {
+              "text": "Banded Shoulder Dislocates",
+              "reps": null,
+              "seconds": null
+            }
+          ]
+        },
+        "slots": [
+          {
+            "key": "sat_skill",
+            "exerciseKey": "planche",
+            "category": "SKILL",
+            "metricType": "HOLD",
+            "setsMin": 4,
+            "setsMax": 4,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": "Tuck planche training.",
+            "order": 0
+          },
+          {
+            "key": "sat_c1",
+            "exerciseKey": "weighted_dip",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 180,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 1
+          },
+          {
+            "key": "sat_c2",
+            "exerciseKey": "bb_bench_press",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 6,
+            "repsHigh": 8,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 180,
+            "restMaxSec": 240,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 2
+          },
+          {
+            "key": "sat_c3",
+            "exerciseKey": "seated_db_ohp",
+            "category": "COMPOUND",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 2,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 120,
+            "restMaxSec": 120,
+            "restAsNeeded": false,
+            "isOptional": true,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 3
+          },
+          {
+            "key": "sat_i1",
+            "exerciseKey": "high_to_low_crossover",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 4
+          },
+          {
+            "key": "sat_i2",
+            "exerciseKey": "pjr_pullover",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 8,
+            "repsHigh": 10,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 5
+          },
+          {
+            "key": "sat_i3",
+            "exerciseKey": "cable_tricep_pushaway",
+            "category": "ISOLATION",
+            "metricType": "WEIGHT_REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 10,
+            "repsHigh": 12,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 90,
+            "restMaxSec": 90,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": null,
+            "targetSkillStepKey": null,
+            "progressionRule": "DOUBLE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 6
+          },
+          {
+            "key": "sat_core_a1",
+            "exerciseKey": "l_sit",
+            "category": "CORE",
+            "metricType": "HOLD",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": null,
+            "repsHigh": null,
+            "isAmrap": true,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": "l_sit_advanced",
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 7
+          },
+          {
+            "key": "sat_core_a2",
+            "exerciseKey": "hollow_body_rock",
+            "category": "CORE",
+            "metricType": "REPS",
+            "setsMin": 3,
+            "setsMax": 3,
+            "repsLow": 20,
+            "repsHigh": 20,
+            "isAmrap": false,
+            "holdTargetSec": null,
+            "holdTargetMaxSec": null,
+            "blockDurationSec": null,
+            "restMinSec": 60,
+            "restMaxSec": 60,
+            "restAsNeeded": false,
+            "isOptional": false,
+            "skipReasonLabel": null,
+            "supersetGroup": "A",
+            "targetSkillStepKey": null,
+            "progressionRule": "NONE",
+            "incrementOverrideKg": null,
+            "alternativeExerciseKeys": [],
+            "notes": null,
+            "order": 8
+          }
+        ],
+        "cardio": [
+          {
+            "type": "WALK",
+            "label": "Light Active Recovery Walk",
+            "targetDistanceM": null,
+            "isOptional": false
+          }
+        ]
+      },
+      {
+        "key": "sun",
+        "label": "Active Rest, Deep Stretching & Recovery",
+        "dayOfWeek": "SUNDAY",
+        "sequenceIndex": 6,
+        "isRest": true,
+        "prep": {
+          "durationMin": null,
+          "items": []
+        },
+        "cooldown": {
+          "durationMin": null,
+          "items": []
+        },
+        "slots": [],
+        "cardio": []
+      }
+    ]
+  }

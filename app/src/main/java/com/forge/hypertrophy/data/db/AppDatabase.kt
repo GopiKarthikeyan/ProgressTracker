@@ -3,6 +3,15 @@ package com.forge.hypertrophy.data.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.forge.hypertrophy.data.dao.BiometricsDao
+import com.forge.hypertrophy.data.dao.CardioDao
+import com.forge.hypertrophy.data.dao.ExerciseDao
+import com.forge.hypertrophy.data.dao.GearDao
+import com.forge.hypertrophy.data.dao.MediaDao
+import com.forge.hypertrophy.data.dao.ProgramDao
+import com.forge.hypertrophy.data.dao.RoutineDao
+import com.forge.hypertrophy.data.dao.SessionDao
+import com.forge.hypertrophy.data.dao.SkillDao
 import com.forge.hypertrophy.data.entity.BiometricsEntity
 import com.forge.hypertrophy.data.entity.CardioLogEntity
 import com.forge.hypertrophy.data.entity.CardioPlanEntity
@@ -47,4 +56,22 @@ import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
     exportSchema = true,
 )
 @TypeConverters(TrainingConverters::class)
-abstract class AppDatabase : RoomDatabase()
+abstract class AppDatabase : RoomDatabase() {
+    abstract fun programDao(): ProgramDao
+
+    abstract fun exerciseDao(): ExerciseDao
+
+    abstract fun skillDao(): SkillDao
+
+    abstract fun routineDao(): RoutineDao
+
+    abstract fun sessionDao(): SessionDao
+
+    abstract fun cardioDao(): CardioDao
+
+    abstract fun mediaDao(): MediaDao
+
+    abstract fun biometricsDao(): BiometricsDao
+
+    abstract fun gearDao(): GearDao
+}
