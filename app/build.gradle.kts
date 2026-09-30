@@ -40,6 +40,18 @@ android {
     buildFeatures {
         compose = true
     }
+    sourceSets {
+        getByName("test").assets.directories.add("$projectDir/schemas")
+        getByName("androidTest").assets.directories.add("$projectDir/schemas")
+        getByName("test").resources.directories.add("$projectDir/schemas")
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -67,6 +79,9 @@ dependencies {
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.room.testing)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(libs.robolectric)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
