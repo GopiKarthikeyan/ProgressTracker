@@ -17,7 +17,7 @@
 - Enums are stored by name, not ordinal; converters exist for LocalDate, Instant, and lists.
 - exportSchema = true and the schemas/ directory is committed.
 - SessionSlot really serializes the prescription snapshot; Biometrics.date is unique.
-- A MigrationTestHelper harness exists; there is no destructive fallback anywhere.
+- A MigrationTestHelper harness exists in androidTest. It runs only with `./gradlew connectedDebugAndroidTest` on a connected device or emulator. `./gradlew testDebugUnitTest` does not cover migrations. There is no destructive fallback anywhere.
 - DAO tests use an in-memory DB.
 
 ## Phase 2
@@ -103,6 +103,8 @@
 Run once after Phase 5, before the first real gym session.
 
 Do a full-app audit before I start logging real training data. Do NOT modify files.
+
+Migration validation is not part of `./gradlew testDebugUnitTest`. The MigrationTestHelper harness lives in androidTest and only runs with `./gradlew connectedDebugAndroidTest` on a connected device or emulator. Do not treat migrations as covered unless that command has been run.
 
 Read docs/SPEC.md and the whole codebase. Focus on anything that could lose or corrupt data: migrations, backup/restore, transactions, session recovery after a crash, and the schedule catching up after days of not opening the app. Then check timer reliability with the screen locked for 10+ minutes.
 
