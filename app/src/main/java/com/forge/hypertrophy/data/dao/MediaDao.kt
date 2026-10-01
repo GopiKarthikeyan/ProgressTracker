@@ -9,11 +9,24 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MediaDao {
-    @Query("SELECT * FROM media_item WHERE exerciseId = :exerciseId ORDER BY id")
+    /** Newest clip first. */
+    @Query("SELECT * FROM media_item WHERE exerciseId = :exerciseId ORDER BY id DESC")
     fun observeForExercise(exerciseId: Long): Flow<List<MediaItemEntity>>
 
     @Query("SELECT * FROM media_item WHERE setEntryId = :setEntryId ORDER BY id")
     fun observeForSet(setEntryId: Long): Flow<List<MediaItemEntity>>
+
+    @Query("SELECT * FROM media_item ORDER BY id DESC")
+    fun observeAll(): Flow<List<MediaItemEntity>>
+
+    @Query("SELECT * FROM media_item WHERE type = 'PHOTO' AND pose IS NOT NULL ORDER BY capturedAt, id")
+    fun observePhotos(): Flow<List<MediaItemEntity>>
+
+    @Query("SELECT * FROM media_item WHERE id = :id")
+    suspend fun get(id: Long): MediaItemEntity?
+
+    @Query("SELECT * FROM media_item ORDER BY id")
+    suspend fun all(): List<MediaItemEntity>
 
     @Insert
     suspend fun insert(item: MediaItemEntity): Long

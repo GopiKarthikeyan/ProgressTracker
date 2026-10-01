@@ -4,4 +4,5 @@ import androidx.compose.ui.unit.dp
 
 object TouchTargets {
     val Workout = 72.dp
+    val Editor = 48.dp
 }

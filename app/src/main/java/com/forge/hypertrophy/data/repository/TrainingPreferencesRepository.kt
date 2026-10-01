@@ -7,7 +7,6 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
@@ -25,6 +24,9 @@ interface TrainingPreferencesRepository {
 
     val activeTimerEndElapsedRealtime: Flow<Long?>
 
+    /** Rest the Quick Settings tile starts, in seconds. */
+    val defaultRestSeconds: Flow<Int>
+
     suspend fun setLastReconciledDate(date: LocalDate?)
 
     suspend fun setPlateInventoryKg(platesKg: List<Double>)
@@ -32,11 +34,9 @@ interface TrainingPreferencesRepository {
     suspend fun setTransitionRestSeconds(seconds: Int)
 
     suspend fun setActiveTimerEndElapsedRealtime(elapsedRealtime: Long?)
-}
 
-private val Context.trainingDataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "training",
-)
+    suspend fun setDefaultRestSeconds(seconds: Int)
+}
 
 @Singleton
 class DataStoreTrainingPreferencesRepository @Inject constructor(
@@ -56,6 +56,16 @@ class DataStoreTrainingPreferencesRepository @Inject constructor(
 
     override val activeTimerEndElapsedRealtime: Flow<Long?> = context.trainingDataStore.data.map { preferences ->
         preferences[ActiveTimerEndKey]
+    }
+
+    override val defaultRestSeconds: Flow<Int> = context.trainingDataStore.data.map { preferences ->
+        preferences[DefaultRestKey] ?: DEFAULT_REST_SECONDS
+    }
+
+    override suspend fun setDefaultRestSeconds(seconds: Int) {
+        context.trainingDataStore.edit { preferences ->
+            preferences[DefaultRestKey] = seconds
+        }
     }
 
     override suspend fun setLastReconciledDate(date: LocalDate?) {
@@ -92,7 +102,9 @@ class DataStoreTrainingPreferencesRepository @Inject constructor(
 
     private companion object {
         const val DEFAULT_TRANSITION_REST_SECONDS = 120
+        const val DEFAULT_REST_SECONDS = 90
         val LastReconciledDateKey = stringPreferencesKey("last_reconciled_date")
+        val DefaultRestKey = intPreferencesKey("default_rest_seconds")
         val PlateInventoryKey = stringPreferencesKey("plate_inventory_kg")
         val TransitionRestKey = intPreferencesKey("transition_rest_seconds")
         val ActiveTimerEndKey = longPreferencesKey("active_timer_end_elapsed_realtime")

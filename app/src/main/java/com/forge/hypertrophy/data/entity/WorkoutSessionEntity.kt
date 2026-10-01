@@ -34,4 +34,6 @@ data class WorkoutSessionEntity(
     val readinessEnergy: Int?,
     val startedAt: Instant?,
     val completedAt: Instant?,
+    /** Set when the session date, status, or a set is changed after the fact. */
+    val editedAt: Instant? = null,
 )

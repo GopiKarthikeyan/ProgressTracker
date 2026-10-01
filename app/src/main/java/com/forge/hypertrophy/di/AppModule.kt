@@ -1,5 +1,7 @@
 package com.forge.hypertrophy.di
 
+import android.os.SystemClock
+import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,4 +15,8 @@ object AppModule {
     @Provides
     @Singleton
     fun provideClock(): Clock = Clock.systemDefaultZone()
+
+    @Provides
+    @Singleton
+    fun provideElapsedRealtime(): ElapsedRealtimeClock = ElapsedRealtimeClock { SystemClock.elapsedRealtime() }
 }

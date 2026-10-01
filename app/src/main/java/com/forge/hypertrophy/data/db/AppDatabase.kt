@@ -3,6 +3,7 @@ package com.forge.hypertrophy.data.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import com.forge.hypertrophy.data.dao.BaselineDao
 import com.forge.hypertrophy.data.dao.BiometricsDao
 import com.forge.hypertrophy.data.dao.CardioDao
 import com.forge.hypertrophy.data.dao.ExerciseDao
@@ -26,8 +27,10 @@ import com.forge.hypertrophy.data.entity.SessionSlotEntity
 import com.forge.hypertrophy.data.entity.SetEntryEntity
 import com.forge.hypertrophy.data.entity.SkillEntity
 import com.forge.hypertrophy.data.entity.SkillProgressEntity
+import com.forge.hypertrophy.data.entity.SkillStageEventEntity
 import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
+import com.forge.hypertrophy.data.entity.SlotBaselineEntity
 import com.forge.hypertrophy.data.entity.TrackPointEntity
 import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 
@@ -38,6 +41,7 @@ import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
         SkillEntity::class,
         SkillStepEntity::class,
         SkillProgressEntity::class,
+        SkillStageEventEntity::class,
         RoutineDayEntity::class,
         ChecklistItemEntity::class,
         RoutineSlotEntity::class,
@@ -51,8 +55,9 @@ import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
         MediaItemEntity::class,
         BiometricsEntity::class,
         GearEntity::class,
+        SlotBaselineEntity::class,
     ],
-    version = 1,
+    version = SCHEMA_VERSION,
     exportSchema = true,
 )
 @TypeConverters(TrainingConverters::class)
@@ -74,4 +79,6 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun biometricsDao(): BiometricsDao
 
     abstract fun gearDao(): GearDao
+
+    abstract fun baselineDao(): BaselineDao
 }

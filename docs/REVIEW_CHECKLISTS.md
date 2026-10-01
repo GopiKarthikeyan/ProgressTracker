@@ -98,37 +98,24 @@
 - The Quick Settings tile starts the timer service correctly from a locked or cold state.
 - The weekly review uses the domain calculators.
 
-## Phase 10
-- Spoken counts and chimes never overlap; AudioFocus is abandoned after each cue.
-- The tempo metronome keeps time from elapsedRealtime, with no cumulative drift across a set.
-- A tempo field missing from ProgramJson imports cleanly (backward compatible).
-- The mic chip needs no press-and-hold; recording auto-stops at 60s; RECORD_AUDIO requested only at first use.
-- On-device recognition only; a missing recognizer is handled gracefully.
-- VoiceMemo rows and files stay in sync on delete; memos are included in backup and restore.
-
-## Phase 11
-- Bodyweight lookup uses the latest entry on or before the session date, never a later one.
-- Relative metrics show "unavailable" instead of wrong numbers when bodyweight is missing.
-- Relative PRs are detected correctly during a weight cut (tested).
-- Recomposition thresholds are unit-tested at their boundaries.
-- Measurement charts have empty states.
-
-## Phase 12
-- The demo never renders during an active set.
-- One pooled ExoPlayer, released with the screen; no leaks when scrolling the library.
-- Demo copies are muted 480p and stored separately; replacing a demo deletes the old file.
-- Photo Picker is used (no storage permission).
-- referenceUrl is only ever opened via external intent; the app makes no network call.
-- Demos are included in backup and restore.
-
-## Phase 13
-- The model is bundled in assets; no network or Google Play Services dependency (grep).
-- Analysis runs only during active hold slots, off the main thread, and stops when the slot ends.
-- The state machine is unit-tested with landmark fixtures: clean hold, jitter within grace, a real break, tracking loss.
-- The detected time always goes through the confirmation dialog.
-- An unsupported camera use-case combination is handled with a clear fallback.
-- The feature is fully disabled when the Settings toggle is off.
-- Also produce a manual test script: front lever and planche at each tier, poor lighting, bar blocking the body, baggy clothing.
+## Phase 9.5
+- SlotBaseline is actually consulted first: a slot with both a baseline and session history still prefers the baseline only if no session has been logged against that slot yet. Once any session exists, baseline is ignored in favor of real history — confirm the engine doesn't keep falling back to the baseline after week one.
+- "Skip — calibrate in first session" truly suppresses the suggestion UI (no stale 0kg / 0 reps default shown) and truly excludes that session from DoubleProgressionEngine and StaticSkillEngine evaluation — check this against the Phase 2 "zero-set sessions ignored" test, since calibration sessions are not zero-set but must be treated the same way for progression purposes.
+- The setup screen's pre-filled steppers come from the same cold-start logic as the live engine (most recent weight for that exercise from any slot) — not a duplicated/divergent copy of that logic. Grep for a second implementation of "most recent weight across slots."
+- Editing a set correctly identifies which PRs and next-session suggestions were derived from it and recomputes only those — not a full-table recompute on every edit (would be slow once history is large) and not a no-op (stale PRs are worse than slow ones).
+- The "don't auto-revert a confirmed stage advance" rule is tested in both directions: editing a set that would now fail mastery criteria leaves the tier advance alone and shows the warning; editing a set that newly qualifies for mastery does NOT retroactively grant an advance without the form-confirmation tap (that tap is a Phase 2 invariant — this phase must not create a silent bypass).
+- editedAt is actually set on edit, distinguishable from the original loggedAt, and surfaced somewhere visible (even just in Diagnostics) for your own debugging.
+- Deleting a set triggers the same recompute path as editing it, not a separate under-tested path.
+- The PRAGMA user_version read happens on a connection Room has not yet opened — verify this isn't racing Room's own onOpen/onCreate callback, and that it works correctly on first-ever app launch (no prior DB file: must not crash, must not create a spurious snapshot).
+- A migration that fails partway (throws) still leaves the pre-migration snapshot in place and doesn't leave a corrupted half-migrated DB as the "current" file — this is the actual scenario this feature exists for, so it deserves a dedicated test that forces a migration to throw.
+- Snapshot rotation keeps exactly 5, oldest deleted first, verified with more than 5 version bumps in a single test rather than asserting the count after one.
+- Restoring a pre-migration snapshot goes through the identical atomic-swap path as a Phase 5 manual restore — no second, divergent restore implementation.
+- Crash handler chains to the original Thread.UncaughtExceptionHandler (test that the original handler's side effect, e.g. process death, still occurs after logging — a handler that swallows the crash instead of chaining is a correctness bug, not a feature).
+- Breadcrumbs contain screen names and action names only — grep that no breadcrumb-writing call site passes a weight, rep count, exercise name, or file path (photo/media paths are exactly the kind of thing that leaks into a "last 50 actions" log if someone wires it up by logging method arguments directly).
+- ApplicationExitInfo reading is gated to API 30+ with a no-op fallback below that, not a runtime crash on older devices.
+- Crash log files and the resulting share-sheet export contain no file paths pointing at photo/media storage, and sharing only happens on explicit user tap (no auto-upload, no silent background share).
+- The 20-most-recent rotation for crash logs is tested the same way as the 5-snapshot rotation (force more than 20 and check deletion order), not assumed to work because the snapshot rotation test passed.
+- Also produce a MANUAL DEVICE TEST SCRIPT: force-close the app mid-workout and reopen (process death during an active session, cross-checked against Phase 4's own recovery test so the two features don't conflict); trigger a real crash (e.g. a deliberate NPE behind a debug-only button) and confirm the log appears in Diagnostics; bump the schema version by one in a throwaway branch and confirm a pre-migration snapshot appears before the migration runs.
 
 ## Full-app audit
 

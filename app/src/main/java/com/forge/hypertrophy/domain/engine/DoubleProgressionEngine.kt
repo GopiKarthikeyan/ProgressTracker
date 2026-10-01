@@ -40,11 +40,19 @@ import com.forge.hypertrophy.domain.model.SetType
  */
 class DoubleProgressionEngine {
     fun suggest(input: ProgressionInput): ProgressionSuggestion {
-        val meaningful = input.slotSessions.map { session ->
+        val meaningful = input.slotSessions.filter { !it.calibration }.map { session ->
             session.sets.filter { it.setType == SetType.WORKING || it.setType == SetType.AMRAP }
         }.filter { it.isNotEmpty() }
 
         if (meaningful.isEmpty()) {
+            if (input.awaitingCalibration) return hold()
+            val baseline = input.baselineWeightKg
+            if (baseline != null && !isBodyweightReps(input)) {
+                return ProgressionSuggestion(
+                    ProgressionAction.BASELINE,
+                    roundLoad(baseline, incrementKg(input)),
+                )
+            }
             val cold = input.latestWeightFromAnySlotKg ?: return hold()
             if (isBodyweightReps(input)) return ProgressionSuggestion(ProgressionAction.COLD_START, null)
             return ProgressionSuggestion(

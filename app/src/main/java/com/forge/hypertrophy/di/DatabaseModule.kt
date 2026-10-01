@@ -2,6 +2,7 @@ package com.forge.hypertrophy.di
 
 import android.content.Context
 import androidx.room.Room
+import com.forge.hypertrophy.data.dao.BaselineDao
 import com.forge.hypertrophy.data.dao.BiometricsDao
 import com.forge.hypertrophy.data.dao.CardioDao
 import com.forge.hypertrophy.data.dao.ExerciseDao
@@ -11,12 +12,19 @@ import com.forge.hypertrophy.data.dao.ProgramDao
 import com.forge.hypertrophy.data.dao.RoutineDao
 import com.forge.hypertrophy.data.dao.SessionDao
 import com.forge.hypertrophy.data.dao.SkillDao
+import com.forge.hypertrophy.data.backup.SNAPSHOT_DIR
+import com.forge.hypertrophy.data.backup.PreMigrationSnapshots
 import com.forge.hypertrophy.data.db.AppDatabase
+import com.forge.hypertrophy.data.db.DATABASE_NAME
+import com.forge.hypertrophy.data.db.DatabaseMigrations
+import com.forge.hypertrophy.data.db.SCHEMA_VERSION
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.io.File
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
@@ -26,11 +34,20 @@ object DatabaseModule {
     @Singleton
     fun provideDatabase(
         @ApplicationContext context: Context,
-    ): AppDatabase = Room.databaseBuilder(
-        context,
-        AppDatabase::class.java,
-        DATABASE_NAME,
-    ).build()
+        clock: Clock,
+    ): AppDatabase {
+        PreMigrationSnapshots(
+            databaseFile = context.getDatabasePath(DATABASE_NAME),
+            snapshotsDir = File(context.filesDir, SNAPSHOT_DIR),
+            currentVersion = SCHEMA_VERSION,
+            clock = clock,
+        ).captureIfStale()
+        return Room.databaseBuilder(
+            context,
+            AppDatabase::class.java,
+            DATABASE_NAME,
+        ).addMigrations(*DatabaseMigrations.ALL).build()
+    }
 
     @Provides
     fun provideProgramDao(database: AppDatabase): ProgramDao = database.programDao()
@@ -59,5 +76,6 @@ object DatabaseModule {
     @Provides
     fun provideGearDao(database: AppDatabase): GearDao = database.gearDao()
 
-    private const val DATABASE_NAME = "hypertrophy.db"
+    @Provides
+    fun provideBaselineDao(database: AppDatabase): BaselineDao = database.baselineDao()
 }

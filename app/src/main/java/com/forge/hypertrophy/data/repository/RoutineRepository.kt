@@ -23,6 +23,10 @@ interface RoutineRepository {
 
     suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>)
 
+    suspend fun days(programId: Long): List<RoutineDayEntity>
+
+    suspend fun slotsForDays(dayIds: List<Long>): List<RoutineSlotEntity>
+
     fun observeChecklist(dayId: Long): Flow<List<ChecklistItemEntity>>
 
     suspend fun insertChecklist(item: ChecklistItemEntity): Long
@@ -70,6 +74,13 @@ class RoomRoutineRepository @Inject constructor(
 
     override suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>) =
         routineDao.reorderDays(programId, orderedDayIds)
+
+    override suspend fun days(programId: Long): List<RoutineDayEntity> = routineDao.days(programId)
+
+    override suspend fun slotsForDays(dayIds: List<Long>): List<RoutineSlotEntity> {
+        if (dayIds.isEmpty()) return emptyList()
+        return routineDao.slotsForDays(dayIds)
+    }
 
     override fun observeChecklist(dayId: Long): Flow<List<ChecklistItemEntity>> = routineDao.observeChecklist(dayId)
 

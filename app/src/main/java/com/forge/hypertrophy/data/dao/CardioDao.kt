@@ -27,4 +27,22 @@ interface CardioDao {
 
     @Insert
     suspend fun insertTrackPoints(points: List<TrackPointEntity>): List<Long>
+
+    @Query("SELECT * FROM cardio_log ORDER BY id DESC")
+    fun observeAll(): Flow<List<CardioLogEntity>>
+
+    @Query(
+        """
+        SELECT gearId AS gearId, SUM(distanceM) AS distanceM
+        FROM cardio_log
+        WHERE gearId IS NOT NULL
+        GROUP BY gearId
+        """,
+    )
+    fun observeMileage(): Flow<List<GearMileage>>
 }
+
+data class GearMileage(
+    val gearId: Long,
+    val distanceM: Double,
+)

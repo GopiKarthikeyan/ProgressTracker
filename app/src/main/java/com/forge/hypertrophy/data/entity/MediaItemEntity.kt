@@ -6,6 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.forge.hypertrophy.domain.model.MediaType
 import com.forge.hypertrophy.domain.model.Pose
+import java.time.Instant
 
 @Entity(
     tableName = "media_item",
@@ -34,7 +35,11 @@ data class MediaItemEntity(
     val pose: Pose?,
     val exerciseId: Long?,
     val setEntryId: Long?,
+    /** Path relative to the app's media directory, for example `media/clip-1.mp4`. */
     val uri: String,
     val trimStartMs: Long?,
     val trimEndMs: Long?,
+    val capturedAt: Instant? = null,
+    /** Text burned into a clip, for example an exercise name with weight and reps. */
+    val label: String? = null,
 )

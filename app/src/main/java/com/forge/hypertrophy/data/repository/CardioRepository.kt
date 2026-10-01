@@ -1,6 +1,7 @@
 package com.forge.hypertrophy.data.repository
 
 import com.forge.hypertrophy.data.dao.CardioDao
+import com.forge.hypertrophy.data.dao.GearMileage
 import com.forge.hypertrophy.data.entity.CardioLogEntity
 import com.forge.hypertrophy.data.entity.TrackPointEntity
 import javax.inject.Inject
@@ -19,6 +20,10 @@ interface CardioRepository {
     fun observeTrackPoints(cardioLogId: Long): Flow<List<TrackPointEntity>>
 
     suspend fun insertTrackPoints(points: List<TrackPointEntity>): List<Long>
+
+    fun observeAll(): Flow<List<CardioLogEntity>>
+
+    fun observeMileage(): Flow<List<GearMileage>>
 }
 
 @Singleton
@@ -38,4 +43,8 @@ class RoomCardioRepository @Inject constructor(
 
     override suspend fun insertTrackPoints(points: List<TrackPointEntity>): List<Long> =
         cardioDao.insertTrackPoints(points)
+
+    override fun observeAll(): Flow<List<CardioLogEntity>> = cardioDao.observeAll()
+
+    override fun observeMileage(): Flow<List<GearMileage>> = cardioDao.observeMileage()
 }

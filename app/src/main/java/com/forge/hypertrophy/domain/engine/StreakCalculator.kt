@@ -22,24 +22,55 @@ class StreakCalculator {
         var count = 0
         var guard = 0
         while (guard++ < LOOKBACK_DAYS) {
-            val day = snapshot.dayOn(date, today) ?: return count
-            val recorded = date in snapshot.explicitCompletions || date in snapshot.autoCompletedRests
-            val ended = date.isBefore(today)
-            val satisfied = when {
-                recorded -> true
-                day.isRest && ended -> true
-                day.isRest -> null
-                ended -> false
-                else -> null
-            }
-            when (satisfied) {
-                true -> count += 1
-                false -> return count
-                null -> Unit
+            when (mark(snapshot, date, today)) {
+                DayMark.Satisfied -> count += 1
+                DayMark.Missed, DayMark.Unknown -> return count
+                DayMark.Open -> Unit
             }
             date = date.minusDays(1)
         }
         return count
+    }
+
+    /** Longest satisfied run inside the same lookback [streak] uses. */
+    fun bestStreak(snapshot: ScheduleSnapshot, today: LocalDate): Int {
+        var date = today
+        var run = 0
+        var best = 0
+        var guard = 0
+        while (guard++ < LOOKBACK_DAYS) {
+            when (mark(snapshot, date, today)) {
+                DayMark.Satisfied -> {
+                    run += 1
+                    if (run > best) best = run
+                }
+                DayMark.Missed -> run = 0
+                DayMark.Open -> Unit
+                DayMark.Unknown -> return best
+            }
+            date = date.minusDays(1)
+        }
+        return best
+    }
+
+    private fun mark(snapshot: ScheduleSnapshot, date: LocalDate, today: LocalDate): DayMark {
+        val day = snapshot.dayOn(date, today) ?: return DayMark.Unknown
+        val recorded = date in snapshot.explicitCompletions || date in snapshot.autoCompletedRests
+        val ended = date.isBefore(today)
+        return when {
+            recorded -> DayMark.Satisfied
+            day.isRest && ended -> DayMark.Satisfied
+            day.isRest -> DayMark.Open
+            ended -> DayMark.Missed
+            else -> DayMark.Open
+        }
+    }
+
+    private enum class DayMark {
+        Satisfied,
+        Missed,
+        Open,
+        Unknown,
     }
 
     private companion object {

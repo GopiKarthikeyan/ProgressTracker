@@ -31,6 +31,58 @@ class DoubleProgressionEngineTest {
     }
 
     @Test
+    fun baselineBeatsColdStartWhenTheSlotHasNoHistory() {
+        val suggestion = engine.suggest(
+            loaded(
+                rule = ProgressionRule.DOUBLE,
+                repsLow = 6,
+                repsHigh = 10,
+                sessions = emptyList(),
+                latestFromAnySlot = 40.0,
+                baselineWeightKg = 80.0,
+            ),
+        )
+        assertEquals(ProgressionAction.BASELINE, suggestion.action)
+        assertEquals(80.0, suggestion.weightKg!!, 0.0)
+    }
+
+    @Test
+    fun awaitingCalibrationShowsNoSuggestionEvenWhenAnotherSlotHasAWeight() {
+        val suggestion = engine.suggest(
+            loaded(
+                rule = ProgressionRule.DOUBLE,
+                repsLow = 6,
+                repsHigh = 10,
+                sessions = emptyList(),
+                latestFromAnySlot = 40.0,
+                awaitingCalibration = true,
+            ),
+        )
+        assertEquals(ProgressionAction.HOLD, suggestion.action)
+        assertNull(suggestion.weightKg)
+    }
+
+    @Test
+    fun calibrationSessionIsExcludedFromProgression() {
+        val calibrated = SlotSession(
+            listOf(LoggedSet(100.0, 10, SetType.WORKING)),
+            calibration = true,
+        )
+        val suggestion = engine.suggest(
+            loaded(
+                rule = ProgressionRule.DOUBLE,
+                repsLow = 6,
+                repsHigh = 10,
+                sessions = listOf(calibrated),
+                latestFromAnySlot = 40.0,
+                baselineWeightKg = 100.0,
+            ),
+        )
+        assertEquals(ProgressionAction.BASELINE, suggestion.action)
+        assertEquals(100.0, suggestion.weightKg!!, 0.0)
+    }
+
+    @Test
     fun noReturnedKilogramExceedsTwoDecimalPlaces() {
         val kilograms = mutableListOf<Double>()
         kilograms += LoadRounding.roundToDecimals(82.49999)
@@ -329,6 +381,8 @@ class DoubleProgressionEngineTest {
         metric: MetricType = MetricType.WEIGHT_REPS,
         overrideKg: Double? = null,
         latestFromAnySlot: Double? = null,
+        baselineWeightKg: Double? = null,
+        awaitingCalibration: Boolean = false,
     ) = ProgressionInput(
         rule = rule,
         equipment = equipment,
@@ -339,6 +393,8 @@ class DoubleProgressionEngineTest {
         incrementOverrideKg = overrideKg,
         slotSessions = sessions,
         latestWeightFromAnySlotKg = latestFromAnySlot,
+        baselineWeightKg = baselineWeightKg,
+        awaitingCalibration = awaitingCalibration,
     )
 
     private fun session(vararg sets: Pair<Double?, Int>) = SlotSession(

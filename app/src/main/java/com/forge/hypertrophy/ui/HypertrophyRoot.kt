@@ -12,11 +12,15 @@ import com.forge.hypertrophy.ui.navigation.MainScaffold
 import com.forge.hypertrophy.ui.screens.onboarding.OnboardingScreen
 import com.forge.hypertrophy.ui.screens.onboarding.OnboardingViewModel
 import com.forge.hypertrophy.ui.theme.Black
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 @Composable
 fun HypertrophyRoot(
+    openToday: StateFlow<Int> = MutableStateFlow(0),
     viewModel: OnboardingViewModel = hiltViewModel(),
 ) {
+    hiltViewModel<AppStartupViewModel>()
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     when (state.onboardingComplete) {
         null -> Box(
@@ -28,6 +32,6 @@ fun HypertrophyRoot(
             state = state,
             onEvent = viewModel::onEvent,
         )
-        true -> MainScaffold()
+        true -> MainScaffold(openToday = openToday)
     }
 }

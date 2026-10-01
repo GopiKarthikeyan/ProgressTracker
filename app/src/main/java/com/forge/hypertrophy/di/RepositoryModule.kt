@@ -12,7 +12,11 @@ import com.forge.hypertrophy.data.repository.RoomProgramRepository
 import com.forge.hypertrophy.data.repository.RoomRoutineRepository
 import com.forge.hypertrophy.data.repository.RoomSessionRepository
 import com.forge.hypertrophy.data.repository.RoomSkillRepository
+import com.forge.hypertrophy.data.repository.DataStoreScheduleCursorRepository
+import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
+import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.BiometricsRepository
+import com.forge.hypertrophy.data.repository.RoomBaselineRepository
 import com.forge.hypertrophy.data.repository.CardioRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.GearRepository
@@ -22,6 +26,8 @@ import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.repository.SkillRepository
 import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.data.weather.OpenMeteoWeatherRepository
+import com.forge.hypertrophy.data.weather.WeatherRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -69,6 +75,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindBaselineRepository(
+        impl: RoomBaselineRepository,
+    ): BaselineRepository
+
+    @Binds
+    @Singleton
     abstract fun bindCardioRepository(
         impl: RoomCardioRepository,
     ): CardioRepository
@@ -96,4 +108,16 @@ abstract class RepositoryModule {
     abstract fun bindTrainingPreferencesRepository(
         impl: DataStoreTrainingPreferencesRepository,
     ): TrainingPreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindScheduleCursorRepository(
+        impl: DataStoreScheduleCursorRepository,
+    ): ScheduleCursorRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWeatherRepository(
+        impl: OpenMeteoWeatherRepository,
+    ): WeatherRepository
 }

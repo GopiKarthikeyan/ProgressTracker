@@ -1,10 +1,12 @@
 package com.forge.hypertrophy.data.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.forge.hypertrophy.domain.model.CardioSource
+import com.forge.hypertrophy.domain.model.CardioType
 
 @Entity(
     tableName = "cardio_log",
@@ -36,4 +38,5 @@ data class CardioLogEntity(
     val gearId: Long?,
     val tempC: Double?,
     val uvIndex: Double?,
+    @ColumnInfo(defaultValue = "'JOG'") val type: CardioType = CardioType.JOG,
 )

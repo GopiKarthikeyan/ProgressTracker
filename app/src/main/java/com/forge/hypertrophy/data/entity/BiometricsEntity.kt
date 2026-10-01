@@ -13,4 +13,5 @@ data class BiometricsEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val date: LocalDate,
     val bodyWeightKg: Double?,
+    val bodyFatPercent: Double? = null,
 )

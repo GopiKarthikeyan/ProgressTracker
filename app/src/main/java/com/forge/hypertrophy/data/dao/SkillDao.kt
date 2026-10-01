@@ -7,8 +7,10 @@ import androidx.room.Query
 import androidx.room.Update
 import com.forge.hypertrophy.data.entity.SkillEntity
 import com.forge.hypertrophy.data.entity.SkillProgressEntity
+import com.forge.hypertrophy.data.entity.SkillStageEventEntity
 import com.forge.hypertrophy.data.entity.SkillStepEntity
 import java.time.Instant
+import java.time.LocalDate
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -52,9 +54,21 @@ interface SkillDao {
     @Query("DELETE FROM skill_step WHERE id = :id")
     suspend fun deleteStep(id: Long)
 
+    @Query("SELECT * FROM skill_step ORDER BY skillId, sortOrder")
+    suspend fun allSteps(): List<SkillStepEntity>
+
+    @Query("SELECT * FROM skill_progress")
+    suspend fun allProgress(): List<SkillProgressEntity>
+
     @Query("SELECT * FROM skill_progress WHERE skillId = :skillId")
     suspend fun getProgress(skillId: Long): SkillProgressEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertProgress(progress: SkillProgressEntity): Long
+
+    @Insert
+    suspend fun insertStageEvent(event: SkillStageEventEntity): Long
+
+    @Query("SELECT * FROM skill_stage_event WHERE date BETWEEN :from AND :to ORDER BY date, id")
+    suspend fun stageEventsBetween(from: LocalDate, to: LocalDate): List<SkillStageEventEntity>
 }

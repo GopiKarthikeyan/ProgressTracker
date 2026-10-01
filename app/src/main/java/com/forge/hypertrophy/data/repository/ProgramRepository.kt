@@ -15,6 +15,8 @@ interface ProgramRepository {
 
     suspend fun get(): ProgramEntity?
 
+    suspend fun getById(id: Long): ProgramEntity?
+
     suspend fun insert(program: ProgramEntity): Long
 
     suspend fun update(program: ProgramEntity)
@@ -45,6 +47,8 @@ class RoomProgramRepository @Inject constructor(
     override fun observeActive(): Flow<ProgramEntity?> = programDao.observeActive()
 
     override suspend fun get(): ProgramEntity? = programDao.get()
+
+    override suspend fun getById(id: Long): ProgramEntity? = programDao.getById(id)
 
     override suspend fun insert(program: ProgramEntity): Long = programDao.insert(program)
 

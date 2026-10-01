@@ -120,4 +120,20 @@ class StreakCalculatorTest {
             expected = 1,
         ),
     )
+
+    @Test
+    fun bestStreakKeepsTheLongerEarlierRun() {
+        val today = LocalDate.of(2026, 10, 5)
+        val snapshot = ProgramFixture.snapshot(
+            mode = ScheduleMode.ROLLING,
+            explicitCompletions = setOf(
+                LocalDate.of(2026, 10, 1),
+                LocalDate.of(2026, 10, 2),
+                LocalDate.of(2026, 10, 4),
+            ),
+            rollingDayByDate = (1..5).associate { LocalDate.of(2026, 10, it) to ProgramFixture.MONDAY },
+        )
+        assertEquals(1, calculator.streak(snapshot, today))
+        assertEquals(2, calculator.bestStreak(snapshot, today))
+    }
 }

@@ -11,9 +11,14 @@ data class LoggedSet(
     val setType: SetType,
 )
 
-/** Sets from a single session for one slot. Most-recent-first lists use this. */
+/**
+ * Sets from a single session for one slot. Most-recent-first lists use this.
+ * A [calibration] session established the slot's starting weight and is left
+ * out of progression.
+ */
 data class SlotSession(
     val sets: List<LoggedSet>,
+    val calibration: Boolean = false,
 )
 
 enum class ProgressionAction {
@@ -23,6 +28,8 @@ enum class ProgressionAction {
     VARIATION_OR_ADDED_LOAD,
     STALL,
     COLD_START,
+    /** A stored starting weight, used only when the slot itself has no history. */
+    BASELINE,
 }
 
 data class ProgressionSuggestion(
@@ -42,4 +49,14 @@ data class ProgressionInput(
     val slotSessions: List<SlotSession>,
     /** Latest working weight for this exercise from any slot, including other slots. */
     val latestWeightFromAnySlotKg: Double?,
+    /**
+     * Starting weight for this slot. Used when the slot has no non-calibration
+     * history, and it wins over [latestWeightFromAnySlotKg].
+     */
+    val baselineWeightKg: Double? = null,
+    /**
+     * The lifter chose "calibrate in the first session" and that session has
+     * not been logged yet. No weight is suggested, including the cold start.
+     */
+    val awaitingCalibration: Boolean = false,
 )
