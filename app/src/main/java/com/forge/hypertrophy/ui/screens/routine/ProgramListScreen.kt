@@ -2,8 +2,11 @@ package com.forge.hypertrophy.ui.screens.routine
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -15,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 
@@ -49,60 +53,95 @@ fun ProgramListScreen(
         exportingProgramId = 0L
     }
     BuilderColumn(title = stringResource(R.string.builder_programs), onBack = null, modifier = modifier) {
-        Row {
-            EditorButton(label = stringResource(R.string.builder_exercises), onClick = onOpenExercises)
-            EditorButton(label = stringResource(R.string.builder_skills), onClick = onOpenSkills)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                EditorButton(
+                    label = stringResource(R.string.builder_exercises),
+                    onClick = onOpenExercises,
+                    modifier = Modifier.weight(1f)
+                )
+                EditorButton(
+                    label = stringResource(R.string.builder_skills),
+                    onClick = onOpenSkills,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            EditorButton(
+                label = stringResource(R.string.builder_import),
+                onClick = { importLauncher.launch(OpenableMimeTypes) },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
-        EditorButton(
-            label = stringResource(R.string.builder_import),
-            onClick = { importLauncher.launch(OpenableMimeTypes) },
-        )
+
         state.notice?.let { notice ->
-            Text(
-                stringResource(
-                    when (notice) {
-                        ProgramListNotice.EXPORTED -> R.string.builder_exported
-                        ProgramListNotice.EXPORT_FAILED -> R.string.builder_export_failed
-                    },
-                ),
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(
+                        when (notice) {
+                            ProgramListNotice.EXPORTED -> R.string.builder_exported
+                            ProgramListNotice.EXPORT_FAILED -> R.string.builder_export_failed
+                        },
+                    ),
+                )
+                EditorButton(
+                    label = stringResource(R.string.builder_dismiss),
+                    onClick = { viewModel.onEvent(ProgramListEvent.DismissNotice) },
+                )
+            }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(
+                value = state.draftName,
+                onValueChange = { viewModel.onEvent(ProgramListEvent.DraftName(it)) },
+                label = { Text(stringResource(R.string.builder_program_name)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
             )
             EditorButton(
-                label = stringResource(R.string.builder_dismiss),
-                onClick = { viewModel.onEvent(ProgramListEvent.DismissNotice) },
+                label = stringResource(R.string.builder_add),
+                onClick = { viewModel.onEvent(ProgramListEvent.Add) },
+                modifier = Modifier.fillMaxWidth()
             )
         }
-        OutlinedTextField(
-            value = state.draftName,
-            onValueChange = { viewModel.onEvent(ProgramListEvent.DraftName(it)) },
-            label = { Text(stringResource(R.string.builder_program_name)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-        )
-        EditorButton(
-            label = stringResource(R.string.builder_add),
-            onClick = { viewModel.onEvent(ProgramListEvent.Add) },
-        )
+
         state.programs.forEach { program ->
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                EditorButton(label = program.name, onClick = { onOpenProgram(program.id) }, modifier = Modifier.weight(1f))
-                Text(stringResource(R.string.builder_active))
-                Switch(
-                    checked = program.isActive,
-                    onCheckedChange = { checked ->
-                        if (checked) viewModel.onEvent(ProgramListEvent.SetActive(program.id))
-                    },
-                )
-                EditorButton(
-                    label = stringResource(R.string.builder_export),
-                    onClick = {
-                        exportingProgramId = program.id
-                        exportLauncher.launch(exportFileName(program.name))
-                    },
-                )
-                EditorButton(
-                    label = stringResource(R.string.builder_delete),
-                    onClick = { viewModel.onEvent(ProgramListEvent.Delete(program.id)) },
-                )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    EditorButton(
+                        label = program.name,
+                        onClick = { onOpenProgram(program.id) },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        stringResource(R.string.builder_active),
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
+                    Switch(
+                        checked = program.isActive,
+                        onCheckedChange = { checked ->
+                            if (checked) viewModel.onEvent(ProgramListEvent.SetActive(program.id))
+                        },
+                    )
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    EditorButton(
+                        label = stringResource(R.string.builder_export),
+                        onClick = {
+                            exportingProgramId = program.id
+                            exportLauncher.launch(exportFileName(program.name))
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    EditorButton(
+                        label = stringResource(R.string.builder_delete),
+                        onClick = { viewModel.onEvent(ProgramListEvent.Delete(program.id)) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             }
         }
     }

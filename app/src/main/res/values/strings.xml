@@ -400,4 +400,32 @@
         <item>Sat</item>
         <item>Sun</item>
     </string-array>
+    <string name="workout_eta">ETA</string>
+    <string name="workout_readiness_title">How are you feeling?</string>
+    <string name="workout_readiness_submit">Ready to Lift</string>
+    <string name="workout_readiness_skip">Skip Readiness</string>
+    <string name="workout_prep_title">Warmup / Prep</string>
+    <string name="workout_start_first">Start First Exercise</string>
+    <string name="workout_set_label">Set %1$d of %2$d</string>
+    <string name="workout_weight_kg">%1$skg</string>
+    <string name="workout_reps_multiplier">×</string>
+    <string name="workout_adjust_weight_minus">−2.5kg</string>
+    <string name="workout_adjust_weight_plus">+2.5kg</string>
+    <string name="workout_adjust_reps_minus">−1 rep</string>
+    <string name="workout_adjust_reps_plus">+1 rep</string>
+    <string name="workout_log_set">Log Set</string>
+    <string name="workout_skip_exercise">Skip Exercise</string>
+    <string name="workout_skip_reason_default">Not feeling it</string>
+    <string name="workout_resting_title">Resting</string>
+    <string name="workout_skip_rest">Skip Rest</string>
+    <string name="workout_next_up">Next Up: %1$s</string>
+    <string name="workout_timed_block">Timed Block</string>
+    <string name="workout_complete_block">Complete Block</string>
+    <string name="workout_cooldown_title">Cooldown</string>
+    <string name="workout_finish">Finish Workout</string>
+    <string name="workout_complete_title">Workout Complete!</string>
+    <string name="workout_pr_summary">PR: %1$s – %2$s kg e1RM</string>
+    <string name="workout_done">Done</string>
+    <string name="workout_resume">Resume Workout</string>
+    <string name="dashboard_resume">Resume</string>
 </resources>

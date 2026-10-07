@@ -92,6 +92,9 @@ data object SnapshotsRoute
 @Serializable
 data object DiagnosticsRoute
 
+@Serializable
+data class WorkoutRoute(val sessionId: Long = 0L)
+
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface BreadcrumbEntryPoint {
@@ -190,6 +193,7 @@ fun MainScaffold(
                 TodayScreen(
                     onOpenCardio = { navController.navigate(CardioRoute) },
                     onOpenGallery = { navController.navigate(GalleryRoute) },
+                    onOpenWorkout = { navController.navigate(WorkoutRoute(it)) },
                 )
             }
             composable<CardioRoute> {
@@ -219,6 +223,7 @@ fun MainScaffold(
                 DashboardScreen(
                     onOpenWeeklyReview = { navController.navigate(WeeklyReviewRoute) },
                     onOpenSessions = { navController.navigate(SessionListRoute) },
+                    onOpenWorkout = { navController.navigate(WorkoutRoute(it)) },
                 )
             }
             composable<WeeklyReviewRoute> {
@@ -251,6 +256,11 @@ fun MainScaffold(
             }
             composable<DiagnosticsRoute> {
                 DiagnosticsScreen(onBack = { navController.popBackStack() })
+            }
+            composable<WorkoutRoute> {
+                com.forge.hypertrophy.ui.screens.workout.WorkoutScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable<ImportPreviewRoute> {
                 val viewModel: ImportPreviewViewModel = hiltViewModel()

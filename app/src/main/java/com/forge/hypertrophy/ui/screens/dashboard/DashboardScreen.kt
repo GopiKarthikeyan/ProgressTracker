@@ -44,6 +44,7 @@ import java.util.Locale
 fun DashboardScreen(
     onOpenWeeklyReview: () -> Unit,
     onOpenSessions: () -> Unit,
+    onOpenWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
@@ -53,6 +54,7 @@ fun DashboardScreen(
         onEvent = viewModel::onEvent,
         onOpenWeeklyReview = onOpenWeeklyReview,
         onOpenSessions = onOpenSessions,
+        onOpenWorkout = onOpenWorkout,
         modifier = modifier,
     )
 }
@@ -63,6 +65,7 @@ fun DashboardContent(
     onEvent: (DashboardEvent) -> Unit,
     onOpenWeeklyReview: () -> Unit,
     onOpenSessions: () -> Unit,
+    onOpenWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -74,10 +77,10 @@ fun DashboardContent(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.headlineSmall, color = White)
-        Notice(state.notice, onEvent)
+        Notice(state.notice, onEvent, onOpenWorkout)
         EditorButton(label = stringResource(R.string.review_open), onClick = onOpenWeeklyReview)
         EditorButton(label = stringResource(R.string.session_list_open), onClick = onOpenSessions)
-        TodaySection(state.today, onEvent)
+        TodaySection(state.today, onEvent, onOpenWorkout)
         StreakSection(state.currentStreak, state.bestStreak)
         HeatmapSection(state.heatmap)
         RecordsSection(state.records)
@@ -90,7 +93,11 @@ fun DashboardContent(
 }
 
 @Composable
-private fun Notice(notice: DashboardNotice?, onEvent: (DashboardEvent) -> Unit) {
+private fun Notice(
+    notice: DashboardNotice?,
+    onEvent: (DashboardEvent) -> Unit,
+    onOpenWorkout: (Long) -> Unit
+) {
     if (notice == null) return
     val text = when (notice) {
         DashboardNotice.WORKOUT_STARTED -> R.string.dashboard_notice_started
@@ -101,12 +108,21 @@ private fun Notice(notice: DashboardNotice?, onEvent: (DashboardEvent) -> Unit) 
     }
     Column {
         Text(stringResource(text), color = NeonAccent)
-        EditorButton(stringResource(R.string.dashboard_dismiss), { onEvent(DashboardEvent.DismissNotice) })
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (notice == DashboardNotice.WORKOUT_STARTED || notice == DashboardNotice.ALREADY_IN_PROGRESS) {
+                EditorButton(stringResource(R.string.workout_resume), { onOpenWorkout(0L) }) // ViewModel will pick up the active one
+            }
+            EditorButton(stringResource(R.string.dashboard_dismiss), { onEvent(DashboardEvent.DismissNotice) })
+        }
     }
 }
 
 @Composable
-private fun TodaySection(today: TodayCard?, onEvent: (DashboardEvent) -> Unit) {
+private fun TodaySection(
+    today: TodayCard?,
+    onEvent: (DashboardEvent) -> Unit,
+    onOpenWorkout: (Long) -> Unit
+) {
     Section(stringResource(R.string.dashboard_today)) {
         if (today == null) {
             Text(stringResource(R.string.dashboard_empty_program), color = White)
@@ -129,9 +145,14 @@ private fun TodaySection(today: TodayCard?, onEvent: (DashboardEvent) -> Unit) {
             NumericText(formatDuration(today.estimatedSeconds), color = NeonAccent)
         }
         EditorButton(
-            label = stringResource(R.string.dashboard_start),
-            onClick = { onEvent(DashboardEvent.Start(shortOnTime = false)) },
-            enabled = today.startEnabled,
+            label = if (today.startEnabled) stringResource(R.string.dashboard_start) else stringResource(R.string.dashboard_resume),
+            onClick = {
+                if (today.startEnabled) {
+                    onEvent(DashboardEvent.Start(shortOnTime = false))
+                } else {
+                    onOpenWorkout(0L)
+                }
+            },
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
             EditorButton(

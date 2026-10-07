@@ -1,5 +1,6 @@
 package com.forge.hypertrophy.ui.screens.routine
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -29,6 +30,7 @@ fun BuilderColumn(
     title: String,
     onBack: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(
@@ -36,6 +38,7 @@ fun BuilderColumn(
             .fillMaxWidth()
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
+        verticalArrangement = verticalArrangement,
         content = {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (onBack != null) {

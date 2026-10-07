@@ -1,22 +1,48 @@
 package com.forge.hypertrophy.ui.screens.workout
 
 import androidx.lifecycle.SavedStateHandle
-import com.forge.hypertrophy.data.dao.DaoFixture
+import com.forge.hypertrophy.data.dao.CompletedSessionDay
+import com.forge.hypertrophy.data.dao.CompletedSetRow
+import com.forge.hypertrophy.data.diagnostics.Breadcrumbs
+import com.forge.hypertrophy.data.entity.CardioPlanEntity
+import com.forge.hypertrophy.data.entity.ChecklistItemEntity
+import com.forge.hypertrophy.data.entity.ExerciseEntity
+import com.forge.hypertrophy.data.entity.ProgramEntity
+import com.forge.hypertrophy.data.entity.RoutineDayEntity
 import com.forge.hypertrophy.data.entity.RoutineSlotEntity
+import com.forge.hypertrophy.data.entity.SessionSlotEntity
+import com.forge.hypertrophy.data.entity.SetEntryEntity
+import com.forge.hypertrophy.data.entity.SkillEntity
+import com.forge.hypertrophy.data.entity.SkillProgressEntity
+import com.forge.hypertrophy.data.entity.SkillStageEventEntity
+import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
-import com.forge.hypertrophy.data.repository.RoomExerciseRepository
-import com.forge.hypertrophy.data.repository.RoomProgramRepository
-import com.forge.hypertrophy.data.repository.RoomRoutineRepository
-import com.forge.hypertrophy.data.repository.RoomSessionRepository
-import com.forge.hypertrophy.data.repository.RoomSkillRepository
+import com.forge.hypertrophy.data.entity.SlotBaselineEntity
+import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
+import com.forge.hypertrophy.data.repository.BaselineRepository
+import com.forge.hypertrophy.data.repository.ExerciseRepository
+import com.forge.hypertrophy.data.repository.ProgramRepository
+import com.forge.hypertrophy.data.repository.RoutineRepository
+import com.forge.hypertrophy.data.repository.SessionRepository
+import com.forge.hypertrophy.data.repository.SkillRepository
 import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.engine.ReadinessAdvice
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.EntryMethod
+import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
-import com.forge.hypertrophy.domain.engine.ReadinessAdvice
+import com.forge.hypertrophy.domain.model.ScheduleMode
+import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
+import com.forge.hypertrophy.domain.model.SetSide
+import com.forge.hypertrophy.domain.model.SetType
 import com.forge.hypertrophy.domain.model.SlotCategory
+import com.forge.hypertrophy.domain.usecase.CompleteWorkoutUseCase
+import com.forge.hypertrophy.domain.usecase.LoadWorkoutUseCase
+import com.forge.hypertrophy.domain.usecase.LogSetUseCase
+import com.forge.hypertrophy.domain.usecase.StartWorkoutUseCase
+import com.forge.hypertrophy.domain.usecase.ToggleShortOnTimeUseCase
 import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
 import com.forge.hypertrophy.domain.workout.TimerCommand
 import com.forge.hypertrophy.domain.workout.TimerSnapshot
@@ -24,29 +50,52 @@ import com.forge.hypertrophy.domain.workout.TimerSpec
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
 import com.forge.hypertrophy.domain.workout.WorkoutTimer
 import com.forge.hypertrophy.domain.workout.projectTimer
-import com.forge.hypertrophy.ui.screens.routine.ViewModelDaoTest
 import com.forge.hypertrophy.ui.screens.routine.awaitUntil
-import com.forge.hypertrophy.data.diagnostics.Breadcrumbs
-import com.forge.hypertrophy.data.repository.RoomBaselineRepository
 import com.forge.hypertrophy.widget.TodayWidgetRefresher
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
-class WorkoutViewModelTest : ViewModelDaoTest() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class WorkoutViewModelTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-04-01T00:00:00Z"), ZoneOffset.UTC)
+    private val sessionRepo = FakeSessionRepository()
+    private val exerciseRepo = FakeExerciseRepository()
+    private val routineRepo = FakeRoutineRepository()
+    private val programRepo = FakeProgramRepository()
+    private val baselineRepo = FakeBaselineRepository()
+    private val skillRepo = FakeSkillRepository()
+    private val widget = CountingRefresher()
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
 
     @Test
     fun everySetIsWrittenImmediatelyAndReadinessFeedsTheAdvisor() = runBlocking {
@@ -57,17 +106,17 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
         viewModel.onEvent(WorkoutEvent.Start(dayId))
         awaitUntil { viewModel.uiState.value.sessionId != null }
         val sessionId = viewModel.uiState.value.sessionId!!
-        assertEquals(SessionStatus.PLANNED, db.sessionDao().get(sessionId)!!.status)
+        assertEquals(SessionStatus.PLANNED, sessionRepo.get(sessionId)!!.status)
 
         viewModel.onEvent(WorkoutEvent.SubmitReadiness(1, 1, 1))
         awaitUntil { viewModel.uiState.value.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS }
-        viewModel.onEvent(WorkoutEvent.CheckOff(db.routineDao().checklistForDays(listOf(dayId)).single().id))
+        viewModel.onEvent(WorkoutEvent.CheckOff(routineRepo.checklistItems.values.first().id))
         awaitUntil { viewModel.uiState.value.position is WorkoutPosition.WorkingSet }
 
         viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN))
-        val slotId = db.sessionDao().allSlots().single().id
-        awaitUntil { sets(slotId).size == 1 && viewModel.uiState.value.position is WorkoutPosition.Resting }
-        assertEquals(5, sets(slotId).single().reps)
+        val slotId = sessionRepo.slots.values.first().id
+        awaitUntil { sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size == 1 && viewModel.uiState.value.position is WorkoutPosition.Resting }
+        assertEquals(5, sessionRepo.sets.values.single { it.sessionSlotId == slotId }.reps)
         assertTrue(viewModel.uiState.value.position is WorkoutPosition.Resting)
 
         viewModel.onEvent(WorkoutEvent.CompleteWorkout)
@@ -75,7 +124,7 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
         viewModel.onEvent(WorkoutEvent.Tick(elapsed.now))
         awaitUntil { viewModel.uiState.value.summary != null }
         assertTrue(viewModel.uiState.value.position is WorkoutPosition.Summary)
-        assertEquals(SessionStatus.COMPLETED, db.sessionDao().get(sessionId)!!.status)
+        assertEquals(SessionStatus.COMPLETED, sessionRepo.get(sessionId)!!.status)
         assertEquals(1, widget.count)
     }
 
@@ -90,7 +139,7 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
         awaitUntil { first.uiState.value.sessionId != null }
         first.onEvent(WorkoutEvent.SkipReadiness)
         awaitUntil { first.uiState.value.position is WorkoutPosition.Prep }
-        val itemId = db.routineDao().checklistForDays(listOf(dayId)).single().id
+        val itemId = routineRepo.checklistItems.values.first().id
         first.onEvent(WorkoutEvent.CheckOff(itemId))
         awaitUntil { first.uiState.value.position is WorkoutPosition.WorkingSet }
         first.onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN))
@@ -102,7 +151,7 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
         elapsed.now = end - 10_000
         val live = viewModel(preferences, FakeWorkoutTimer(), elapsed, sessionId)
         awaitUntil { live.uiState.value.position is WorkoutPosition.Resting }
-        assertEquals(end, live.let { preferences.end.value })
+        assertEquals(end, preferences.end.value)
 
         elapsed.now = firstTimer.spec!!.overtimeEndElapsedRealtime!! + 1
         val done = viewModel(preferences, FakeWorkoutTimer(), elapsed, sessionId)
@@ -118,87 +167,84 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
         awaitUntil { viewModel.uiState.value.sessionId != null }
         viewModel.onEvent(WorkoutEvent.SkipReadiness)
         awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Prep }
-        val itemId = db.routineDao().checklistForDays(listOf(dayId)).single().id
+        val itemId = routineRepo.checklistItems.values.first().id
         viewModel.onEvent(WorkoutEvent.CheckOff(itemId))
         awaitUntil { viewModel.uiState.value.position is WorkoutPosition.WorkingSet }
 
         viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
         awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Resting }
-        val slotId = db.sessionDao().allSlots().single().id
+        val slotId = sessionRepo.slots.values.first().id
         viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
         awaitUntil { viewModel.uiState.value.undoUntilElapsedRealtime != null }
-        assertEquals(1, sets(slotId).size)
+        assertEquals(1, sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size)
         assertTrue(viewModel.uiState.value.position is WorkoutPosition.Resting)
 
         viewModel.onEvent(WorkoutEvent.Undo)
-        awaitUntil { sets(slotId).isEmpty() }
+        awaitUntil { sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.isEmpty() }
         assertTrue(viewModel.uiState.value.position is WorkoutPosition.WorkingSet)
 
         elapsed.now += 5_001
         viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
-        awaitUntil { sets(slotId).size == 1 }
+        awaitUntil { sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size == 1 }
         elapsed.now += 5_001
         viewModel.onEvent(WorkoutEvent.Undo)
         awaitUntil { viewModel.uiState.value.undoUntilElapsedRealtime == null }
-        assertEquals(1, sets(slotId).size)
+        assertEquals(1, sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size)
     }
 
     @Test
     fun shortOnTimeSkipsTheOptionalSlotAndReorderDoesNotTouchTheRoutine() = runBlocking {
         val dayId = seedDay(optional = true)
-        val routineOrders = db.routineDao().slots(dayId).map { it.id to it.sortOrder }
+        val routineOrders = routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder }
         val viewModel = viewModel(FakePreferences(), FakeWorkoutTimer(), FakeElapsed())
         viewModel.onEvent(WorkoutEvent.Start(dayId))
         awaitUntil { viewModel.uiState.value.sessionId != null }
         viewModel.onEvent(WorkoutEvent.ToggleShortOnTime)
         awaitUntil {
-            db.sessionDao().allSlots().any { it.skipped && it.skipReason == SHORT_ON_TIME_REASON }
+            sessionRepo.slots.values.any { it.skipped && it.skipReason == "short on time" }
         }
-        assertEquals(routineOrders, db.routineDao().slots(dayId).map { it.id to it.sortOrder })
+        assertEquals(routineOrders, routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder })
 
-        val before = db.sessionDao().allSlots().sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id }
+        val before = sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id }
         viewModel.onEvent(WorkoutEvent.MoveSlot(0, 1))
         awaitUntil {
-            db.sessionDao().allSlots().sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id } ==
+            sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id } ==
                 listOf(before[1], before[0])
         }
-        val after = db.sessionDao().allSlots().sortedBy { it.prescriptionSnapshot.sortOrder }
+        val after = sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }
         assertEquals(listOf(0, 1), after.map { it.prescriptionSnapshot.sortOrder })
-        assertEquals(routineOrders, db.routineDao().slots(dayId).map { it.id to it.sortOrder })
+        assertEquals(routineOrders, routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder })
     }
 
     @Test
     fun choosingAnAlternativeDoesNotRewriteTheSnapshotExercise() = runBlocking {
         val dayId = seedDay(optional = false)
-        val other = DaoFixture(db).exercise("other")
-        val routineSlot = db.routineDao().slots(dayId).single()
-        db.routineDao().insertAlternative(SlotAlternativeEntity(slotId = routineSlot.id, exerciseId = other))
+        val other = exerciseRepo.insert(ExerciseEntity(name = "other", equipment = Equipment.BARBELL, barWeightKg = 20.0, loadIncrementKg = 2.5, isUnilateral = false, skillId = null, primaryMuscleGroups = emptyList(), secondaryMuscleGroups = emptyList(), setupNotes = "", archivedAt = null))
+        val routineSlot = routineRepo.slots.values.first { it.dayId == dayId }
+        routineRepo.insertAlternative(SlotAlternativeEntity(slotId = routineSlot.id, exerciseId = other))
         val viewModel = viewModel(FakePreferences(), FakeWorkoutTimer(), FakeElapsed())
         viewModel.onEvent(WorkoutEvent.Start(dayId))
         awaitUntil { viewModel.uiState.value.sessionId != null }
         viewModel.onEvent(WorkoutEvent.SkipReadiness)
         awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Prep }
-        val itemId = db.routineDao().checklistForDays(listOf(dayId)).single().id
+        val itemId = routineRepo.checklistItems.values.first().id
         viewModel.onEvent(WorkoutEvent.CheckOff(itemId))
         awaitUntil { viewModel.uiState.value.position is WorkoutPosition.WorkingSet }
 
         viewModel.onEvent(WorkoutEvent.ChooseAlternative(other))
-        awaitUntil { db.sessionDao().allSlots().single().chosenAlternativeExerciseId == other }
-        val stored = db.sessionDao().allSlots().single()
+        awaitUntil { sessionRepo.slots.values.first().chosenAlternativeExerciseId == other }
+        val stored = sessionRepo.slots.values.first()
         assertEquals(routineSlot.exerciseId, stored.prescriptionSnapshot.exerciseId)
         assertNotEquals(other, stored.prescriptionSnapshot.exerciseId)
         assertEquals("other", (viewModel.uiState.value.position as WorkoutPosition.WorkingSet).slot.exerciseName)
     }
 
-    private suspend fun sets(slotId: Long) = RoomSessionRepository(db.sessionDao()).sets(slotId)
-
     private suspend fun seedDay(optional: Boolean, sets: Int = 1): Long {
-        val fixture = DaoFixture(db)
-        val programId = fixture.program()
-        val dayId = fixture.day(programId)
-        val exerciseId = fixture.exercise("press")
-        db.routineDao().insertChecklist(
-            com.forge.hypertrophy.data.entity.ChecklistItemEntity(
+        val programId = programRepo.insert(ProgramEntity(name = "program", isActive = true, scheduleMode = ScheduleMode.ROLLING, rollingSequence = 0, deloadActive = false, deloadStartedOn = null))
+        val dayId = routineRepo.insertDay(RoutineDayEntity(programId = programId, label = "day", sequenceIndex = 0, dayOfWeek = null, isRest = false))
+        val exerciseId = exerciseRepo.insert(ExerciseEntity(name = "press", equipment = Equipment.BARBELL, barWeightKg = 20.0, loadIncrementKg = 2.5, isUnilateral = false, skillId = null, primaryMuscleGroups = emptyList(), secondaryMuscleGroups = emptyList(), setupNotes = "", archivedAt = null))
+        routineRepo.insertChecklist(
+            ChecklistItemEntity(
                 dayId = dayId,
                 phase = ChecklistPhase.PREP,
                 text = "row",
@@ -212,7 +258,7 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
     }
 
     private suspend fun insertRoutineSlot(dayId: Long, exerciseId: Long, sort: Int, sets: Int, optional: Boolean) {
-        db.routineDao().insertSlot(
+        routineRepo.insertSlot(
             RoutineSlotEntity(
                 dayId = dayId,
                 exerciseId = exerciseId,
@@ -240,29 +286,48 @@ class WorkoutViewModelTest : ViewModelDaoTest() {
     }
 
     private fun viewModel(
-        preferences: FakePreferences,
+        preferences: TrainingPreferencesRepository,
         timer: WorkoutTimer,
-        elapsed: FakeElapsed,
+        elapsed: ElapsedRealtimeClock,
         sessionId: Long = 0L,
-    ) = track(
-        WorkoutViewModel(
-            SavedStateHandle(mapOf("sessionId" to sessionId)),
-            RoomSessionRepository(db.sessionDao()),
-            RoomRoutineRepository(db.routineDao()),
-            RoomExerciseRepository(db.exerciseDao(), db.routineDao(), db.sessionDao(), db.mediaDao(), clock),
-            RoomProgramRepository(db.programDao()),
-            RoomSkillRepository(db.skillDao(), db.exerciseDao(), db.routineDao(), db.sessionDao(), clock),
+    ) = WorkoutViewModel(
+        SavedStateHandle(mapOf("sessionId" to sessionId)),
+        sessionRepo,
+        exerciseRepo,
+        preferences,
+        timer,
+        clock,
+        elapsed,
+        widget,
+        Breadcrumbs(),
+        LoadWorkoutUseCase(
+            sessionRepo,
+            routineRepo,
+            exerciseRepo,
             preferences,
-            timer,
-            clock,
-            elapsed,
-            widget,
-            RoomBaselineRepository(db.baselineDao()),
-            Breadcrumbs(),
+            baselineRepo
         ),
+        StartWorkoutUseCase(
+            sessionRepo,
+            routineRepo,
+            programRepo,
+            clock
+        ),
+        CompleteWorkoutUseCase(
+            sessionRepo,
+            exerciseRepo,
+            skillRepo,
+            baselineRepo,
+            clock
+        ),
+        LogSetUseCase(
+            sessionRepo,
+            clock
+        ),
+        ToggleShortOnTimeUseCase(
+            sessionRepo
+        )
     )
-
-    private val widget = CountingRefresher()
 }
 
 private class CountingRefresher : TodayWidgetRefresher {
@@ -309,11 +374,13 @@ private class FakePreferences : TrainingPreferencesRepository {
     private val plates = MutableStateFlow<List<Double>>(listOf(20.0, 10.0))
     private val rest = MutableStateFlow(120)
     private val reconciled = MutableStateFlow<LocalDate?>(null)
+    private val defaultRest = MutableStateFlow(90)
 
     override val lastReconciledDate = reconciled
     override val plateInventoryKg = plates
     override val transitionRestSeconds: StateFlow<Int> = rest
     override val activeTimerEndElapsedRealtime: Flow<Long?> = end
+    override val defaultRestSeconds: Flow<Int> = defaultRest
 
     override suspend fun setLastReconciledDate(date: LocalDate?) {
         reconciled.value = date
@@ -331,10 +398,257 @@ private class FakePreferences : TrainingPreferencesRepository {
         end.value = elapsedRealtime
     }
 
-    private val defaultRest = MutableStateFlow(90)
-    override val defaultRestSeconds: Flow<Int> = defaultRest
-
     override suspend fun setDefaultRestSeconds(seconds: Int) {
         defaultRest.value = seconds
     }
+}
+
+private class FakeSessionRepository : SessionRepository {
+    val sessions = mutableMapOf<Long, WorkoutSessionEntity>()
+    val slots = mutableMapOf<Long, SessionSlotEntity>()
+    val sets = mutableMapOf<Long, SetEntryEntity>()
+
+    private val sessionsFlow = MutableStateFlow(emptyList<WorkoutSessionEntity>())
+    private val slotsFlow = MutableStateFlow(emptyList<SessionSlotEntity>())
+    private val setsFlow = MutableStateFlow(emptyList<SetEntryEntity>())
+
+    override fun observe(id: Long): Flow<WorkoutSessionEntity?> = sessionsFlow.map { it.find { s -> s.id == id } }
+    override fun observeInProgress(): Flow<List<WorkoutSessionEntity>> = sessionsFlow.map { it.filter { s -> s.status == SessionStatus.IN_PROGRESS } }
+    override suspend fun get(id: Long): WorkoutSessionEntity? = sessions[id]
+    override suspend fun insert(session: WorkoutSessionEntity): Long {
+        val id = (sessions.keys.maxOrNull() ?: 0L) + 1
+        val saved = session.copy(id = id)
+        sessions[id] = saved
+        sessionsFlow.value = sessions.values.toList()
+        return id
+    }
+    override suspend fun update(session: WorkoutSessionEntity) {
+        sessions[session.id] = session
+        sessionsFlow.value = sessions.values.toList()
+    }
+    override suspend fun delete(id: Long) {
+        sessions.remove(id)
+        sessionsFlow.value = sessions.values.toList()
+    }
+    override fun observeSlots(sessionId: Long): Flow<List<SessionSlotEntity>> = slotsFlow.map { it.filter { s -> s.sessionId == sessionId } }
+    override suspend fun insertSlot(slot: SessionSlotEntity): Long {
+        val id = (slots.keys.maxOrNull() ?: 0L) + 1
+        val saved = slot.copy(id = id)
+        slots[id] = saved
+        slotsFlow.value = slots.values.toList()
+        return id
+    }
+    override suspend fun updateSlot(slot: SessionSlotEntity) {
+        slots[slot.id] = slot
+        slotsFlow.value = slots.values.toList()
+    }
+    override fun observeSets(sessionSlotId: Long): Flow<List<SetEntryEntity>> = setsFlow.map { it.filter { s -> s.sessionSlotId == sessionSlotId } }
+    override suspend fun insertSet(entry: SetEntryEntity): Long {
+        val id = (sets.keys.maxOrNull() ?: 0L) + 1
+        val saved = entry.copy(id = id)
+        sets[id] = saved
+        setsFlow.value = sets.values.toList()
+        return id
+    }
+    override suspend fun updateSet(entry: SetEntryEntity) {
+        sets[entry.id] = entry
+        setsFlow.value = sets.values.toList()
+    }
+    override suspend fun deleteSet(id: Long) {
+        sets.remove(id)
+        setsFlow.value = sets.values.toList()
+    }
+    override suspend fun allSlots(): List<SessionSlotEntity> = slots.values.toList()
+    override suspend fun sets(sessionSlotId: Long): List<SetEntryEntity> = sets.values.filter { it.sessionSlotId == sessionSlotId }
+    override suspend fun completedDays(): List<CompletedSessionDay> = sessions.values.filter { it.status == SessionStatus.COMPLETED }.map { CompletedSessionDay(it.date, it.kind) }
+    override suspend fun completedSets(): List<CompletedSetRow> = sets.values.mapNotNull { set ->
+        val slot = slots[set.sessionSlotId] ?: return@mapNotNull null
+        val session = sessions[slot.sessionId] ?: return@mapNotNull null
+        CompletedSetRow(
+            sessionDate = session.date,
+            isDeload = session.isDeload,
+            sessionId = session.id,
+            completedAt = session.completedAt,
+            slotId = slot.slotId,
+            prescriptionSnapshot = slot.prescriptionSnapshot,
+            chosenAlternativeExerciseId = slot.chosenAlternativeExerciseId,
+            setType = set.setType,
+            weightKg = set.weightKg,
+            reps = set.reps,
+            holdSec = set.holdSec
+        )
+    }
+    override suspend fun getSet(id: Long): SetEntryEntity? = sets[id]
+    override suspend fun getSlot(id: Long): SessionSlotEntity? = slots[id]
+    override suspend fun recentSetsForExercise(exerciseId: Long, limit: Int): List<SetEntryEntity> {
+        return sets.values.filter { set ->
+            val slot = slots[set.sessionSlotId]
+            slot?.prescriptionSnapshot?.exerciseId == exerciseId || slot?.chosenAlternativeExerciseId == exerciseId
+        }.sortedByDescending { it.loggedAt }.take(limit)
+    }
+    override suspend fun earliestCompletedDate(): LocalDate? = sessions.values.filter { it.status == SessionStatus.COMPLETED }.minOfOrNull { it.date }
+    override suspend fun history(): List<WorkoutSessionEntity> = sessions.values.toList()
+}
+
+private class FakeExerciseRepository : ExerciseRepository {
+    val exercises = mutableMapOf<Long, ExerciseEntity>()
+    private val flow = MutableStateFlow(emptyList<ExerciseEntity>())
+
+    override fun observeActive(): Flow<List<ExerciseEntity>> = flow.map { it.filter { e -> e.archivedAt == null } }
+    override suspend fun get(id: Long): ExerciseEntity? = exercises[id]
+    override suspend fun all(): List<ExerciseEntity> = exercises.values.toList()
+    override suspend fun insert(exercise: ExerciseEntity): Long {
+        val id = (exercises.keys.maxOrNull() ?: 0L) + 1
+        exercises[id] = exercise.copy(id = id)
+        flow.value = exercises.values.toList()
+        return id
+    }
+    override suspend fun update(exercise: ExerciseEntity) {
+        exercises[exercise.id] = exercise
+        flow.value = exercises.values.toList()
+    }
+    override suspend fun archive(id: Long) {
+        val e = exercises[id] ?: return
+        exercises[id] = e.copy(archivedAt = Instant.now())
+        flow.value = exercises.values.toList()
+    }
+    override suspend fun delete(id: Long) {
+        exercises.remove(id)
+        flow.value = exercises.values.toList()
+    }
+    override suspend fun referencedIds(): Set<Long> = emptySet()
+}
+
+private class FakeRoutineRepository : RoutineRepository {
+    val days = mutableMapOf<Long, RoutineDayEntity>()
+    val slots = mutableMapOf<Long, RoutineSlotEntity>()
+    val checklistItems = mutableMapOf<Long, ChecklistItemEntity>()
+    val alternatives = mutableMapOf<Long, SlotAlternativeEntity>()
+
+    private val daysFlow = MutableStateFlow(emptyList<RoutineDayEntity>())
+    private val slotsFlow = MutableStateFlow(emptyList<RoutineSlotEntity>())
+    private val checklistFlow = MutableStateFlow(emptyList<ChecklistItemEntity>())
+
+    override fun observeDays(programId: Long): Flow<List<RoutineDayEntity>> = daysFlow.map { it.filter { d -> d.programId == programId } }
+    override suspend fun getDay(id: Long): RoutineDayEntity? = days[id]
+    override suspend fun insertDay(day: RoutineDayEntity): Long {
+        val id = (days.keys.maxOrNull() ?: 0L) + 1
+        days[id] = day.copy(id = id)
+        daysFlow.value = days.values.toList()
+        return id
+    }
+    override suspend fun updateDay(day: RoutineDayEntity) {
+        days[day.id] = day
+        daysFlow.value = days.values.toList()
+    }
+    override suspend fun deleteDay(id: Long) {
+        days.remove(id)
+        daysFlow.value = days.values.toList()
+    }
+    override suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>) {}
+    override suspend fun days(programId: Long): List<RoutineDayEntity> = days.values.filter { it.programId == programId }
+    override suspend fun slotsForDays(dayIds: List<Long>): List<RoutineSlotEntity> = slots.values.filter { it.dayId in dayIds }
+    override fun observeChecklist(dayId: Long): Flow<List<ChecklistItemEntity>> = checklistFlow.map { it.filter { c -> c.dayId == dayId } }
+    override suspend fun insertChecklist(item: ChecklistItemEntity): Long {
+        val id = (checklistItems.keys.maxOrNull() ?: 0L) + 1
+        checklistItems[id] = item.copy(id = id)
+        checklistFlow.value = checklistItems.values.toList()
+        return id
+    }
+    override suspend fun updateChecklist(item: ChecklistItemEntity) {
+        checklistItems[item.id] = item
+        checklistFlow.value = checklistItems.values.toList()
+    }
+    override suspend fun deleteChecklist(id: Long) {
+        checklistItems.remove(id)
+        checklistFlow.value = checklistItems.values.toList()
+    }
+    override fun observeSlots(dayId: Long): Flow<List<RoutineSlotEntity>> = slotsFlow.map { it.filter { s -> s.dayId == dayId } }
+    override suspend fun getSlot(id: Long): RoutineSlotEntity? = slots[id]
+    override suspend fun insertSlot(slot: RoutineSlotEntity): Long {
+        val id = (slots.keys.maxOrNull() ?: 0L) + 1
+        slots[id] = slot.copy(id = id)
+        slotsFlow.value = slots.values.toList()
+        return id
+    }
+    override suspend fun updateSlot(slot: RoutineSlotEntity) {
+        slots[slot.id] = slot
+        slotsFlow.value = slots.values.toList()
+    }
+    override suspend fun deleteSlot(id: Long) {
+        slots.remove(id)
+        slotsFlow.value = slots.values.toList()
+    }
+    override suspend fun reorderSlots(dayId: Long, orderedSlotIds: List<Long>) {}
+    override fun observeAlternatives(slotId: Long): Flow<List<SlotAlternativeEntity>> = MutableStateFlow(alternatives.values.filter { it.slotId == slotId })
+    override suspend fun insertAlternative(alternative: SlotAlternativeEntity): Long {
+        val id = (alternatives.keys.maxOrNull() ?: 0L) + 1
+        alternatives[id] = alternative.copy(id = id)
+        return id
+    }
+    override suspend fun deleteAlternative(id: Long) {
+        alternatives.remove(id)
+    }
+    override fun observeCardioPlan(dayId: Long): Flow<CardioPlanEntity?> = MutableStateFlow(null)
+    override suspend fun upsertCardioPlan(plan: CardioPlanEntity): Long = 0L
+}
+
+private class FakeProgramRepository : ProgramRepository {
+    val programs = mutableMapOf<Long, ProgramEntity>()
+    private val flow = MutableStateFlow(emptyList<ProgramEntity>())
+
+    override fun observe(): Flow<ProgramEntity?> = flow.map { it.find { p -> p.isActive } }
+    override fun observeAll(): Flow<List<ProgramEntity>> = flow
+    override fun observeActive(): Flow<ProgramEntity?> = flow.map { it.find { p -> p.isActive } }
+    override suspend fun get(): ProgramEntity? = programs.values.find { it.isActive }
+    override suspend fun getById(id: Long): ProgramEntity? = programs[id]
+    override suspend fun insert(program: ProgramEntity): Long {
+        val id = (programs.keys.maxOrNull() ?: 0L) + 1
+        programs[id] = program.copy(id = id)
+        flow.value = programs.values.toList()
+        return id
+    }
+    override suspend fun update(program: ProgramEntity) {
+        programs[program.id] = program
+        flow.value = programs.values.toList()
+    }
+    override suspend fun setActive(id: Long) {
+        programs.forEach { (k, v) -> programs[k] = v.copy(isActive = k == id) }
+        flow.value = programs.values.toList()
+    }
+    override suspend fun delete(id: Long) {
+        programs.remove(id)
+        flow.value = programs.values.toList()
+    }
+}
+
+private class FakeBaselineRepository : BaselineRepository {
+    val baselines = mutableMapOf<Long, SlotBaselineEntity>()
+    override suspend fun forSlot(slotId: Long): SlotBaselineEntity? = baselines.values.find { it.slotId == slotId }
+    override suspend fun forSlots(slotIds: List<Long>): List<SlotBaselineEntity> = baselines.values.filter { it.slotId in slotIds }
+    override suspend fun all(): List<SlotBaselineEntity> = baselines.values.toList()
+    override suspend fun save(entity: SlotBaselineEntity) {
+        baselines[entity.id] = entity
+    }
+}
+
+private class FakeSkillRepository : SkillRepository {
+    override fun observeActive(): Flow<List<SkillEntity>> = MutableStateFlow(emptyList())
+    override suspend fun get(id: Long): SkillEntity? = null
+    override suspend fun insert(skill: SkillEntity): Long = 0L
+    override suspend fun update(skill: SkillEntity) {}
+    override suspend fun archive(id: Long) {}
+    override suspend fun delete(id: Long) {}
+    override fun observeSteps(skillId: Long): Flow<List<SkillStepEntity>> = MutableStateFlow(emptyList())
+    override suspend fun getSteps(skillId: Long): List<SkillStepEntity> = emptyList()
+    override suspend fun insertStep(step: SkillStepEntity): Long = 0L
+    override suspend fun updateStep(step: SkillStepEntity) {}
+    override suspend fun deleteStep(id: Long) {}
+    override suspend fun getProgress(skillId: Long): SkillProgressEntity? = null
+    override suspend fun allSteps(): List<SkillStepEntity> = emptyList()
+    override suspend fun allProgress(): List<SkillProgressEntity> = emptyList()
+    override suspend fun upsertProgress(progress: SkillProgressEntity): Long = 0L
+    override suspend fun recordStageEvent(event: SkillStageEventEntity): Long = 0L
+    override suspend fun stageEventsBetween(from: LocalDate, to: LocalDate): List<SkillStageEventEntity> = emptyList()
+    override suspend fun referencedIds(): Set<Long> = emptySet()
 }

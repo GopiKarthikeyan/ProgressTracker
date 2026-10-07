@@ -3,6 +3,7 @@ package com.forge.hypertrophy.data.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.withTransaction
 import com.forge.hypertrophy.data.dao.BaselineDao
 import com.forge.hypertrophy.data.dao.BiometricsDao
 import com.forge.hypertrophy.data.dao.CardioDao
@@ -62,6 +63,13 @@ import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 )
 @TypeConverters(TrainingConverters::class)
 abstract class AppDatabase : RoomDatabase() {
+    /**
+     * A wrapper around [withTransaction] that can be overridden in tests to
+     * avoid Room's transaction dispatcher requirements.
+     */
+    open suspend fun <R> runTransaction(block: suspend () -> R): R =
+        withTransaction(block)
+
     abstract fun programDao(): ProgramDao
 
     abstract fun exerciseDao(): ExerciseDao

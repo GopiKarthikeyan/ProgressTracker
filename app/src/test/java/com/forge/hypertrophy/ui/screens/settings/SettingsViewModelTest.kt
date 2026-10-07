@@ -1,29 +1,61 @@
 package com.forge.hypertrophy.ui.screens.settings
 
+import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.backup.BackupClient
 import com.forge.hypertrophy.data.backup.BackupManifest
 import com.forge.hypertrophy.data.backup.BackupProgress
-import com.forge.hypertrophy.data.dao.DaoFixture
+import com.forge.hypertrophy.data.entity.CardioPlanEntity
+import com.forge.hypertrophy.data.entity.ChecklistItemEntity
+import com.forge.hypertrophy.data.entity.ProgramEntity
 import com.forge.hypertrophy.data.entity.RoutineDayEntity
+import com.forge.hypertrophy.data.entity.RoutineSlotEntity
+import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.data.repository.MediaPreferencesRepository
-import com.forge.hypertrophy.data.repository.RoomProgramRepository
-import com.forge.hypertrophy.data.repository.RoomRoutineRepository
+import com.forge.hypertrophy.data.repository.ProgramRepository
+import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.transfer.ProgramJson
 import com.forge.hypertrophy.data.transfer.SampleProgramProvider
 import com.forge.hypertrophy.domain.model.ScheduleMode
-import com.forge.hypertrophy.ui.screens.routine.ViewModelDaoTest
 import com.forge.hypertrophy.ui.screens.routine.awaitUntil
+import java.time.Instant
 import java.time.LocalDate
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
-class SettingsViewModelTest : ViewModelDaoTest() {
+@OptIn(ExperimentalCoroutinesApi::class)
+class SettingsViewModelTest {
+    private val programRepo = FakeProgramRepository()
+    private val routineRepo = FakeRoutineRepository()
+    private val activeViewModels = mutableListOf<SettingsViewModel>()
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+    }
+
+    @After
+    fun tearDown() {
+        activeViewModels.forEach { it.viewModelScope.cancel() }
+        activeViewModels.clear()
+        Dispatchers.resetMain()
+    }
+
     @Test
     fun duplicateWeekdayMappingIsRejectedAndNamesTheDays() = runBlocking {
         val programId = fixedProgram()
@@ -39,8 +71,8 @@ class SettingsViewModelTest : ViewModelDaoTest() {
             listOf(WeekdayConflict(weekday = 1, dayLabels = listOf("push", "pull"))),
             viewModel.uiState.value.weekdayConflicts,
         )
-        assertEquals(1, db.routineDao().getDay(first)!!.dayOfWeek)
-        assertEquals(2, db.routineDao().getDay(second)!!.dayOfWeek)
+        assertEquals(1, routineRepo.getDay(first)!!.dayOfWeek)
+        assertEquals(2, routineRepo.getDay(second)!!.dayOfWeek)
     }
 
     @Test
@@ -54,7 +86,7 @@ class SettingsViewModelTest : ViewModelDaoTest() {
         viewModel.onEvent(SettingsEvent.Weekday(second, 4))
         viewModel.onEvent(SettingsEvent.SaveWeekdays)
 
-        awaitUntil { db.routineDao().getDay(second)!!.dayOfWeek == 4 }
+        awaitUntil { routineRepo.getDay(second)!!.dayOfWeek == 4 }
         assertTrue(viewModel.uiState.value.weekdayConflicts.isEmpty())
         awaitUntil { !viewModel.uiState.value.weekdaysDirty }
     }
@@ -83,22 +115,21 @@ class SettingsViewModelTest : ViewModelDaoTest() {
 
     @Test
     fun rollingReorderLeavesNoGapsOrDuplicates() = runBlocking {
-        val fixture = DaoFixture(db)
-        val programId = fixture.program("rolling")
-        db.programDao().setActive(programId)
-        fixture.day(programId, sequenceIndex = 5, label = "c")
-        fixture.day(programId, sequenceIndex = 9, label = "b")
-        fixture.day(programId, sequenceIndex = 1, label = "a")
+        val programId = rollingProgram()
+        programRepo.setActive(programId)
+        routineRepo.insertDay(RoutineDayEntity(programId = programId, dayOfWeek = null, sequenceIndex = 5, label = "c", isRest = false))
+        routineRepo.insertDay(RoutineDayEntity(programId = programId, dayOfWeek = null, sequenceIndex = 9, label = "b", isRest = false))
+        routineRepo.insertDay(RoutineDayEntity(programId = programId, dayOfWeek = null, sequenceIndex = 1, label = "a", isRest = false))
         val viewModel = settings(FakePreferences(), sample(false))
         awaitUntil { viewModel.uiState.value.days.size == 3 }
 
         viewModel.onEvent(SettingsEvent.MoveDay(from = 0, to = 2))
 
         awaitUntil {
-            val days = db.routineDao().days(programId)
+            val days = routineRepo.days(programId)
             days.map { it.label } == listOf("c", "b", "a") && days.map { it.sequenceIndex } == listOf(0, 1, 2)
         }
-        val days = db.routineDao().days(programId)
+        val days = routineRepo.days(programId)
         assertEquals(listOf(0, 1, 2), days.map { it.sequenceIndex })
         assertEquals(days.size, days.map { it.sequenceIndex }.distinct().size)
     }
@@ -124,16 +155,35 @@ class SettingsViewModelTest : ViewModelDaoTest() {
         assertTrue(shown.uiState.value.developerVisible)
     }
 
+    private suspend fun rollingProgram(): Long {
+        val id = programRepo.insert(
+            ProgramEntity(
+                name = "rolling",
+                scheduleMode = ScheduleMode.ROLLING,
+                rollingSequence = 0,
+                deloadActive = false,
+                deloadStartedOn = null,
+            ),
+        )
+        return id
+    }
+
     private suspend fun fixedProgram(): Long {
-        val id = DaoFixture(db).program("fixed")
-        val program = db.programDao().getById(id)!!
-        db.programDao().update(program.copy(scheduleMode = ScheduleMode.FIXED))
-        db.programDao().setActive(id)
+        val id = programRepo.insert(
+            ProgramEntity(
+                name = "fixed",
+                scheduleMode = ScheduleMode.FIXED,
+                rollingSequence = 0,
+                deloadActive = false,
+                deloadStartedOn = null,
+            ),
+        )
+        programRepo.setActive(id)
         return id
     }
 
     private suspend fun insertDay(programId: Long, label: String, weekday: Int?, sequence: Int): Long =
-        db.routineDao().insertDay(
+        routineRepo.insertDay(
             RoutineDayEntity(
                 programId = programId,
                 label = label,
@@ -143,16 +193,18 @@ class SettingsViewModelTest : ViewModelDaoTest() {
             ),
         )
 
-    private fun settings(preferences: TrainingPreferencesRepository, sample: SampleProgramProvider) = track(
-        SettingsViewModel(
-            programs = RoomProgramRepository(db.programDao()),
-            routines = RoomRoutineRepository(db.routineDao()),
+    private fun settings(preferences: TrainingPreferencesRepository, sample: SampleProgramProvider): SettingsViewModel {
+        val vm = SettingsViewModel(
+            programs = programRepo,
+            routines = routineRepo,
             preferences = preferences,
             sampleProgram = sample,
             backup = FakeBackup(),
             mediaPreferences = FakeMediaPreferences(),
-        ),
-    )
+        )
+        activeViewModels.add(vm)
+        return vm
+    }
 
     private fun sample(available: Boolean) = object : SampleProgramProvider {
         override val available: Boolean = available
@@ -225,5 +277,83 @@ class SettingsViewModelTest : ViewModelDaoTest() {
         override suspend fun setAutoBackupEnabled(enabled: Boolean) = Unit
 
         override suspend fun setAutoBackupFolder(uri: String) = Unit
+    }
+
+    private class FakeProgramRepository : ProgramRepository {
+        val programs = mutableMapOf<Long, ProgramEntity>()
+        private val flow = MutableStateFlow(emptyList<ProgramEntity>())
+
+        override fun observe(): Flow<ProgramEntity?> = flow.map { it.find { p -> p.isActive } }
+        override fun observeAll(): Flow<List<ProgramEntity>> = flow
+        override fun observeActive(): Flow<ProgramEntity?> = flow.map { it.find { p -> p.isActive } }
+        override suspend fun get(): ProgramEntity? = programs.values.find { it.isActive }
+        override suspend fun getById(id: Long): ProgramEntity? = programs[id]
+        override suspend fun insert(program: ProgramEntity): Long {
+            val id = (programs.keys.maxOrNull() ?: 0L) + 1
+            programs[id] = program.copy(id = id)
+            flow.value = programs.values.toList()
+            return id
+        }
+        override suspend fun update(program: ProgramEntity) {
+            programs[program.id] = program
+            flow.value = programs.values.toList()
+        }
+        override suspend fun setActive(id: Long) {
+            programs.forEach { (k, v) -> programs[k] = v.copy(isActive = k == id) }
+            flow.value = programs.values.toList()
+        }
+        override suspend fun delete(id: Long) {
+            programs.remove(id)
+            flow.value = programs.values.toList()
+        }
+    }
+
+    private class FakeRoutineRepository : RoutineRepository {
+        val days = mutableMapOf<Long, RoutineDayEntity>()
+        private val daysFlow = MutableStateFlow(emptyList<RoutineDayEntity>())
+
+        override fun observeDays(programId: Long): Flow<List<RoutineDayEntity>> =
+            daysFlow.map { it.filter { d -> d.programId == programId }.sortedBy { it.sequenceIndex } }
+
+        override suspend fun getDay(id: Long): RoutineDayEntity? = days[id]
+        override suspend fun insertDay(day: RoutineDayEntity): Long {
+            val id = (days.keys.maxOrNull() ?: 0L) + 1
+            days[id] = day.copy(id = id)
+            daysFlow.value = days.values.toList()
+            return id
+        }
+        override suspend fun updateDay(day: RoutineDayEntity) {
+            days[day.id] = day
+            daysFlow.value = days.values.toList()
+        }
+        override suspend fun deleteDay(id: Long) {
+            days.remove(id)
+            daysFlow.value = days.values.toList()
+        }
+        override suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>) {
+            orderedDayIds.forEachIndexed { index, id ->
+                days[id] = days[id]!!.copy(sequenceIndex = index)
+            }
+            daysFlow.value = days.values.toList()
+        }
+        override suspend fun days(programId: Long): List<RoutineDayEntity> =
+            days.values.filter { it.programId == programId }.sortedBy { it.sequenceIndex }
+
+        override suspend fun slotsForDays(dayIds: List<Long>): List<RoutineSlotEntity> = emptyList()
+        override fun observeChecklist(dayId: Long): Flow<List<ChecklistItemEntity>> = MutableStateFlow(emptyList())
+        override suspend fun insertChecklist(item: ChecklistItemEntity): Long = 0L
+        override suspend fun updateChecklist(item: ChecklistItemEntity) {}
+        override suspend fun deleteChecklist(id: Long) {}
+        override fun observeSlots(dayId: Long): Flow<List<RoutineSlotEntity>> = MutableStateFlow(emptyList())
+        override suspend fun getSlot(id: Long): RoutineSlotEntity? = null
+        override suspend fun insertSlot(slot: RoutineSlotEntity): Long = 0L
+        override suspend fun updateSlot(slot: RoutineSlotEntity) {}
+        override suspend fun deleteSlot(id: Long) {}
+        override suspend fun reorderSlots(dayId: Long, orderedSlotIds: List<Long>) {}
+        override fun observeAlternatives(slotId: Long): Flow<List<SlotAlternativeEntity>> = MutableStateFlow(emptyList())
+        override suspend fun insertAlternative(alternative: SlotAlternativeEntity): Long = 0L
+        override suspend fun deleteAlternative(id: Long) {}
+        override fun observeCardioPlan(dayId: Long): Flow<CardioPlanEntity?> = MutableStateFlow(null)
+        override suspend fun upsertCardioPlan(plan: CardioPlanEntity): Long = 0L
     }
 }

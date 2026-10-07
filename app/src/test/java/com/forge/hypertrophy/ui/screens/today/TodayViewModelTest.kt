@@ -1,38 +1,25 @@
-package com.forge.hypertrophy.ui.screens.dashboard
+package com.forge.hypertrophy.ui.screens.today
 
 import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.dao.CompletedSessionDay
 import com.forge.hypertrophy.data.dao.CompletedSetRow
-import com.forge.hypertrophy.data.entity.BiometricsEntity
 import com.forge.hypertrophy.data.entity.CardioPlanEntity
 import com.forge.hypertrophy.data.entity.ChecklistItemEntity
-import com.forge.hypertrophy.data.entity.ExerciseEntity
 import com.forge.hypertrophy.data.entity.ProgramEntity
 import com.forge.hypertrophy.data.entity.RoutineDayEntity
 import com.forge.hypertrophy.data.entity.RoutineSlotEntity
 import com.forge.hypertrophy.data.entity.SessionSlotEntity
 import com.forge.hypertrophy.data.entity.SetEntryEntity
-import com.forge.hypertrophy.data.entity.SkillEntity
-import com.forge.hypertrophy.data.entity.SkillProgressEntity
-import com.forge.hypertrophy.data.entity.SkillStageEventEntity
-import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
-import com.forge.hypertrophy.data.entity.SlotBaselineEntity
 import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
-import com.forge.hypertrophy.data.repository.BaselineRepository
-import com.forge.hypertrophy.data.repository.BiometricsRepository
-import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
-import com.forge.hypertrophy.data.repository.SkillRepository
 import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.model.ScheduleMode
-import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
 import com.forge.hypertrophy.ui.screens.routine.awaitUntil
-import com.forge.hypertrophy.widget.TodayWidgetRefresher
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -42,7 +29,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -50,25 +36,21 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class DashboardViewModelTest {
+class TodayViewModelTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-05T12:00:00Z"), ZoneOffset.UTC)
     private val programRepo = FakeProgramRepository()
     private val routineRepo = FakeRoutineRepository()
     private val sessionRepo = FakeSessionRepository()
-    private val exerciseRepo = FakeExerciseRepository()
-    private val skillRepo = FakeSkillRepository()
-    private val biometricsRepo = FakeBiometricsRepository()
     private val preferences = FakePreferences()
     private val cursor = MemoryCursor()
-    private val baselines = FakeBaselineRepository()
-    private val widget = CountingRefresher()
-    private val activeViewModels = mutableListOf<DashboardViewModel>()
+    private val activeViewModels = mutableListOf<TodayViewModel>()
 
     @Before
     fun setup() {
@@ -83,111 +65,16 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun freshInstallHasEmptyCards() = runBlocking {
-        val viewModel = dashboard()
-        awaitUntil { viewModel.uiState.value.heatmap.isNotEmpty() }
-        assertNull(viewModel.uiState.value.today)
-        assertEquals(0, viewModel.uiState.value.currentStreak)
-        assertTrue(viewModel.uiState.value.heatmap.none { it.kind != null })
-        assertTrue(viewModel.uiState.value.records.isEmpty())
-        assertTrue(viewModel.uiState.value.skills.isEmpty())
-        assertTrue(viewModel.uiState.value.weight.samples.isEmpty())
-        assertTrue(viewModel.uiState.value.bodyFat.samples.isEmpty())
-        assertTrue(viewModel.uiState.value.volume.isEmpty())
-        assertTrue(viewModel.uiState.value.stalls.isEmpty())
-        assertNull(viewModel.uiState.value.deload)
+    fun noProgramReturnsNullDayLabel() = runBlocking {
+        val viewModel = today()
+        awaitUntil { viewModel.uiState.value.dayLabel == null }
+        assertNull(viewModel.uiState.value.dayLabel)
+        assertFalse(viewModel.uiState.value.isInProgress)
     }
 
     @Test
-    fun skipToNextRefreshesTheTodayCard() = runBlocking {
-        val programId = rollingProgram()
-        routineRepo.insertDay(day(programId, "push", 0))
-        routineRepo.insertDay(day(programId, "pull", 1))
-        programRepo.setActive(programId)
-        val viewModel = dashboard()
-        awaitUntil { viewModel.uiState.value.today?.label == "push" }
-
-        viewModel.onEvent(DashboardEvent.SkipToNext)
-
-        awaitUntil { viewModel.uiState.value.today?.label == "pull" }
-        assertEquals(1, programRepo.getById(programId)!!.rollingSequence)
-    }
-
-    @Test
-    fun swapWithTomorrowRefreshesTheTodayCard() = runBlocking {
+    fun activeProgramReturnsCurrentDayLabel() = runBlocking {
         val programId = programRepo.insert(
-            ProgramEntity(
-                name = "fixed",
-                scheduleMode = ScheduleMode.FIXED,
-                rollingSequence = 0,
-                deloadActive = false,
-                deloadStartedOn = null,
-            ),
-        )
-        routineRepo.insertDay(day(programId, "push", 0, weekday = 1))
-        routineRepo.insertDay(day(programId, "pull", 1, weekday = 2))
-        programRepo.setActive(programId)
-        val viewModel = dashboard()
-        awaitUntil { viewModel.uiState.value.today?.label == "push" }
-
-        viewModel.onEvent(DashboardEvent.SwapWithTomorrow)
-
-        awaitUntil { viewModel.uiState.value.today?.label == "pull" }
-    }
-
-    @Test
-    fun takeRestNowRefreshesTheTodayCard() = runBlocking {
-        val programId = rollingProgram()
-        routineRepo.insertDay(day(programId, "push", 0))
-        routineRepo.insertDay(day(programId, "rest", 1, rest = true))
-        routineRepo.insertDay(day(programId, "pull", 2))
-        programRepo.setActive(programId)
-        val viewModel = dashboard()
-        awaitUntil { viewModel.uiState.value.today?.label == "push" }
-
-        viewModel.onEvent(DashboardEvent.TakeRestNow)
-
-        awaitUntil { viewModel.uiState.value.today?.label == "rest" }
-        val logged = sessionRepo.completedDays()
-        assertEquals(listOf(SessionKind.REST), logged.map { it.kind })
-    }
-
-    @Test
-    fun weighInKeepsAGapOutOfTheAverage() = runBlocking {
-        val early = LocalDate.of(2026, 9, 25)
-        biometricsRepo.upsert(BiometricsEntity(date = early, bodyWeightKg = 70.0, bodyFatPercent = null))
-        val viewModel = dashboard()
-        awaitUntil { viewModel.uiState.value.weight.samples.size == 1 }
-
-        viewModel.onEvent(DashboardEvent.WeightDraft("80"))
-        viewModel.onEvent(DashboardEvent.BodyFatDraft("15"))
-        viewModel.onEvent(DashboardEvent.SaveWeighIn)
-
-        awaitUntil { viewModel.uiState.value.weight.samples.size == 2 }
-        val state = viewModel.uiState.value
-        assertEquals(80.0, state.weight.average.last().value, 0.001)
-        assertTrue(state.weight.average.none { it.value == 0.0 })
-        assertEquals(15.0, state.bodyFat.samples.single().value, 0.001)
-        assertEquals(80.0, biometricsRepo.get(LocalDate.of(2026, 10, 5))!!.bodyWeightKg!!, 0.001)
-    }
-
-    @Test
-    fun scheduleCatchUpRefreshesTheWidget() = runBlocking {
-        val programId = rollingProgram()
-        routineRepo.insertDay(day(programId, "push", 0))
-        programRepo.setActive(programId)
-        val viewModel = dashboard()
-        awaitUntil { viewModel.uiState.value.today?.label == "push" }
-        awaitUntil { widget.count > 0 }
-        val before = widget.count
-
-        viewModel.onEvent(DashboardEvent.SkipToNext)
-
-        awaitUntil { widget.count > before }
-    }
-
-    private fun rollingProgram(): Long = runBlocking {
-        programRepo.insert(
             ProgramEntity(
                 name = "rolling",
                 scheduleMode = ScheduleMode.ROLLING,
@@ -196,45 +83,57 @@ class DashboardViewModelTest {
                 deloadStartedOn = null,
             ),
         )
+        routineRepo.insertDay(
+            RoutineDayEntity(
+                programId = programId,
+                label = "Push",
+                sequenceIndex = 0,
+                dayOfWeek = null,
+                isRest = false,
+            )
+        )
+        programRepo.setActive(programId)
+
+        val viewModel = today()
+        awaitUntil { viewModel.uiState.value.dayLabel == "Push" }
+        assertEquals("Push", viewModel.uiState.value.dayLabel)
     }
 
-    private fun day(
-        programId: Long,
-        label: String,
-        sequence: Int,
-        weekday: Int? = null,
-        rest: Boolean = false,
-    ) = RoutineDayEntity(
-        programId = programId,
-        label = label,
-        dayOfWeek = weekday,
-        sequenceIndex = sequence,
-        isRest = rest,
-    )
+    @Test
+    fun inProgressSessionReflectedInState() = runBlocking {
+        val sessionId = sessionRepo.insert(
+            WorkoutSessionEntity(
+                date = LocalDate.of(2026, 10, 5),
+                dayId = 1L,
+                kind = com.forge.hypertrophy.domain.model.SessionKind.GYM,
+                status = SessionStatus.IN_PROGRESS,
+                isDeload = false,
+                isShortOnTime = false,
+                readinessSleep = null,
+                readinessSoreness = null,
+                readinessEnergy = null,
+                startedAt = clock.instant(),
+                completedAt = null,
+            )
+        )
 
-    private fun dashboard(): DashboardViewModel {
-        val vm = DashboardViewModel(
+        val viewModel = today()
+        awaitUntil { viewModel.uiState.value.isInProgress }
+        assertTrue(viewModel.uiState.value.isInProgress)
+        assertEquals(sessionId, viewModel.uiState.value.activeSessionId)
+    }
+
+    private fun today(): TodayViewModel {
+        val vm = TodayViewModel(
             programs = programRepo,
             routines = routineRepo,
             sessions = sessionRepo,
-            exercises = exerciseRepo,
-            skills = skillRepo,
-            biometrics = biometricsRepo,
             preferences = preferences,
             cursor = cursor,
             clock = clock,
-            widget = widget,
-            baselines = baselines,
         )
         activeViewModels.add(vm)
         return vm
-    }
-
-    private class CountingRefresher : TodayWidgetRefresher {
-        var count = 0
-        override suspend fun refresh() {
-            count += 1
-        }
     }
 
     private class MemoryCursor : ScheduleCursorRepository {
@@ -273,19 +172,15 @@ class DashboardViewModelTest {
         override suspend fun setLastReconciledDate(date: LocalDate?) {
             reconciled.value = date
         }
-
         override suspend fun setPlateInventoryKg(platesKg: List<Double>) {
             plates.value = platesKg
         }
-
         override suspend fun setTransitionRestSeconds(seconds: Int) {
             rest.value = seconds
         }
-
         override suspend fun setActiveTimerEndElapsedRealtime(elapsedRealtime: Long?) {
             end.value = elapsedRealtime
         }
-
         override suspend fun setDefaultRestSeconds(seconds: Int) {
             defaultRest.value = seconds
         }
@@ -375,8 +270,6 @@ class DashboardViewModelTest {
 
     private class FakeSessionRepository : SessionRepository {
         val sessions = mutableMapOf<Long, WorkoutSessionEntity>()
-        val slots = mutableMapOf<Long, SessionSlotEntity>()
-        val sets = mutableMapOf<Long, SetEntryEntity>()
         private val sessionsFlow = MutableStateFlow(emptyList<WorkoutSessionEntity>())
 
         override fun observe(id: Long): Flow<WorkoutSessionEntity?> = sessionsFlow.map { it.find { s -> s.id == id } }
@@ -384,8 +277,7 @@ class DashboardViewModelTest {
         override suspend fun get(id: Long): WorkoutSessionEntity? = sessions[id]
         override suspend fun insert(session: WorkoutSessionEntity): Long {
             val id = (sessions.keys.maxOrNull() ?: 0L) + 1
-            val saved = session.copy(id = id)
-            sessions[id] = saved
+            sessions[id] = session.copy(id = id)
             sessionsFlow.value = sessions.values.toList()
             return id
         }
@@ -398,76 +290,20 @@ class DashboardViewModelTest {
             sessionsFlow.value = sessions.values.toList()
         }
         override fun observeSlots(sessionId: Long): Flow<List<SessionSlotEntity>> = MutableStateFlow(emptyList())
-        override suspend fun insertSlot(slot: SessionSlotEntity): Long {
-            val id = (slots.keys.maxOrNull() ?: 0L) + 1
-            slots[id] = slot.copy(id = id)
-            return id
-        }
+        override suspend fun insertSlot(slot: SessionSlotEntity): Long = 0L
         override suspend fun updateSlot(slot: SessionSlotEntity) {}
         override fun observeSets(sessionSlotId: Long): Flow<List<SetEntryEntity>> = MutableStateFlow(emptyList())
         override suspend fun insertSet(entry: SetEntryEntity): Long = 0L
         override suspend fun updateSet(entry: SetEntryEntity) {}
         override suspend fun deleteSet(id: Long) {}
-        override suspend fun allSlots(): List<SessionSlotEntity> = slots.values.toList()
+        override suspend fun allSlots(): List<SessionSlotEntity> = emptyList()
         override suspend fun sets(sessionSlotId: Long): List<SetEntryEntity> = emptyList()
-        override suspend fun completedDays(): List<CompletedSessionDay> = sessions.values.filter { it.status == SessionStatus.COMPLETED }.map { CompletedSessionDay(it.date, it.kind) }
+        override suspend fun completedDays(): List<CompletedSessionDay> = emptyList()
         override suspend fun completedSets(): List<CompletedSetRow> = emptyList()
         override suspend fun getSet(id: Long): SetEntryEntity? = null
         override suspend fun getSlot(id: Long): SessionSlotEntity? = null
         override suspend fun recentSetsForExercise(exerciseId: Long, limit: Int): List<SetEntryEntity> = emptyList()
-        override suspend fun earliestCompletedDate(): LocalDate? = sessions.values.filter { it.status == SessionStatus.COMPLETED }.minOfOrNull { it.date }
-        override suspend fun history(): List<WorkoutSessionEntity> = sessions.values.toList()
-    }
-
-    private class FakeExerciseRepository : ExerciseRepository {
-        override fun observeActive(): Flow<List<ExerciseEntity>> = MutableStateFlow(emptyList())
-        override suspend fun get(id: Long): ExerciseEntity? = null
-        override suspend fun all(): List<ExerciseEntity> = emptyList()
-        override suspend fun insert(exercise: ExerciseEntity): Long = 0L
-        override suspend fun update(exercise: ExerciseEntity) {}
-        override suspend fun archive(id: Long) {}
-        override suspend fun delete(id: Long) {}
-        override suspend fun referencedIds(): Set<Long> = emptySet()
-    }
-
-    private class FakeSkillRepository : SkillRepository {
-        override fun observeActive(): Flow<List<SkillEntity>> = MutableStateFlow(emptyList())
-        override suspend fun get(id: Long): SkillEntity? = null
-        override suspend fun insert(skill: SkillEntity): Long = 0L
-        override suspend fun update(skill: SkillEntity) {}
-        override suspend fun archive(id: Long) {}
-        override suspend fun delete(id: Long) {}
-        override fun observeSteps(skillId: Long): Flow<List<SkillStepEntity>> = MutableStateFlow(emptyList())
-        override suspend fun getSteps(skillId: Long): List<SkillStepEntity> = emptyList()
-        override suspend fun insertStep(step: SkillStepEntity): Long = 0L
-        override suspend fun updateStep(step: SkillStepEntity) {}
-        override suspend fun deleteStep(id: Long) {}
-        override suspend fun getProgress(skillId: Long): SkillProgressEntity? = null
-        override suspend fun allSteps(): List<SkillStepEntity> = emptyList()
-        override suspend fun allProgress(): List<SkillProgressEntity> = emptyList()
-        override suspend fun upsertProgress(progress: SkillProgressEntity): Long = 0L
-        override suspend fun recordStageEvent(event: SkillStageEventEntity): Long = 0L
-        override suspend fun stageEventsBetween(from: LocalDate, to: LocalDate): List<SkillStageEventEntity> = emptyList()
-        override suspend fun referencedIds(): Set<Long> = emptySet()
-    }
-
-    private class FakeBiometricsRepository : BiometricsRepository {
-        val samples = mutableMapOf<LocalDate, BiometricsEntity>()
-        private val flow = MutableStateFlow(emptyList<BiometricsEntity>())
-
-        override fun observeAll(): Flow<List<BiometricsEntity>> = flow
-        override suspend fun get(date: LocalDate): BiometricsEntity? = samples[date]
-        override suspend fun upsert(biometrics: BiometricsEntity): Long {
-            samples[biometrics.date] = biometrics
-            flow.value = samples.values.toList()
-            return 0L
-        }
-    }
-
-    private class FakeBaselineRepository : BaselineRepository {
-        override suspend fun forSlot(slotId: Long): SlotBaselineEntity? = null
-        override suspend fun forSlots(slotIds: List<Long>): List<SlotBaselineEntity> = emptyList()
-        override suspend fun all(): List<SlotBaselineEntity> = emptyList()
-        override suspend fun save(entity: SlotBaselineEntity) {}
+        override suspend fun earliestCompletedDate(): LocalDate? = null
+        override suspend fun history(): List<WorkoutSessionEntity> = emptyList()
     }
 }

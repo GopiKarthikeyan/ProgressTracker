@@ -108,7 +108,7 @@ class ProgramImporter(
     ): ImportResult {
         val preview = preview(document, mode, scheduleMode)
         if (preview.errors.isNotEmpty()) return ImportResult.Rejected(preview)
-        val programId = database.withTransaction {
+        val programId = database.runTransaction {
             val id = write(document, mode, scheduleMode)
             beforeCommit()
             id
