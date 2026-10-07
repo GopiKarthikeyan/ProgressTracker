@@ -7,7 +7,7 @@ import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.model.ScheduleSnapshot
 import com.forge.hypertrophy.domain.model.SlotPrescription
 import com.forge.hypertrophy.domain.model.TrainingDay

@@ -3,7 +3,7 @@ package com.forge.hypertrophy.workout
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
 import com.forge.hypertrophy.domain.workout.TimerCommand
 import com.forge.hypertrophy.domain.workout.TimerSnapshot

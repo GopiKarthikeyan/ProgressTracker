@@ -24,6 +24,7 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
+import com.forge.hypertrophy.ui.screens.routine.formatKg
 import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.NeonAccent
 import com.forge.hypertrophy.ui.theme.White
@@ -134,6 +135,29 @@ private fun WorkingSetView(
             NumericText(text = reps.toString(), color = White, style = MaterialTheme.typography.headlineLarge)
         }
 
+        PlatesPerSide(pos.requiredPlates)
+
+        pos.regulation?.let { prompt ->
+            Text(
+                text = stringResource(
+                    R.string.workout_regulation_suggestion,
+                    formatRpe(prompt.lastRpe),
+                    formatKg(prompt.suggestedWeightKg),
+                ),
+                color = White.copy(alpha = 0.7f),
+            )
+            EditorButton(
+                label = stringResource(R.string.workout_regulation_accept),
+                onClick = { onEvent(WorkoutEvent.AcceptRegulation) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+            EditorButton(
+                label = stringResource(R.string.workout_regulation_dismiss),
+                onClick = { onEvent(WorkoutEvent.DismissRegulation) },
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             EditorButton(label = stringResource(R.string.workout_adjust_weight_minus), onClick = { onEvent(WorkoutEvent.Adjust(weightDeltaKg = -2.5)) })
             EditorButton(label = stringResource(R.string.workout_adjust_weight_plus), onClick = { onEvent(WorkoutEvent.Adjust(weightDeltaKg = 2.5)) })
@@ -171,8 +195,22 @@ private fun RestingView(
         
         state.nextUp?.let { next ->
             Text(stringResource(R.string.workout_next_up, next.exerciseName), color = White.copy(alpha = 0.7f))
+            PlatesPerSide(next.platesPerSideKg)
         }
     }
+}
+
+@Composable
+private fun PlatesPerSide(plates: List<Double>) {
+    if (plates.isEmpty()) return
+    Text(
+        text = stringResource(R.string.workout_plates_per_side, plates.joinToString(" + ", transform = ::formatKg)),
+        color = White.copy(alpha = 0.7f),
+    )
+}
+
+private fun formatRpe(rpe: Double): String {
+    return if (rpe % 1.0 == 0.0) rpe.toInt().toString() else formatKg(rpe)
 }
 
 @Composable

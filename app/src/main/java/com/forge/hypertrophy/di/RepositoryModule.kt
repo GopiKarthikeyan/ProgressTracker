@@ -12,6 +12,7 @@ import com.forge.hypertrophy.data.repository.RoomProgramRepository
 import com.forge.hypertrophy.data.repository.RoomRoutineRepository
 import com.forge.hypertrophy.data.repository.RoomSessionRepository
 import com.forge.hypertrophy.data.repository.RoomSkillRepository
+import com.forge.hypertrophy.data.repository.RoomWorkoutRepository
 import com.forge.hypertrophy.data.repository.DataStoreScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.BaselineRepository
@@ -25,7 +26,8 @@ import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.repository.SkillRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.WorkoutRepository
 import com.forge.hypertrophy.data.weather.OpenMeteoWeatherRepository
 import com.forge.hypertrophy.data.weather.WeatherRepository
 import dagger.Binds
@@ -102,6 +104,12 @@ abstract class RepositoryModule {
     abstract fun bindGearRepository(
         impl: RoomGearRepository,
     ): GearRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindWorkoutRepository(
+        impl: RoomWorkoutRepository,
+    ): WorkoutRepository
 
     @Binds
     @Singleton

@@ -1,7 +1,7 @@
 package com.forge.hypertrophy.di
 
 import com.forge.hypertrophy.data.db.AppDatabase
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.storage.ContentResolverProgramDocumentStore
 import com.forge.hypertrophy.data.storage.ProgramDocumentStore
 import com.forge.hypertrophy.data.transfer.ProgramExportPreferences

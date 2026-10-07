@@ -78,6 +78,8 @@ data class WorkoutMachineState(
     val ownHistoryBySessionSlot: Map<Long, RecordedSet> = emptyMap(),
     val baselineBySessionSlot: Map<Long, BaselineHint> = emptyMap(),
     val sessionJoints: Set<String> = emptySet(),
+    val dismissedRegulationSetIds: Set<Long> = emptySet(),
+    val acceptedRegulationSetIds: Set<Long> = emptySet(),
 )
 
 sealed interface WorkoutPosition {
@@ -95,6 +97,8 @@ sealed interface WorkoutPosition {
         val suggestion: SetSuggestion,
         val suggestSkip: Boolean,
         val needsFormCheck: Boolean,
+        val requiredPlates: List<Double> = emptyList(),
+        val regulation: RegulationPrompt? = null,
     ) : WorkoutPosition
 
     data class Resting(
@@ -108,6 +112,12 @@ sealed interface WorkoutPosition {
 
     data object Summary : WorkoutPosition
 }
+
+data class RegulationPrompt(
+    val sourceSetId: Long,
+    val lastRpe: Double,
+    val suggestedWeightKg: Double,
+)
 
 enum class RestKind {
     BETWEEN_SETS,
@@ -315,6 +325,28 @@ fun suggestionFor(
     )
 }
 
+fun restWindowSeconds(resting: WorkoutPosition.Resting, transitionRestSeconds: Int): Pair<Int, Int> = when (resting.kind) {
+    RestKind.TRANSITION -> transitionRestSeconds to transitionRestSeconds
+    RestKind.AS_NEEDED -> 0 to 0
+    RestKind.BETWEEN_SETS -> {
+        val prescription = resting.slot.prescription
+        val minimum = prescription.restMinSec ?: 0
+        val maximum = prescription.restMaxSec ?: minimum
+        if (fellShortOfTarget(resting)) maximum to maximum else minimum to maximum
+    }
+}
+
+private fun fellShortOfTarget(resting: WorkoutPosition.Resting): Boolean {
+    val prescription = resting.slot.prescription
+    val logged = resting.slot.sets
+        .filter { it.setNumber == resting.round }
+        .maxByOrNull { it.id }
+        ?: return false
+    val repsShort = prescription.repsLow != null && logged.reps != null && logged.reps < prescription.repsLow
+    val holdShort = prescription.holdTargetSec != null && logged.holdSec != null && logged.holdSec < prescription.holdTargetSec
+    return repsShort || holdShort
+}
+
 fun restTimer(
     resting: WorkoutPosition.Resting,
     nowElapsedRealtime: Long,
@@ -323,16 +355,9 @@ fun restTimer(
     speak: Boolean,
 ): TimerSpec = when (resting.kind) {
     RestKind.AS_NEEDED -> stopwatchSpec(nowElapsedRealtime)
-    RestKind.TRANSITION -> countdownSpec(nowElapsedRealtime, transitionRestSeconds, transitionRestSeconds, cue, speak)
-    RestKind.BETWEEN_SETS -> {
-        val prescription = resting.slot.prescription
-        countdownSpec(
-            nowElapsedRealtime,
-            prescription.restMinSec ?: 0,
-            prescription.restMaxSec ?: prescription.restMinSec ?: 0,
-            cue,
-            speak,
-        )
+    else -> {
+        val (minimum, maximum) = restWindowSeconds(resting, transitionRestSeconds)
+        countdownSpec(nowElapsedRealtime, minimum, maximum, cue, speak)
     }
 }
 

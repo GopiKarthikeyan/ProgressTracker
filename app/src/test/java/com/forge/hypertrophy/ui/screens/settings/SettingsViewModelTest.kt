@@ -13,7 +13,7 @@ import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.data.repository.MediaPreferencesRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.transfer.ProgramJson
 import com.forge.hypertrophy.data.transfer.SampleProgramProvider
 import com.forge.hypertrophy.domain.model.ScheduleMode

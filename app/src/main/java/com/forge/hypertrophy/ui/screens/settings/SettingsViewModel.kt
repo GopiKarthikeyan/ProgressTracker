@@ -6,7 +6,7 @@ import com.forge.hypertrophy.data.entity.RoutineDayEntity
 import com.forge.hypertrophy.data.repository.MediaPreferencesRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.transfer.SampleProgramProvider
 import com.forge.hypertrophy.data.backup.BackupClient
 import com.forge.hypertrophy.data.backup.NewerBackupException

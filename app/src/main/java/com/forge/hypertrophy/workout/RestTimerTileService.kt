@@ -3,7 +3,7 @@ package com.forge.hypertrophy.workout
 import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import com.forge.hypertrophy.R
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
 import com.forge.hypertrophy.domain.workout.TimerKind
 import com.forge.hypertrophy.domain.workout.TimerSpec

@@ -419,6 +419,10 @@
     <string name="workout_resting_title">Resting</string>
     <string name="workout_skip_rest">Skip Rest</string>
     <string name="workout_next_up">Next Up: %1$s</string>
+    <string name="workout_plates_per_side">Plates per side: %1$s</string>
+    <string name="workout_regulation_suggestion">RPE %1$s last set — suggest dropping to %2$skg</string>
+    <string name="workout_regulation_accept">Use suggested weight</string>
+    <string name="workout_regulation_dismiss">Keep current weight</string>
     <string name="workout_timed_block">Timed Block</string>
     <string name="workout_complete_block">Complete Block</string>
     <string name="workout_cooldown_title">Cooldown</string>

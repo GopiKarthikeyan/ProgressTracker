@@ -3,12 +3,11 @@ package com.forge.hypertrophy.ui.screens.workout
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.forge.hypertrophy.data.entity.SetEntryEntity
 import com.forge.hypertrophy.data.diagnostics.Breadcrumbs
-import com.forge.hypertrophy.data.repository.ExerciseRepository
-import com.forge.hypertrophy.data.repository.RoutineRepository
-import com.forge.hypertrophy.data.repository.SessionRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.WorkoutRepository
+import com.forge.hypertrophy.domain.engine.AutoRegulationAdvisor
+import com.forge.hypertrophy.domain.engine.AutoRegulationSuggestion
 import com.forge.hypertrophy.domain.engine.PlateCalculator
 import com.forge.hypertrophy.domain.engine.ReadinessAdvice
 import com.forge.hypertrophy.domain.engine.ReadinessAdvisor
@@ -19,23 +18,21 @@ import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionAction
 import com.forge.hypertrophy.domain.model.SessionStatus
-import com.forge.hypertrophy.domain.model.SetType
 import com.forge.hypertrophy.domain.model.TrainingSlot
 import com.forge.hypertrophy.domain.model.WarmupStep
-import com.forge.hypertrophy.domain.usecase.CompleteWorkoutUseCase
 import com.forge.hypertrophy.domain.usecase.LoadWorkoutUseCase
-import com.forge.hypertrophy.domain.usecase.LogSetUseCase
-import com.forge.hypertrophy.domain.usecase.StartWorkoutUseCase
 import com.forge.hypertrophy.domain.usecase.ToggleShortOnTimeUseCase
+import com.forge.hypertrophy.domain.usecase.WorkoutInteractors
 import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
 import com.forge.hypertrophy.domain.workout.HandsFreeGate
-import com.forge.hypertrophy.domain.workout.RecordedSet
+import com.forge.hypertrophy.domain.workout.RegulationPrompt
 import com.forge.hypertrophy.domain.workout.RestKind
 import com.forge.hypertrophy.domain.workout.TimerCommand
 import com.forge.hypertrophy.domain.workout.TimerPhase
 import com.forge.hypertrophy.domain.workout.TimerSnapshot
 import com.forge.hypertrophy.domain.workout.WorkoutMachineState
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
+import com.forge.hypertrophy.domain.workout.WorkoutPositionTransitionValidator
 import com.forge.hypertrophy.domain.workout.WorkoutSlot
 import com.forge.hypertrophy.domain.workout.WorkoutTimer
 import com.forge.hypertrophy.widget.TodayWidgetRefresher
@@ -53,6 +50,7 @@ import com.forge.hypertrophy.domain.workout.removeSet
 import com.forge.hypertrophy.domain.workout.restKey
 import com.forge.hypertrophy.domain.workout.restTimer
 import com.forge.hypertrophy.domain.workout.restoredCountdown
+import com.forge.hypertrophy.domain.workout.restWindowSeconds
 import com.forge.hypertrophy.domain.workout.skipSlot
 import com.forge.hypertrophy.domain.workout.suggestionFor
 import com.forge.hypertrophy.domain.workout.updateSet
@@ -124,6 +122,8 @@ sealed interface WorkoutEvent {
     data class ConfirmForm(val slotId: Long) : WorkoutEvent
     data class ToggleJoint(val flag: String) : WorkoutEvent
     data class SetRpe(val setId: Long, val rpe: Double?) : WorkoutEvent
+    data object AcceptRegulation : WorkoutEvent
+    data object DismissRegulation : WorkoutEvent
     data object ToggleShortOnTime : WorkoutEvent
     data object CompleteWorkout : WorkoutEvent
     data object Undo : WorkoutEvent
@@ -135,8 +135,7 @@ sealed interface WorkoutEvent {
 @HiltViewModel
 class WorkoutViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val sessions: SessionRepository,
-    private val exercises: ExerciseRepository,
+    private val workouts: WorkoutRepository,
     private val preferences: TrainingPreferencesRepository,
     private val timer: WorkoutTimer,
     private val clock: Clock,
@@ -144,9 +143,7 @@ class WorkoutViewModel @Inject constructor(
     private val widget: TodayWidgetRefresher,
     private val breadcrumbs: Breadcrumbs,
     private val loadWorkout: LoadWorkoutUseCase,
-    private val startWorkout: StartWorkoutUseCase,
-    private val completeWorkout: CompleteWorkoutUseCase,
-    private val logSet: LogSetUseCase,
+    private val interactors: WorkoutInteractors,
     private val toggleShortOnTimeUseCase: ToggleShortOnTimeUseCase,
 ) : ViewModel() {
     private val requestedSessionId: Long = savedStateHandle.get<Long>("sessionId") ?: 0L
@@ -163,6 +160,8 @@ class WorkoutViewModel @Inject constructor(
     private val estimator = SessionEstimator()
     private val plates = PlateCalculator()
     private val warmups = WarmupRampGenerator(plates)
+    private val transitions = WorkoutPositionTransitionValidator()
+    private val regulation = AutoRegulationAdvisor()
 
     init {
         if (requestedSessionId != 0L) {
@@ -206,6 +205,8 @@ class WorkoutViewModel @Inject constructor(
                 }
                 is WorkoutEvent.ToggleJoint -> toggleJoint(event.flag)
                 is WorkoutEvent.SetRpe -> setRpe(event.setId, event.rpe)
+                WorkoutEvent.AcceptRegulation -> acceptRegulation()
+                WorkoutEvent.DismissRegulation -> dismissRegulation()
                 WorkoutEvent.ToggleShortOnTime -> toggleShortOnTime()
                 WorkoutEvent.CompleteWorkout -> complete()
                 WorkoutEvent.Undo -> undo()
@@ -224,7 +225,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun start(dayId: Long) {
-        val id = startWorkout.execute(dayId)
+        val id = interactors.start.execute(dayId)
         restore(id)
     }
 
@@ -239,17 +240,9 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun begin(sleep: Int?, soreness: Int?, energy: Int?) {
-        val session = sessions.get(sessionId) ?: return
+        if (workouts.findSession(sessionId) == null) return
         val advice = readiness.advise(ReadinessCheck(sleep, soreness, energy))
-        sessions.update(
-            session.copy(
-                status = SessionStatus.IN_PROGRESS,
-                readinessSleep = sleep,
-                readinessSoreness = soreness,
-                readinessEnergy = energy,
-                startedAt = clock.instant(),
-            ),
-        )
+        if (!workouts.beginSession(sessionId, sleep, soreness, energy, clock.instant())) return
         machine = machine.copy(started = true)
         _uiState.value = _uiState.value.copy(advice = advice)
         publish()
@@ -272,7 +265,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun logWorkingSet(position: WorkoutPosition.WorkingSet, method: EntryMethod, now: Long) {
-        val recorded = logSet.logWorkingSet(
+        val recorded = interactors.logSet.logWorkingSet(
             sessionSlotId = position.slot.sessionSlotId,
             setNumber = position.setNumber,
             side = position.side,
@@ -293,7 +286,7 @@ class WorkoutViewModel @Inject constructor(
             TimerPhase.COUNTDOWN, TimerPhase.WARNING -> (planned - (snapshot.remainingMillis / 1000L).toInt()).coerceAtLeast(0)
             else -> planned
         }
-        val recorded = logSet.logPracticeBlock(position.slot.sessionSlotId, elapsedSeconds)
+        val recorded = interactors.logSet.logPracticeBlock(position.slot.sessionSlotId, elapsedSeconds)
         machine = logBlock(machine, recorded)
         armed = null
         timer.stop()
@@ -318,7 +311,7 @@ class WorkoutViewModel @Inject constructor(
 
     private suspend fun choose(exerciseId: Long?) {
         val slot = currentSlot() ?: return
-        val exercise = exerciseId?.let { exercises.get(it) }
+        val exercise = exerciseId?.let { workouts.findExercise(it) }
         machine = chooseAlternative(machine, slot.sessionSlotId, exerciseId)
         if (exercise != null) {
             machine = machine.copy(
@@ -352,7 +345,28 @@ class WorkoutViewModel @Inject constructor(
         machine = updateSet(machine, setId) { it.copy(rpe = rpe) }
         val slot = machine.slots.firstOrNull { slot -> slot.sets.any { it.id == setId } } ?: return
         val set = slot.sets.first { it.id == setId }
-        sessions.updateSet(set.toEntity(slot.sessionSlotId))
+        workouts.updateRecordedSet(slot.sessionSlotId, set, clock.instant())
+        publish()
+    }
+
+    private suspend fun acceptRegulation() {
+        val working = workoutPosition(machine) as? WorkoutPosition.WorkingSet ?: return
+        val prompt = regulationFor(working) ?: return
+        val current = working.suggestion.weightKg ?: return
+        val weight = regulation.weightAfterDecision(current, prompt.toSuggestion(), accepted = true)
+        machine = machine.copy(
+            draft = working.suggestion.copy(weightKg = weight),
+            acceptedRegulationSetIds = machine.acceptedRegulationSetIds + prompt.sourceSetId,
+        )
+        publish()
+    }
+
+    private suspend fun dismissRegulation() {
+        val working = workoutPosition(machine) as? WorkoutPosition.WorkingSet ?: return
+        val prompt = regulationFor(working) ?: return
+        machine = machine.copy(
+            dismissedRegulationSetIds = machine.dismissedRegulationSetIds + prompt.sourceSetId,
+        )
         publish()
     }
 
@@ -369,7 +383,7 @@ class WorkoutViewModel @Inject constructor(
             if (pending != null) publish()
             return
         }
-        sessions.deleteSet(id)
+        workouts.deleteSet(id)
         machine = removeSet(machine, id)
         armed = null
         publish()
@@ -377,8 +391,8 @@ class WorkoutViewModel @Inject constructor(
 
     private suspend fun editNotes(notes: String) {
         val slot = currentSlot() ?: return
-        val exercise = exercises.get(slot.activeExerciseId) ?: return
-        exercises.update(exercise.copy(setupNotes = notes))
+        if (workouts.findExercise(slot.activeExerciseId) == null) return
+        workouts.updateSetupNotes(slot.activeExerciseId, notes)
         machine = machine.copy(
             slots = machine.slots.map { candidate ->
                 if (candidate.sessionSlotId == slot.sessionSlotId) candidate.copy(setupNotes = notes) else candidate
@@ -388,7 +402,8 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun complete() {
-        val summary = completeWorkout.execute(sessionId, machine)
+        if (!accept(WorkoutPosition.Summary)) return
+        val summary = interactors.complete.execute(sessionId, machine)
         armed = null
         timer.stop()
         machine = machine.copy(started = true, prep = machine.prep.map { it.copy(done = true) }, cooldown = machine.cooldown.map { it.copy(done = true) })
@@ -403,20 +418,22 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun publish() {
-        val session = sessions.get(sessionId)
+        val session = workouts.findSession(sessionId)
         val finished = session?.status == SessionStatus.COMPLETED
         val position = if (finished) WorkoutPosition.Summary else workoutPosition(machine)
+        if (!accept(position)) return
+        val shown = decorate(position)
         if (finished) {
             if (armed != null) {
                 armed = null
                 timer.stop()
             }
         } else {
-            syncTimer(position)
+            syncTimer(shown)
         }
         _uiState.value = WorkoutUiState(
             sessionId = sessionId,
-            position = position,
+            position = shown,
             advice = _uiState.value.advice,
             timer = timer.snapshot.value,
             etaSeconds = eta(),
@@ -424,8 +441,15 @@ class WorkoutViewModel @Inject constructor(
             undoUntilElapsedRealtime = handsFree.undoUntilElapsedRealtime,
             cuesEnabled = cuesEnabled,
             summary = _uiState.value.summary,
-            nextUp = nextUp(position),
+            nextUp = nextUp(shown),
         )
+    }
+
+    private fun accept(next: WorkoutPosition, resetSession: Boolean = false): Boolean {
+        val from = _uiState.value.position
+        if (transitions.allow(from, next, resetSession)) return true
+        breadcrumbs.record("rejected ${from::class.simpleName} -> ${next::class.simpleName}")
+        return false
     }
 
     private suspend fun syncTimer(position: WorkoutPosition) {
@@ -486,14 +510,8 @@ class WorkoutViewModel @Inject constructor(
         }
     }
 
-    private fun restBounds(position: WorkoutPosition.Resting): Pair<Int, Int> = when (position.kind) {
-        RestKind.TRANSITION -> machine.transitionRestSeconds to machine.transitionRestSeconds
-        RestKind.AS_NEEDED -> 0 to 0
-        RestKind.BETWEEN_SETS -> {
-            val min = position.slot.prescription.restMinSec ?: 0
-            min to (position.slot.prescription.restMaxSec ?: min)
-        }
-    }
+    private fun restBounds(position: WorkoutPosition.Resting): Pair<Int, Int> =
+        restWindowSeconds(position, machine.transitionRestSeconds)
 
     private fun cueFor(slot: WorkoutSlot?): String? {
         if (slot == null) return null
@@ -515,13 +533,48 @@ class WorkoutViewModel @Inject constructor(
         val weight = suggestion.weightKg
         val inventory = preferences.plateInventoryKg.first()
         val bar = slot.barWeightKg ?: 20.0
-        val load = if (weight == null) emptyList() else plates.load(weight, bar, inventory).platesPerSideKg
+        val load = platesPerSide(weight, bar, inventory)
         val warmup = if (weight == null) {
             emptyList()
         } else {
             warmups.ramp(slot.equipment, slot.prescription.category, weight, bar, inventory)
         }
         return NextUp(slot.exerciseName, load, warmup)
+    }
+
+    private suspend fun decorate(position: WorkoutPosition): WorkoutPosition {
+        val plated = withPlates(position)
+        val working = plated as? WorkoutPosition.WorkingSet ?: return plated
+        return working.copy(regulation = regulationFor(working))
+    }
+
+    private fun regulationFor(working: WorkoutPosition.WorkingSet): RegulationPrompt? {
+        val last = machine.slots
+            .filter { it.activeExerciseId == working.slot.activeExerciseId }
+            .flatMap { it.sets }
+            .maxByOrNull { it.id }
+            ?: return null
+        if (last.id in machine.dismissedRegulationSetIds || last.id in machine.acceptedRegulationSetIds) return null
+        val increment = working.slot.prescription.incrementOverrideKg ?: DEFAULT_LOAD_INCREMENT_KG
+        val advice = regulation.advise(last.rpe, working.suggestion.weightKg, increment) ?: return null
+        return RegulationPrompt(last.id, advice.lastRpe, advice.suggestedWeightKg)
+    }
+
+    private fun RegulationPrompt.toSuggestion() = AutoRegulationSuggestion(
+        lastRpe = lastRpe,
+        suggestedWeightKg = suggestedWeightKg,
+    )
+
+    private suspend fun withPlates(position: WorkoutPosition): WorkoutPosition {
+        val working = position as? WorkoutPosition.WorkingSet ?: return position
+        val inventory = preferences.plateInventoryKg.first()
+        val bar = working.slot.barWeightKg ?: 20.0
+        return working.copy(requiredPlates = platesPerSide(working.suggestion.weightKg, bar, inventory))
+    }
+
+    private fun platesPerSide(weightKg: Double?, barKg: Double, inventoryKg: List<Double>): List<Double> {
+        val weight = weightKg ?: return emptyList()
+        return plates.load(weight, barKg, inventoryKg).platesPerSideKg
     }
 
     private fun eta(): Int {
@@ -544,20 +597,7 @@ class WorkoutViewModel @Inject constructor(
     )
 
     private suspend fun persist(slot: WorkoutSlot) {
-        val entity = sessions.observeSlots(sessionId).first().firstOrNull { it.id == slot.sessionSlotId } ?: return
-        sessions.updateSlot(
-            entity.copy(
-                prescriptionSnapshot = entity.prescriptionSnapshot.copy(
-                    sortOrder = slot.sortOrder,
-                    setsMin = slot.prescription.setsMin,
-                    setsMax = slot.prescription.setsMax,
-                ),
-                chosenAlternativeExerciseId = slot.chosenAlternativeExerciseId,
-                skipped = slot.skipped,
-                skipReason = slot.skipReason,
-                formConfirmed = slot.formConfirmed,
-            ),
-        )
+        workouts.persistSlot(sessionId, slot)
     }
 
     private fun currentSlot(): WorkoutSlot? = when (val position = workoutPosition(machine)) {
@@ -567,18 +607,7 @@ class WorkoutViewModel @Inject constructor(
         else -> null
     }
 
-    private fun RecordedSet.toEntity(sessionSlotId: Long) = SetEntryEntity(
-        id = id,
-        sessionSlotId = sessionSlotId,
-        setNumber = setNumber,
-        side = side,
-        setType = SetType.WORKING,
-        weightKg = weightKg,
-        reps = reps,
-        holdSec = holdSec,
-        rpe = rpe,
-        jointFlags = jointFlags,
-        entryMethod = entryMethod,
-        loggedAt = clock.instant(),
-    )
+    private companion object {
+        const val DEFAULT_LOAD_INCREMENT_KG = 2.5
+    }
 }

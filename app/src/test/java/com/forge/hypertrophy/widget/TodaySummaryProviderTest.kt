@@ -8,7 +8,7 @@ import com.forge.hypertrophy.data.repository.RoomProgramRepository
 import com.forge.hypertrophy.data.repository.RoomRoutineRepository
 import com.forge.hypertrophy.data.repository.RoomSessionRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.schedule.ScheduleLoader
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SessionKind

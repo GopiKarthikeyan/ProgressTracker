@@ -67,6 +67,13 @@ class WorkoutMachineTest {
     }
 
     @Test
+    fun shortSetUsesRestMaxAndAMetTargetUsesRestMin() {
+        assertEquals(90 to 90, restWindowSeconds(restAfter(reps = 4), transitionRestSeconds = 120))
+        assertEquals(60 to 90, restWindowSeconds(restAfter(reps = 5), transitionRestSeconds = 120))
+        assertEquals(60 to 90, restWindowSeconds(restAfter(reps = 8), transitionRestSeconds = 120))
+    }
+
+    @Test
     fun spokenCueMatchesTheSetScript() {
         assertEquals(
             "Set 2 of 3, weighted pull-ups, plus 20 kg, 5 to 8 reps",
@@ -75,6 +82,16 @@ class WorkoutMachineTest {
     }
 
     private fun started(vararg slots: WorkoutSlot) = WorkoutMachineState(slots = slots.toList(), started = true)
+
+    private fun restAfter(reps: Int): WorkoutPosition.Resting {
+        val state = started(slot(1, 0, null))
+        val working = workoutPosition(state) as WorkoutPosition.WorkingSet
+        val logged = logCurrentSet(
+            state,
+            RecordedSet(1, working.setNumber, working.side, null, reps, null, null, emptyList(), EntryMethod.SCREEN),
+        )
+        return workoutPosition(logged) as WorkoutPosition.Resting
+    }
 
     private fun log(state: WorkoutMachineState): WorkoutMachineState {
         val working = workoutPosition(state) as WorkoutPosition.WorkingSet

@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.time.LocalDate
 import javax.inject.Inject
@@ -14,29 +15,6 @@ import javax.inject.Singleton
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
-
-interface TrainingPreferencesRepository {
-    val lastReconciledDate: Flow<LocalDate?>
-
-    val plateInventoryKg: Flow<List<Double>>
-
-    val transitionRestSeconds: Flow<Int>
-
-    val activeTimerEndElapsedRealtime: Flow<Long?>
-
-    /** Rest the Quick Settings tile starts, in seconds. */
-    val defaultRestSeconds: Flow<Int>
-
-    suspend fun setLastReconciledDate(date: LocalDate?)
-
-    suspend fun setPlateInventoryKg(platesKg: List<Double>)
-
-    suspend fun setTransitionRestSeconds(seconds: Int)
-
-    suspend fun setActiveTimerEndElapsedRealtime(elapsedRealtime: Long?)
-
-    suspend fun setDefaultRestSeconds(seconds: Int)
-}
 
 @Singleton
 class DataStoreTrainingPreferencesRepository @Inject constructor(

@@ -25,7 +25,6 @@ import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.repository.SkillRepository
-import com.forge.hypertrophy.data.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.engine.ReadinessAdvice
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.EntryMethod
@@ -42,16 +41,24 @@ import com.forge.hypertrophy.domain.usecase.CompleteWorkoutUseCase
 import com.forge.hypertrophy.domain.usecase.LoadWorkoutUseCase
 import com.forge.hypertrophy.domain.usecase.LogSetUseCase
 import com.forge.hypertrophy.domain.usecase.StartWorkoutUseCase
+import com.forge.hypertrophy.domain.usecase.WorkoutInteractors
+import com.forge.hypertrophy.domain.repository.ExerciseDetails
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
+import com.forge.hypertrophy.domain.repository.WorkoutRepository
+import com.forge.hypertrophy.domain.repository.WorkoutSessionState
 import com.forge.hypertrophy.domain.usecase.ToggleShortOnTimeUseCase
 import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
+import com.forge.hypertrophy.domain.workout.RecordedSet
+import com.forge.hypertrophy.domain.workout.WorkoutSlot
 import com.forge.hypertrophy.domain.workout.TimerCommand
 import com.forge.hypertrophy.domain.workout.TimerSnapshot
 import com.forge.hypertrophy.domain.workout.TimerSpec
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
 import com.forge.hypertrophy.domain.workout.WorkoutTimer
 import com.forge.hypertrophy.domain.workout.projectTimer
-import com.forge.hypertrophy.ui.screens.routine.awaitUntil
 import com.forge.hypertrophy.widget.TodayWidgetRefresher
+import app.cash.turbine.test
+import kotlin.time.Duration.Companion.seconds
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -64,16 +71,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -87,156 +96,351 @@ class WorkoutViewModelTest {
     private val skillRepo = FakeSkillRepository()
     private val widget = CountingRefresher()
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-    }
-
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-    }
-
     @Test
-    fun everySetIsWrittenImmediatelyAndReadinessFeedsTheAdvisor() = runBlocking {
-        val dayId = seedDay(optional = false)
-        val preferences = FakePreferences()
-        val elapsed = FakeElapsed()
-        val viewModel = viewModel(preferences, FakeWorkoutTimer(), elapsed)
-        viewModel.onEvent(WorkoutEvent.Start(dayId))
-        awaitUntil { viewModel.uiState.value.sessionId != null }
-        val sessionId = viewModel.uiState.value.sessionId!!
-        assertEquals(SessionStatus.PLANNED, sessionRepo.get(sessionId)!!.status)
-
-        viewModel.onEvent(WorkoutEvent.SubmitReadiness(1, 1, 1))
-        awaitUntil { viewModel.uiState.value.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS }
-        viewModel.onEvent(WorkoutEvent.CheckOff(routineRepo.checklistItems.values.first().id))
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.WorkingSet }
-
-        viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN))
-        val slotId = sessionRepo.slots.values.first().id
-        awaitUntil { sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size == 1 && viewModel.uiState.value.position is WorkoutPosition.Resting }
-        assertEquals(5, sessionRepo.sets.values.single { it.sessionSlotId == slotId }.reps)
-        assertTrue(viewModel.uiState.value.position is WorkoutPosition.Resting)
-
-        viewModel.onEvent(WorkoutEvent.CompleteWorkout)
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Summary }
-        viewModel.onEvent(WorkoutEvent.Tick(elapsed.now))
-        awaitUntil { viewModel.uiState.value.summary != null }
-        assertTrue(viewModel.uiState.value.position is WorkoutPosition.Summary)
-        assertEquals(SessionStatus.COMPLETED, sessionRepo.get(sessionId)!!.status)
-        assertEquals(1, widget.count)
-    }
-
-    @Test
-    fun restoreResumesALiveRestAndSkipsAFinishedOne() = runBlocking {
-        val dayId = seedDay(optional = false)
-        val preferences = FakePreferences()
-        val elapsed = FakeElapsed()
-        val firstTimer = FakeWorkoutTimer()
-        val first = viewModel(preferences, firstTimer, elapsed)
-        first.onEvent(WorkoutEvent.Start(dayId))
-        awaitUntil { first.uiState.value.sessionId != null }
-        first.onEvent(WorkoutEvent.SkipReadiness)
-        awaitUntil { first.uiState.value.position is WorkoutPosition.Prep }
-        val itemId = routineRepo.checklistItems.values.first().id
-        first.onEvent(WorkoutEvent.CheckOff(itemId))
-        awaitUntil { first.uiState.value.position is WorkoutPosition.WorkingSet }
-        first.onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN))
-        awaitUntil { first.uiState.value.position is WorkoutPosition.Resting }
-        val sessionId = first.uiState.value.sessionId!!
-        val end = firstTimer.spec!!.persistedEnd()!!
-        preferences.end.value = end
-
-        elapsed.now = end - 10_000
-        val live = viewModel(preferences, FakeWorkoutTimer(), elapsed, sessionId)
-        awaitUntil { live.uiState.value.position is WorkoutPosition.Resting }
-        assertEquals(end, preferences.end.value)
-
-        elapsed.now = firstTimer.spec!!.overtimeEndElapsedRealtime!! + 1
-        val done = viewModel(preferences, FakeWorkoutTimer(), elapsed, sessionId)
-        awaitUntil { done.uiState.value.position is WorkoutPosition.Summary }
-    }
-
-    @Test
-    fun hardwareTriggerDebouncesAndUndoDeletesTheSet() = runBlocking {
-        val dayId = seedDay(optional = false, sets = 2)
-        val elapsed = FakeElapsed()
-        val viewModel = viewModel(FakePreferences(), FakeWorkoutTimer(), elapsed)
-        viewModel.onEvent(WorkoutEvent.Start(dayId))
-        awaitUntil { viewModel.uiState.value.sessionId != null }
-        viewModel.onEvent(WorkoutEvent.SkipReadiness)
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Prep }
-        val itemId = routineRepo.checklistItems.values.first().id
-        viewModel.onEvent(WorkoutEvent.CheckOff(itemId))
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.WorkingSet }
-
-        viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Resting }
-        val slotId = sessionRepo.slots.values.first().id
-        viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
-        awaitUntil { viewModel.uiState.value.undoUntilElapsedRealtime != null }
-        assertEquals(1, sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size)
-        assertTrue(viewModel.uiState.value.position is WorkoutPosition.Resting)
-
-        viewModel.onEvent(WorkoutEvent.Undo)
-        awaitUntil { sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.isEmpty() }
-        assertTrue(viewModel.uiState.value.position is WorkoutPosition.WorkingSet)
-
-        elapsed.now += 5_001
-        viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
-        awaitUntil { sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size == 1 }
-        elapsed.now += 5_001
-        viewModel.onEvent(WorkoutEvent.Undo)
-        awaitUntil { viewModel.uiState.value.undoUntilElapsedRealtime == null }
-        assertEquals(1, sessionRepo.sets.values.filter { it.sessionSlotId == slotId }.size)
-    }
-
-    @Test
-    fun shortOnTimeSkipsTheOptionalSlotAndReorderDoesNotTouchTheRoutine() = runBlocking {
-        val dayId = seedDay(optional = true)
-        val routineOrders = routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder }
-        val viewModel = viewModel(FakePreferences(), FakeWorkoutTimer(), FakeElapsed())
-        viewModel.onEvent(WorkoutEvent.Start(dayId))
-        awaitUntil { viewModel.uiState.value.sessionId != null }
-        viewModel.onEvent(WorkoutEvent.ToggleShortOnTime)
-        awaitUntil {
-            sessionRepo.slots.values.any { it.skipped && it.skipReason == "short on time" }
+    fun everySetIsWrittenImmediatelyAndReadinessFeedsTheAdvisor() = workoutTest {
+        workoutRobot {
+            startSession()
+            assertSessionStatus(SessionStatus.PLANNED)
+            submitReadiness(1, 1, 1)
+            checkOffPrep()
+            logSet()
+            assertSetLogged(reps = 5)
+            assertState<WorkoutPosition.Resting>()
+            completeWorkout()
+            tick()
+            assertState<WorkoutPosition.Summary>()
+            assertSessionStatus(SessionStatus.COMPLETED)
+            assertWidgetRefreshed()
         }
-        assertEquals(routineOrders, routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder })
-
-        val before = sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id }
-        viewModel.onEvent(WorkoutEvent.MoveSlot(0, 1))
-        awaitUntil {
-            sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id } ==
-                listOf(before[1], before[0])
-        }
-        val after = sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }
-        assertEquals(listOf(0, 1), after.map { it.prescriptionSnapshot.sortOrder })
-        assertEquals(routineOrders, routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder })
     }
 
     @Test
-    fun choosingAnAlternativeDoesNotRewriteTheSnapshotExercise() = runBlocking {
-        val dayId = seedDay(optional = false)
-        val other = exerciseRepo.insert(ExerciseEntity(name = "other", equipment = Equipment.BARBELL, barWeightKg = 20.0, loadIncrementKg = 2.5, isUnilateral = false, skillId = null, primaryMuscleGroups = emptyList(), secondaryMuscleGroups = emptyList(), setupNotes = "", archivedAt = null))
-        val routineSlot = routineRepo.slots.values.first { it.dayId == dayId }
-        routineRepo.insertAlternative(SlotAlternativeEntity(slotId = routineSlot.id, exerciseId = other))
-        val viewModel = viewModel(FakePreferences(), FakeWorkoutTimer(), FakeElapsed())
-        viewModel.onEvent(WorkoutEvent.Start(dayId))
-        awaitUntil { viewModel.uiState.value.sessionId != null }
-        viewModel.onEvent(WorkoutEvent.SkipReadiness)
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.Prep }
-        val itemId = routineRepo.checklistItems.values.first().id
-        viewModel.onEvent(WorkoutEvent.CheckOff(itemId))
-        awaitUntil { viewModel.uiState.value.position is WorkoutPosition.WorkingSet }
+    fun restoreResumesALiveRestAndSkipsAFinishedOne() = workoutTest {
+        workoutRobot {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSet()
+            val end = captureRestEnd()
+            restore(millisBeforeEnd = 10_000)
+            assertRestEnd(end)
+            restoreAfterOvertime()
+        }
+    }
 
-        viewModel.onEvent(WorkoutEvent.ChooseAlternative(other))
-        awaitUntil { sessionRepo.slots.values.first().chosenAlternativeExerciseId == other }
-        val stored = sessionRepo.slots.values.first()
-        assertEquals(routineSlot.exerciseId, stored.prescriptionSnapshot.exerciseId)
-        assertNotEquals(other, stored.prescriptionSnapshot.exerciseId)
-        assertEquals("other", (viewModel.uiState.value.position as WorkoutPosition.WorkingSet).slot.exerciseName)
+    @Test
+    fun hardwareTriggerDebouncesAndUndoDeletesTheSet() = workoutTest {
+        workoutRobot(sets = 2) {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSet(EntryMethod.HARDWARE_KEY)
+            logSet(EntryMethod.HARDWARE_KEY)
+            assertSetLogged(count = 1)
+            assertState<WorkoutPosition.Resting>()
+            undo()
+            assertState<WorkoutPosition.WorkingSet>()
+            advanceRest(6)
+            logSet(EntryMethod.HARDWARE_KEY)
+            advanceRest(6)
+            undo()
+            assertSetLogged(count = 1)
+        }
+    }
+
+    @Test
+    fun shortOnTimeSkipsTheOptionalSlotAndReorderDoesNotTouchTheRoutine() = workoutTest {
+        workoutRobot(optional = true) {
+            val routineOrders = routineOrders()
+            startSession()
+            toggleShortOnTime()
+            assertRoutineUntouched(routineOrders)
+            moveFirstSlotDown()
+            assertSlotsReordered()
+            assertRoutineUntouched(routineOrders)
+        }
+    }
+
+    @Test
+    fun shortSetRestsForRestMaxAndSurvivesRestore() = workoutTest {
+        workoutRobot(sets = 2) {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            adjustReps(-1)
+            logSet()
+            assertSetLogged(reps = 4)
+            val end = captureRestEnd()
+            restore(millisBeforeEnd = 10_000)
+            assertRestEnd(end)
+            assertRestoredCountdownTargets(90)
+        }
+    }
+
+    @Test
+    fun choosingAnAlternativeDoesNotRewriteTheSnapshotExercise() = workoutTest {
+        workoutRobot {
+            val other = addAlternative("other")
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            chooseAlternative(other)
+            assertSnapshotPreserved(other, "other")
+        }
+    }
+
+    private fun workoutTest(block: suspend TestScope.() -> Unit) = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        try {
+            block()
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private suspend fun TestScope.workoutRobot(
+        optional: Boolean = false,
+        sets: Int = 1,
+        block: suspend WorkoutRobot.() -> Unit,
+    ) {
+        WorkoutRobot(seedDay(optional, sets), this).block()
+    }
+
+    private inner class WorkoutRobot(
+        private val dayId: Long,
+        private val scope: TestScope,
+    ) {
+        private val preferences = FakePreferences()
+        private val elapsed = SchedulerElapsedClock(scope)
+        private var timer = FakeWorkoutTimer()
+        private var viewModel = newViewModel()
+        private var sessionId: Long = 0
+        private var routineExerciseId: Long = 0
+        private var restEnd: Long = 0
+        private var restStartedElapsed: Long = 0
+        private var overtimeEnd: Long = 0
+
+        suspend fun startSession() {
+            val state = after(WorkoutEvent.Start(dayId)) { it.sessionId != null }
+            sessionId = state.sessionId!!
+        }
+
+        suspend fun submitReadiness(sleep: Int, soreness: Int, energy: Int) {
+            after(WorkoutEvent.SubmitReadiness(sleep, soreness, energy)) {
+                it.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS
+            }
+        }
+
+        suspend fun skipReadiness() {
+            after(WorkoutEvent.SkipReadiness) { it.position is WorkoutPosition.Prep }
+        }
+
+        suspend fun adjustReps(delta: Int) {
+            after(WorkoutEvent.Adjust(repDelta = delta)) { state ->
+                val working = state.position as? WorkoutPosition.WorkingSet
+                working != null && working.suggestion.reps == 5 + delta
+            }
+        }
+
+        suspend fun checkOffPrep() {
+            val itemId = routineRepo.checklistItems.values.first().id
+            after(WorkoutEvent.CheckOff(itemId)) { it.position is WorkoutPosition.WorkingSet }
+        }
+
+        suspend fun logSet(method: EntryMethod = EntryMethod.SCREEN) {
+            val before = setsForCurrentSlot().size
+            after(WorkoutEvent.Primary(method)) { state ->
+                val count = setsForCurrentSlot().size
+                when {
+                    count > before && state.position is WorkoutPosition.Resting -> true
+                    method == EntryMethod.HARDWARE_KEY &&
+                        count == before &&
+                        state.position is WorkoutPosition.Resting &&
+                        state.undoUntilElapsedRealtime != null -> true
+                    else -> false
+                }
+            }
+        }
+
+        /** Moves virtual time forward. Six seconds is past the 5s undo window. */
+        fun advanceRest(seconds: Long) {
+            scope.advanceTimeBy(seconds * 1_000)
+            scope.runCurrent()
+        }
+
+        suspend fun undo() {
+            after(WorkoutEvent.Undo) { state ->
+                setsForCurrentSlot().isEmpty() || state.undoUntilElapsedRealtime == null
+            }
+        }
+
+        suspend fun completeWorkout() {
+            after(WorkoutEvent.CompleteWorkout) { it.position is WorkoutPosition.Summary }
+        }
+
+        suspend fun tick() {
+            after(WorkoutEvent.Tick(elapsed.elapsedRealtime())) { it.summary != null }
+        }
+
+        suspend fun toggleShortOnTime() {
+            after(WorkoutEvent.ToggleShortOnTime) {
+                sessionRepo.slots.values.any { it.skipped && it.skipReason == "short on time" }
+            }
+        }
+
+        suspend fun moveFirstSlotDown() {
+            val before = sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id }
+            after(WorkoutEvent.MoveSlot(0, 1)) {
+                sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }.map { it.id } ==
+                    listOf(before[1], before[0])
+            }
+        }
+
+        suspend fun addAlternative(name: String): Long {
+            val other = exerciseRepo.insert(
+                ExerciseEntity(
+                    name = name,
+                    equipment = Equipment.BARBELL,
+                    barWeightKg = 20.0,
+                    loadIncrementKg = 2.5,
+                    isUnilateral = false,
+                    skillId = null,
+                    primaryMuscleGroups = emptyList(),
+                    secondaryMuscleGroups = emptyList(),
+                    setupNotes = "",
+                    archivedAt = null,
+                ),
+            )
+            val routineSlot = routineRepo.slots.values.first { it.dayId == dayId }
+            routineExerciseId = routineSlot.exerciseId
+            routineRepo.insertAlternative(SlotAlternativeEntity(slotId = routineSlot.id, exerciseId = other))
+            return other
+        }
+
+        suspend fun chooseAlternative(exerciseId: Long) {
+            after(WorkoutEvent.ChooseAlternative(exerciseId)) {
+                sessionRepo.slots.values.first().chosenAlternativeExerciseId == exerciseId
+            }
+        }
+
+        fun captureRestEnd(): Long {
+            restStartedElapsed = elapsed.elapsedRealtime()
+            val end = timer.spec!!.persistedEnd()!!
+            preferences.end.value = end
+            restEnd = end
+            overtimeEnd = timer.spec!!.overtimeEndElapsedRealtime!!
+            return end
+        }
+
+        suspend fun restore(millisBeforeEnd: Long) {
+            seekElapsed(restEnd - millisBeforeEnd)
+            reopen()
+            scope.runCurrent()
+            awaitCollected { it.position is WorkoutPosition.Resting }
+        }
+
+        suspend fun restoreAfterOvertime() {
+            seekElapsed(overtimeEnd + 1)
+            reopen()
+            scope.runCurrent()
+            awaitCollected { it.position is WorkoutPosition.Summary }
+        }
+
+        fun routineOrders(): List<Pair<Long, Int>> =
+            routineRepo.slots.values.filter { it.dayId == dayId }.map { it.id to it.sortOrder }
+
+        suspend fun assertSessionStatus(status: SessionStatus) {
+            assertEquals(status, sessionRepo.get(sessionId)!!.status)
+        }
+
+        fun assertWidgetRefreshed() {
+            assertEquals(1, widget.count)
+        }
+
+        fun assertRestEnd(end: Long) {
+            assertEquals(end, preferences.end.value)
+        }
+
+        fun assertRestoredCountdownTargets(seconds: Int) {
+            val spec = timer.spec!!
+            assertEquals(restEnd, spec.anchorElapsedRealtime)
+            assertEquals(spec.anchorElapsedRealtime, spec.overtimeEndElapsedRealtime)
+            assertEquals(seconds * 1_000L, restEnd - restStartedElapsed)
+        }
+
+        fun assertRoutineUntouched(expected: List<Pair<Long, Int>>) {
+            assertEquals(expected, routineOrders())
+        }
+
+        fun assertSlotsReordered() {
+            val ordered = sessionRepo.slots.values.sortedBy { it.prescriptionSnapshot.sortOrder }
+            assertEquals(listOf(0, 1), ordered.map { it.prescriptionSnapshot.sortOrder })
+        }
+
+        fun assertSetLogged(reps: Int? = null, count: Int? = null) {
+            val sets = setsForCurrentSlot()
+            if (count != null) assertEquals(count, sets.size)
+            if (reps != null) assertEquals(reps, sets.single().reps)
+        }
+
+        suspend fun assertSnapshotPreserved(otherId: Long, name: String) {
+            val stored = sessionRepo.slots.values.first()
+            assertEquals(routineExerciseId, stored.prescriptionSnapshot.exerciseId)
+            assertNotEquals(otherId, stored.prescriptionSnapshot.exerciseId)
+            val state = awaitCollected { it.position is WorkoutPosition.WorkingSet }
+            assertEquals(name, (state.position as WorkoutPosition.WorkingSet).slot.exerciseName)
+        }
+
+        suspend inline fun <reified T : WorkoutPosition> assertState() {
+            val state = awaitCollected { it.position is T }
+            assertTrue(state.position is T)
+        }
+
+        private fun setsForCurrentSlot(): List<SetEntryEntity> {
+            val slotId = sessionRepo.slots.values.first().id
+            return sessionRepo.sets.values.filter { it.sessionSlotId == slotId }
+        }
+
+        private fun reopen() {
+            timer = FakeWorkoutTimer()
+            viewModel = newViewModel(sessionId)
+        }
+
+        private fun newViewModel(existingSessionId: Long = 0L) = this@WorkoutViewModelTest.createViewModel(
+            preferences,
+            timer,
+            elapsed,
+            existingSessionId,
+        )
+
+        private fun seekElapsed(target: Long) {
+            val delta = target - elapsed.elapsedRealtime()
+            check(delta >= 0L) { "virtual time cannot move backwards" }
+            if (delta > 0L) scope.advanceTimeBy(delta)
+            scope.runCurrent()
+        }
+
+        private suspend fun after(
+            event: WorkoutEvent,
+            predicate: (WorkoutUiState) -> Boolean,
+        ): WorkoutUiState {
+            viewModel.onEvent(event)
+            scope.runCurrent()
+            return awaitCollected(predicate)
+        }
+
+        private suspend fun awaitCollected(predicate: (WorkoutUiState) -> Boolean): WorkoutUiState {
+            lateinit var matched: WorkoutUiState
+            viewModel.uiState.test(timeout = 5.seconds) {
+                var latest = awaitItem()
+                while (!predicate(latest)) {
+                    latest = awaitItem()
+                }
+                matched = latest
+                cancelAndIgnoreRemainingEvents()
+            }
+            return matched
+        }
     }
 
     private suspend fun seedDay(optional: Boolean, sets: Int = 1): Long {
@@ -285,15 +489,14 @@ class WorkoutViewModelTest {
         )
     }
 
-    private fun viewModel(
+    private fun createViewModel(
         preferences: TrainingPreferencesRepository,
         timer: WorkoutTimer,
         elapsed: ElapsedRealtimeClock,
         sessionId: Long = 0L,
     ) = WorkoutViewModel(
         SavedStateHandle(mapOf("sessionId" to sessionId)),
-        sessionRepo,
-        exerciseRepo,
+        FakeWorkoutRepository(sessionRepo, exerciseRepo),
         preferences,
         timer,
         clock,
@@ -307,22 +510,24 @@ class WorkoutViewModelTest {
             preferences,
             baselineRepo
         ),
-        StartWorkoutUseCase(
-            sessionRepo,
-            routineRepo,
-            programRepo,
-            clock
-        ),
-        CompleteWorkoutUseCase(
-            sessionRepo,
-            exerciseRepo,
-            skillRepo,
-            baselineRepo,
-            clock
-        ),
-        LogSetUseCase(
-            sessionRepo,
-            clock
+        WorkoutInteractors(
+            start = StartWorkoutUseCase(
+                sessionRepo,
+                routineRepo,
+                programRepo,
+                clock
+            ),
+            logSet = LogSetUseCase(
+                sessionRepo,
+                clock
+            ),
+            complete = CompleteWorkoutUseCase(
+                sessionRepo,
+                exerciseRepo,
+                skillRepo,
+                baselineRepo,
+                clock
+            ),
         ),
         ToggleShortOnTimeUseCase(
             sessionRepo
@@ -337,9 +542,14 @@ private class CountingRefresher : TodayWidgetRefresher {
     }
 }
 
-private class FakeElapsed : ElapsedRealtimeClock {
-    var now: Long = 1_000_000
-    override fun elapsedRealtime(): Long = now
+private class SchedulerElapsedClock(
+    private val scope: TestScope,
+) : ElapsedRealtimeClock {
+    override fun elapsedRealtime(): Long = BASE_ELAPSED_REALTIME + scope.testScheduler.currentTime
+
+    private companion object {
+        const val BASE_ELAPSED_REALTIME = 1_000_000L
+    }
 }
 
 private class FakeWorkoutTimer : WorkoutTimer {
@@ -366,6 +576,90 @@ private class FakeWorkoutTimer : WorkoutTimer {
 
     override fun refresh(nowElapsedRealtime: Long) {
         _snapshot.value = projectTimer(spec, nowElapsedRealtime)
+    }
+}
+
+private class FakeWorkoutRepository(
+    private val sessions: FakeSessionRepository,
+    private val exercises: FakeExerciseRepository,
+) : WorkoutRepository {
+    override suspend fun findSession(id: Long): WorkoutSessionState? {
+        val session = sessions.get(id) ?: return null
+        return WorkoutSessionState(status = session.status, isShortOnTime = session.isShortOnTime)
+    }
+
+    override suspend fun beginSession(
+        id: Long,
+        sleep: Int?,
+        soreness: Int?,
+        energy: Int?,
+        startedAt: Instant,
+    ): Boolean {
+        val session = sessions.get(id) ?: return false
+        sessions.update(
+            session.copy(
+                status = SessionStatus.IN_PROGRESS,
+                readinessSleep = sleep,
+                readinessSoreness = soreness,
+                readinessEnergy = energy,
+                startedAt = startedAt,
+            ),
+        )
+        return true
+    }
+
+    override suspend fun updateRecordedSet(sessionSlotId: Long, set: RecordedSet, loggedAt: Instant) {
+        sessions.updateSet(
+            SetEntryEntity(
+                id = set.id,
+                sessionSlotId = sessionSlotId,
+                setNumber = set.setNumber,
+                side = set.side,
+                setType = SetType.WORKING,
+                weightKg = set.weightKg,
+                reps = set.reps,
+                holdSec = set.holdSec,
+                rpe = set.rpe,
+                jointFlags = set.jointFlags,
+                entryMethod = set.entryMethod,
+                loggedAt = loggedAt,
+            ),
+        )
+    }
+
+    override suspend fun deleteSet(id: Long) {
+        sessions.deleteSet(id)
+    }
+
+    override suspend fun persistSlot(sessionId: Long, slot: WorkoutSlot) {
+        val entity = sessions.observeSlots(sessionId).first().firstOrNull { it.id == slot.sessionSlotId } ?: return
+        sessions.updateSlot(
+            entity.copy(
+                prescriptionSnapshot = entity.prescriptionSnapshot.copy(
+                    sortOrder = slot.sortOrder,
+                    setsMin = slot.prescription.setsMin,
+                    setsMax = slot.prescription.setsMax,
+                ),
+                chosenAlternativeExerciseId = slot.chosenAlternativeExerciseId,
+                skipped = slot.skipped,
+                skipReason = slot.skipReason,
+                formConfirmed = slot.formConfirmed,
+            ),
+        )
+    }
+
+    override suspend fun findExercise(id: Long): ExerciseDetails? {
+        val exercise = exercises.get(id) ?: return null
+        return ExerciseDetails(
+            name = exercise.name,
+            setupNotes = exercise.setupNotes,
+            isUnilateral = exercise.isUnilateral,
+        )
+    }
+
+    override suspend fun updateSetupNotes(exerciseId: Long, notes: String) {
+        val exercise = exercises.get(exerciseId) ?: return
+        exercises.update(exercise.copy(setupNotes = notes))
     }
 }
 
