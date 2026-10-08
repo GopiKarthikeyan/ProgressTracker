@@ -18,7 +18,7 @@ import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.screens.routine.formatKg
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 
 @Composable
 fun BaselineSetupScreen(
@@ -38,9 +38,9 @@ fun BaselineSetupContent(
     modifier: Modifier = Modifier,
 ) {
     BuilderColumn(title = stringResource(R.string.baseline_title), onBack = onBack, modifier = modifier) {
-        Text(stringResource(R.string.baseline_hint), color = White)
+        Text(stringResource(R.string.baseline_hint), color = Ink)
         if (state.loaded && state.days.isEmpty()) {
-            Text(stringResource(R.string.baseline_empty), color = White)
+            Text(stringResource(R.string.baseline_empty), color = Ink)
         }
         state.days.forEach { day ->
             Text(day.label, color = NeonAccent, style = MaterialTheme.typography.titleMedium)
@@ -56,16 +56,16 @@ fun BaselineSetupContent(
 @Composable
 private fun SlotRow(slot: BaselineSlotUi, onEvent: (BaselineSetupEvent) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth()) {
-        Text(slot.exerciseName, color = White)
+        Text(slot.exerciseName, color = Ink)
         if (slot.calibrate) {
             Text(stringResource(R.string.baseline_calibrating), color = NeonAccent)
         } else {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 EditorButton(stringResource(R.string.baseline_minus), { onEvent(BaselineSetupEvent.StepWeight(slot.slotId, -1)) })
-                NumericText(formatKg(slot.weightKg) + " kg", color = White)
+                NumericText(formatKg(slot.weightKg) + " kg", color = Ink)
                 EditorButton(stringResource(R.string.baseline_plus), { onEvent(BaselineSetupEvent.StepWeight(slot.slotId, 1)) })
                 EditorButton(stringResource(R.string.baseline_minus), { onEvent(BaselineSetupEvent.StepReps(slot.slotId, -1)) })
-                NumericText(slot.reps.toString(), color = White)
+                NumericText(slot.reps.toString(), color = Ink)
                 EditorButton(stringResource(R.string.baseline_plus), { onEvent(BaselineSetupEvent.StepReps(slot.slotId, 1)) })
             }
         }

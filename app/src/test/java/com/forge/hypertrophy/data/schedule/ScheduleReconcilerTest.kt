@@ -1,6 +1,5 @@
-package com.forge.hypertrophy.ui.screens.today
+package com.forge.hypertrophy.data.schedule
 
-import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.dao.CompletedSessionDay
 import com.forge.hypertrophy.data.dao.CompletedSetRow
 import com.forge.hypertrophy.data.entity.CardioPlanEntity
@@ -16,193 +15,87 @@ import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
-import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
-import com.forge.hypertrophy.domain.usecase.StartWorkoutUseCase
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SessionStatus
-import com.forge.hypertrophy.ui.screens.routine.awaitUntil
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 
-@OptIn(ExperimentalCoroutinesApi::class)
-class TodayViewModelTest {
+class ScheduleReconcilerTest {
     private val clock: Clock = Clock.fixed(Instant.parse("2026-10-05T12:00:00Z"), ZoneOffset.UTC)
-    private val programRepo = FakeProgramRepository()
-    private val routineRepo = FakeRoutineRepository()
-    private val sessionRepo = FakeSessionRepository()
+    private val programs = FakeProgramRepository()
+    private val routines = FakeRoutineRepository()
+    private val sessions = FakeSessionRepository()
     private val preferences = FakePreferences()
     private val cursor = MemoryCursor()
-    private val activeViewModels = mutableListOf<TodayViewModel>()
+    private val reconciler = ScheduleReconciler(programs, routines, sessions, preferences, cursor, clock)
 
-    @Before
-    fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
-    }
-
-    @After
-    fun tearDown() {
-        activeViewModels.forEach { it.viewModelScope.cancel() }
-        activeViewModels.clear()
-        Dispatchers.resetMain()
+    @Test
+    fun noActiveProgramWritesNothing() = runBlocking {
+        assertFalse(reconciler.reconcile())
+        assertEquals(null, preferences.lastReconciledDate.value)
     }
 
     @Test
-    fun noProgramReturnsNullDayLabel() = runBlocking {
-        val viewModel = today()
-        awaitUntil { viewModel.uiState.value.dayLabel == null }
-        assertNull(viewModel.uiState.value.dayLabel)
-        assertFalse(viewModel.uiState.value.isInProgress)
+    fun firstRunAnchorsTheCursorAtYesterdayWithoutInventingHistory() = runBlocking {
+        val programId = rollingProgram()
+        routines.insertDay(day(programId, "push", 0))
+        routines.insertDay(day(programId, "rest", 1, rest = true))
+        programs.setActive(programId)
+
+        assertTrue(reconciler.reconcile())
+
+        assertEquals(LocalDate.of(2026, 10, 4), preferences.lastReconciledDate.value)
+        assertTrue(cursor.autoCompletedRests.value.isEmpty())
+        assertEquals(0, programs.programs.getValue(programId).rollingSequence)
     }
 
     @Test
-    fun activeProgramReturnsCurrentDayLabel() = runBlocking {
-        val programId = programRepo.insert(
-            ProgramEntity(
-                name = "rolling",
-                scheduleMode = ScheduleMode.ROLLING,
-                rollingSequence = 0,
-                deloadActive = false,
-                deloadStartedOn = null,
-            ),
-        )
-        val dayId = routineRepo.insertDay(
-            RoutineDayEntity(
-                programId = programId,
-                label = "Push",
-                sequenceIndex = 0,
-                dayOfWeek = null,
-                isRest = false,
-            )
-        )
-        programRepo.setActive(programId)
+    fun daysAwayAdvanceTheRotationAndAutoCompleteRests() = runBlocking {
+        val programId = rollingProgram()
+        routines.insertDay(day(programId, "push", 0))
+        routines.insertDay(day(programId, "rest", 1, rest = true))
+        routines.insertDay(day(programId, "pull", 2))
+        programs.setActive(programId)
+        preferences.setLastReconciledDate(LocalDate.of(2026, 10, 2))
 
-        val viewModel = today()
-        awaitUntil { viewModel.uiState.value.dayLabel == "Push" }
-        assertEquals("Push", viewModel.uiState.value.dayLabel)
-        assertEquals(dayId, viewModel.uiState.value.scheduledDayId)
-        assertFalse(viewModel.uiState.value.isRestDay)
+        assertTrue(reconciler.reconcile())
+
+        // Oct 3 consumed push, Oct 4 consumed the rest day; today points at pull.
+        assertEquals(2, programs.programs.getValue(programId).rollingSequence)
+        assertEquals(setOf(LocalDate.of(2026, 10, 4)), cursor.autoCompletedRests.value)
+        assertEquals(LocalDate.of(2026, 10, 4), preferences.lastReconciledDate.value)
+
+        assertFalse(reconciler.reconcile())
     }
 
-    @Test
-    fun startWorkoutCreatesASessionAndRequestsNavigation() = runBlocking {
-        val programId = programRepo.insert(
-            ProgramEntity(
-                name = "rolling",
-                scheduleMode = ScheduleMode.ROLLING,
-                rollingSequence = 0,
-                deloadActive = false,
-                deloadStartedOn = null,
-            ),
-        )
-        val dayId = routineRepo.insertDay(
-            RoutineDayEntity(
-                programId = programId,
-                label = "Push",
-                sequenceIndex = 0,
-                dayOfWeek = null,
-                isRest = false,
-            ),
-        )
-        programRepo.setActive(programId)
+    private suspend fun rollingProgram(): Long = programs.insert(
+        ProgramEntity(
+            name = "rolling",
+            scheduleMode = ScheduleMode.ROLLING,
+            rollingSequence = 0,
+            deloadActive = false,
+            deloadStartedOn = null,
+        ),
+    )
 
-        val viewModel = today()
-        awaitUntil { viewModel.uiState.value.scheduledDayId == dayId }
-        viewModel.onEvent(TodayEvent.StartWorkout)
-        awaitUntil { viewModel.uiState.value.sessionToOpen != null }
-        val sessionId = viewModel.uiState.value.sessionToOpen
-        val session = sessionRepo.sessions.getValue(sessionId!!)
-        assertEquals(dayId, session.dayId)
-        assertEquals(SessionStatus.PLANNED, session.status)
-
-        viewModel.onEvent(TodayEvent.OpenedSession)
-        assertNull(viewModel.uiState.value.sessionToOpen)
-    }
-
-    @Test
-    fun restDayDoesNotStartASession() = runBlocking {
-        val programId = programRepo.insert(
-            ProgramEntity(
-                name = "rolling",
-                scheduleMode = ScheduleMode.ROLLING,
-                rollingSequence = 0,
-                deloadActive = false,
-                deloadStartedOn = null,
-            ),
-        )
-        routineRepo.insertDay(
-            RoutineDayEntity(
-                programId = programId,
-                label = "Rest",
-                sequenceIndex = 0,
-                dayOfWeek = null,
-                isRest = true,
-            ),
-        )
-        programRepo.setActive(programId)
-
-        val viewModel = today()
-        awaitUntil { viewModel.uiState.value.isRestDay }
-        viewModel.onEvent(TodayEvent.StartWorkout)
-        assertNull(viewModel.uiState.value.sessionToOpen)
-        assertTrue(sessionRepo.sessions.isEmpty())
-    }
-
-    @Test
-    fun inProgressSessionReflectedInState() = runBlocking {
-        val sessionId = sessionRepo.insert(
-            WorkoutSessionEntity(
-                date = LocalDate.of(2026, 10, 5),
-                dayId = 1L,
-                kind = com.forge.hypertrophy.domain.model.SessionKind.GYM,
-                status = SessionStatus.IN_PROGRESS,
-                isDeload = false,
-                isShortOnTime = false,
-                readinessSleep = null,
-                readinessSoreness = null,
-                readinessEnergy = null,
-                startedAt = clock.instant(),
-                completedAt = null,
-            )
-        )
-
-        val viewModel = today()
-        awaitUntil { viewModel.uiState.value.isInProgress }
-        assertTrue(viewModel.uiState.value.isInProgress)
-        assertEquals(sessionId, viewModel.uiState.value.activeSessionId)
-    }
-
-    private fun today(): TodayViewModel {
-        val vm = TodayViewModel(
-            programs = programRepo,
-            routines = routineRepo,
-            sessions = sessionRepo,
-            preferences = preferences,
-            cursor = cursor,
-            clock = clock,
-            startWorkout = StartWorkoutUseCase(sessionRepo, routineRepo, programRepo, clock),
-        )
-        activeViewModels.add(vm)
-        return vm
-    }
+    private fun day(programId: Long, label: String, sequence: Int, rest: Boolean = false) = RoutineDayEntity(
+        programId = programId,
+        label = label,
+        sequenceIndex = sequence,
+        dayOfWeek = null,
+        isRest = rest,
+    )
 
     private class MemoryCursor : ScheduleCursorRepository {
         private val swaps = MutableStateFlow<Map<LocalDate, Long>>(emptyMap())

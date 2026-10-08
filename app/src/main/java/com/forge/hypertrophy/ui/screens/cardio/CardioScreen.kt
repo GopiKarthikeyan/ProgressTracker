@@ -35,7 +35,7 @@ import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 import java.util.Locale
 
 @Composable
@@ -63,7 +63,7 @@ fun CardioScreen(
             }
             Text(
                 stringResource(R.string.cardio_title),
-                color = White,
+                color = Ink,
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(top = 16.dp),
             )
@@ -94,15 +94,15 @@ private fun TrackingSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit
     Section(stringResource(R.string.cardio_gps)) {
         if (state.paused) Text(stringResource(R.string.cardio_paused), color = NeonAccent)
         Row {
-            Text(stringResource(R.string.cardio_distance), color = White, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.cardio_distance), color = Ink, modifier = Modifier.weight(1f))
             NumericText(formatKm(state.liveDistanceM), color = NeonAccent)
         }
         Row {
-            Text(stringResource(R.string.cardio_duration), color = White, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.cardio_duration), color = Ink, modifier = Modifier.weight(1f))
             NumericText(formatClock(state.liveMovingSec), color = NeonAccent)
         }
         if (state.livePoints.size < 2) {
-            Text(stringResource(R.string.cardio_route_empty), color = White)
+            Text(stringResource(R.string.cardio_route_empty), color = Ink)
         }
         RouteCanvas(state.livePoints)
         WideButton(stringResource(R.string.cardio_stop)) { onEvent(CardioEvent.StopGps) }
@@ -120,11 +120,11 @@ private fun LogForm(
         Field(stringResource(R.string.cardio_distance_km), state.distanceKm) { onEvent(CardioEvent.Distance(it)) }
         Field(stringResource(R.string.cardio_minutes), state.minutes) { onEvent(CardioEvent.Minutes(it)) }
         Field(stringResource(R.string.cardio_seconds), state.seconds) { onEvent(CardioEvent.Seconds(it)) }
-        Text(stringResource(R.string.cardio_type), color = White)
+        Text(stringResource(R.string.cardio_type), color = Ink)
         CardioType.entries.forEach { type ->
             WideButton(typeLabel(type), enabled = state.type != type) { onEvent(CardioEvent.TypeChosen(type)) }
         }
-        Text(stringResource(R.string.cardio_shoe), color = White)
+        Text(stringResource(R.string.cardio_shoe), color = Ink)
         WideButton(stringResource(R.string.cardio_shoe_none), enabled = state.gearId != null) {
             onEvent(CardioEvent.GearChosen(null))
         }
@@ -144,20 +144,20 @@ private fun LogForm(
 private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
     Section(stringResource(R.string.cardio_logs)) {
         if (state.logs.isEmpty()) {
-            Text(stringResource(R.string.cardio_logs_empty), color = White)
+            Text(stringResource(R.string.cardio_logs_empty), color = Ink)
             return@Section
         }
         state.logs.forEach { log ->
-            Text(typeLabel(log.type), color = White)
+            Text(typeLabel(log.type), color = Ink)
             Row {
                 Text(
                     if (log.source == CardioSource.GPS) stringResource(R.string.cardio_source_gps) else stringResource(R.string.cardio_source_manual),
-                    color = White,
+                    color = Ink,
                     modifier = Modifier.weight(1f),
                 )
                 NumericText(formatKm(log.distanceM), color = NeonAccent)
             }
-            log.gearName?.let { Text(it, color = White) }
+            log.gearName?.let { Text(it, color = Ink) }
             WideButton(stringResource(R.string.cardio_edit)) { onEvent(CardioEvent.Edit(log.id)) }
         }
     }
@@ -167,16 +167,16 @@ private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
 private fun GearSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
     Section(stringResource(R.string.cardio_gear)) {
         if (state.gear.isEmpty()) {
-            Text(stringResource(R.string.cardio_gear_empty), color = White)
+            Text(stringResource(R.string.cardio_gear_empty), color = Ink)
         }
         state.gear.forEach { shoe ->
-            Text(shoe.name, color = White)
+            Text(shoe.name, color = Ink)
             Row {
-                Text(stringResource(R.string.cardio_used), color = White, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.cardio_used), color = Ink, modifier = Modifier.weight(1f))
                 NumericText(formatKm(shoe.usedM), color = NeonAccent)
             }
             Row {
-                Text(stringResource(R.string.cardio_limit), color = White, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.cardio_limit), color = Ink, modifier = Modifier.weight(1f))
                 NumericText(formatKm(shoe.limitM.toDouble()), color = NeonAccent)
             }
             if (shoe.retired) Text(stringResource(R.string.cardio_retire), color = NeonAccent)

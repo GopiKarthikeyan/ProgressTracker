@@ -38,7 +38,7 @@ import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.delay
@@ -108,7 +108,7 @@ fun VideoComparisonScreen(
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
                 Text(stringResource(R.string.builder_back))
             }
-            Text(stringResource(R.string.media_compare), color = White, style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.media_compare), color = Ink, style = MaterialTheme.typography.titleMedium)
         }
         Row(
             modifier = Modifier
@@ -121,7 +121,7 @@ fun VideoComparisonScreen(
         }
         Row(modifier = Modifier.fillMaxWidth()) {
             NumericText(formatMs(playback.positionMs), color = NeonAccent, modifier = Modifier.weight(1f))
-            NumericText(formatMs(playback.lengthMs), color = White)
+            NumericText(formatMs(playback.lengthMs), color = Ink)
         }
         Slider(
             value = if (playback.lengthMs == 0L) 0f else playback.positionMs.toFloat() / playback.lengthMs,
@@ -163,7 +163,7 @@ fun VideoComparisonScreen(
 @Composable
 private fun ClipPane(player: ExoPlayer, label: String, modifier: Modifier) {
     Column(modifier = modifier) {
-        Text(label, color = White)
+        Text(label, color = Ink)
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()
@@ -182,7 +182,7 @@ private fun ClipPane(player: ExoPlayer, label: String, modifier: Modifier) {
 @Composable
 private fun OffsetRow(label: String, offsetMs: Long, onOffset: (Long) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Text(label, color = White, modifier = Modifier.weight(1f))
+        Text(label, color = Ink, modifier = Modifier.weight(1f))
         ControlButton("-", Modifier.heightIn(min = TouchTargets.Workout)) { onOffset(offsetMs - OFFSET_STEP_MS) }
         NumericText(formatMs(offsetMs), color = NeonAccent)
         ControlButton("+", Modifier.heightIn(min = TouchTargets.Workout)) { onOffset(offsetMs + OFFSET_STEP_MS) }

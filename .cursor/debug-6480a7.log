@@ -1,0 +1,4 @@
+{"sessionId":"6480a7","runId":"post-fix","hypothesisId":"C","location":"WorkoutViewModel.choose","message":"alternative applied","data":{"requestedId":2,"name":"other","barKg":15.0},"timestamp":1775001600000}
+{"sessionId":"6480a7","runId":"post-fix","hypothesisId":"C","location":"WorkoutViewModel.choose","message":"alternative applied","data":{"requestedId":null,"name":"press","barKg":20.0},"timestamp":1775001600000}
+{"sessionId":"6480a7","runId":"post-fix","hypothesisId":"A","location":"CompleteWorkoutUseCase.nextSessionNotes","message":"next session suggestion","data":{"incrementKg":2.5,"sessionCount":3,"action":"STALL","weightKg":null,"exercise":"press"},"timestamp":1775001600000}
+{"sessionId":"6480a7","runId":"post-fix","hypothesisId":"A","location":"CompleteWorkoutUseCase.nextSessionNotes","message":"next session suggestion","data":{"incrementKg":5.0,"sessionCount":1,"action":"INCREASE","weightKg":105.0,"exercise":"press"},"timestamp":1775001600000}

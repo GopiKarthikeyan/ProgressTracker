@@ -19,6 +19,7 @@ import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.repository.SkillRepository
 import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.schedule.ScheduleLoader
+import com.forge.hypertrophy.data.schedule.ScheduleReconciler
 import com.forge.hypertrophy.data.schedule.toPrescription
 import com.forge.hypertrophy.domain.engine.DatedValue
 import com.forge.hypertrophy.domain.engine.DeloadEngine
@@ -49,7 +50,6 @@ import com.forge.hypertrophy.domain.model.SlotPrescription
 import com.forge.hypertrophy.domain.model.LoggedSet
 import com.forge.hypertrophy.domain.model.TrainingDay
 import com.forge.hypertrophy.domain.usecase.GetTodaysWorkoutUseCase
-import com.forge.hypertrophy.domain.usecase.ReconcileScheduleUseCase
 import com.forge.hypertrophy.domain.usecase.ScheduleEdit
 import com.forge.hypertrophy.domain.usecase.SkipToNextUseCase
 import com.forge.hypertrophy.domain.usecase.SwapWithTomorrowUseCase
@@ -82,6 +82,7 @@ class DashboardViewModel @Inject constructor(
     private val clock: Clock,
     private val widget: TodayWidgetRefresher,
     private val baselines: BaselineRepository,
+    private val reconciler: ScheduleReconciler,
 ) : ViewModel() {
     private val loader = ScheduleLoader(programs, routines, sessions, preferences, cursor)
     private val streaks = StreakCalculator()
@@ -93,7 +94,6 @@ class DashboardViewModel @Inject constructor(
     private val estimator = SessionEstimator()
     private val planner = ShortOnTimePlanner(estimator)
     private val todayWorkout = GetTodaysWorkoutUseCase(clock)
-    private val reconcile = ReconcileScheduleUseCase(clock)
     private val takeRest = TakeRestNowUseCase(clock, streaks)
     private val skipToNext = SkipToNextUseCase(clock, streaks)
     private val swapTomorrow = SwapWithTomorrowUseCase(clock, streaks)
@@ -234,11 +234,7 @@ class DashboardViewModel @Inject constructor(
                 publishHistory(program = null, snapshot = null, slots = emptyList())
                 return
             }
-            val loaded = loader.load(program) ?: return
-            val reconciled = reconcile.reconcile(loaded.snapshot)
-            if (reconciled != loaded.snapshot) {
-                persist(program, loaded.days, reconciled)
-            }
+            reconciler.reconcile(program)
             publish(program)
         }
     }

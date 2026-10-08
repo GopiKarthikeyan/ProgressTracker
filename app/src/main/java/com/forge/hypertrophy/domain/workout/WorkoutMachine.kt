@@ -47,6 +47,7 @@ data class WorkoutSlot(
     val chosenAlternativeExerciseId: Long? = null,
     val formConfirmed: Boolean = false,
     val sets: List<RecordedSet> = emptyList(),
+    val skillHold: SkillHoldHint? = null,
 ) {
     val activeExerciseId: Long
         get() = chosenAlternativeExerciseId ?: prescription.exerciseId
@@ -97,6 +98,8 @@ sealed interface WorkoutPosition {
         val suggestion: SetSuggestion,
         val suggestSkip: Boolean,
         val needsFormCheck: Boolean,
+        val slotIndex: Int = 0,
+        val slotCount: Int = 1,
         val requiredPlates: List<Double> = emptyList(),
         val regulation: RegulationPrompt? = null,
     ) : WorkoutPosition
@@ -154,6 +157,7 @@ fun workoutPosition(state: WorkoutMachineState): WorkoutPosition {
                 state.baselineBySessionSlot[item.slot.sessionSlotId],
                 state.ownHistoryBySessionSlot[item.slot.sessionSlotId],
             )
+            val ordered = state.slots.sortedBy { it.sortOrder }
             WorkoutPosition.WorkingSet(
                 slot = item.slot,
                 setNumber = item.setNumber,
@@ -162,6 +166,8 @@ fun workoutPosition(state: WorkoutMachineState): WorkoutPosition {
                 suggestion = suggestion,
                 suggestSkip = suggestSkip(item.slot, state),
                 needsFormCheck = item.slot.prescription.category == SlotCategory.SKILL && !item.slot.formConfirmed,
+                slotIndex = ordered.indexOfFirst { it.sessionSlotId == item.slot.sessionSlotId }.coerceAtLeast(0),
+                slotCount = ordered.size.coerceAtLeast(1),
             )
         }
         is AgendaItem.Rest -> WorkoutPosition.Resting(
@@ -284,19 +290,26 @@ fun suggestionFor(
 ): SetSuggestion {
     val prescription = slot.prescription
     val hold = prescription.metricType == MetricType.HOLD || prescription.metricType == MetricType.HOLD_OR_REPS
+    fun holdSeconds(preferred: Int?): Int? = if (!hold) {
+        null
+    } else {
+        preferred ?: prescription.holdTargetSec ?: slot.skillHold?.let { hint ->
+            skillHoldSeconds(hint.stage, hint.targets, slot.sets.sumOf { it.holdSec ?: 0 })
+        }
+    }
     if (ownPrevious != null) {
         return SetSuggestion(
             weightKg = ownPrevious.weightKg,
             reps = if (hold) null else ownPrevious.reps,
-            holdSec = if (hold) ownPrevious.holdSec ?: prescription.holdTargetSec else null,
-            fromPreviousSession = true,
+            holdSec = holdSeconds(ownPrevious.holdSec),
+            fromPreviousSession = !hold || ownPrevious.holdSec != null,
         )
     }
     if (baseline?.awaitingCalibration == true) {
         return SetSuggestion(
             weightKg = null,
             reps = if (hold) null else prescription.repsLow ?: prescription.repsHigh,
-            holdSec = if (hold) prescription.holdTargetSec else null,
+            holdSec = holdSeconds(null),
             fromPreviousSession = false,
         )
     }
@@ -313,14 +326,14 @@ fun suggestionFor(
         return SetSuggestion(
             weightKg = previous.weightKg,
             reps = if (hold) null else previous.reps,
-            holdSec = if (hold) previous.holdSec ?: prescription.holdTargetSec else null,
-            fromPreviousSession = true,
+            holdSec = holdSeconds(previous.holdSec),
+            fromPreviousSession = !hold || previous.holdSec != null,
         )
     }
     return SetSuggestion(
         weightKg = null,
         reps = if (hold) null else prescription.repsLow ?: prescription.repsHigh,
-        holdSec = if (hold) prescription.holdTargetSec else null,
+        holdSec = holdSeconds(null),
         fromPreviousSession = false,
     )
 }

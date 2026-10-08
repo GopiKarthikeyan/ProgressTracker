@@ -11,7 +11,7 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 
 @Composable
 fun SnapshotsScreen(
@@ -31,8 +31,8 @@ fun SnapshotsContent(
     modifier: Modifier = Modifier,
 ) {
     BuilderColumn(title = stringResource(R.string.snapshots_title), onBack = onBack, modifier = modifier) {
-        Text(stringResource(R.string.snapshots_hint), color = White)
-        if (state.snapshots.isEmpty()) Text(stringResource(R.string.snapshots_empty), color = White)
+        Text(stringResource(R.string.snapshots_hint), color = Ink)
+        if (state.snapshots.isEmpty()) Text(stringResource(R.string.snapshots_empty), color = Ink)
         state.snapshots.forEach { snapshot ->
             EditorButton(
                 label = stringResource(R.string.snapshots_restore, snapshot.schemaVersion, snapshot.label),

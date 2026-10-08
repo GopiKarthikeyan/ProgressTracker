@@ -42,7 +42,7 @@ import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 import java.io.File
 
 @Composable
@@ -75,13 +75,13 @@ fun PhysiqueCaptureScreen(
             }
             Text(
                 state.pose?.let { poseLabel(it) } ?: stringResource(R.string.media_physique_complete),
-                color = White,
+                color = Ink,
                 style = MaterialTheme.typography.titleMedium,
             )
         }
         Text(
             pluralStringResource(R.plurals.media_physique_progress, Pose.entries.size, state.done.size, Pose.entries.size),
-            color = White,
+            color = Ink,
         )
         Box(
             modifier = Modifier
@@ -91,7 +91,7 @@ fun PhysiqueCaptureScreen(
             if (cameraGranted && state.phase != PhotoPhase.COMPLETE) {
                 Shutter(state, viewModel::onEvent)
             } else if (!cameraGranted) {
-                Text(stringResource(R.string.media_camera_permission), color = White)
+                Text(stringResource(R.string.media_camera_permission), color = Ink)
             }
             val ghost by rememberPhoto(state.ghostPath)
             ghost?.let { bitmap ->

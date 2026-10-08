@@ -278,8 +278,11 @@ class SettingsViewModel @Inject constructor(
     private fun saveWeekdays() {
         val rows = renderDays()
         val conflicts = rows
-            .filter { it.weekday != null }
-            .groupBy { it.weekday!! }
+            .mapNotNull { day ->
+                val weekday = day.weekday ?: return@mapNotNull null
+                weekday to day
+            }
+            .groupBy(keySelector = { it.first }, valueTransform = { it.second })
             .filterValues { it.size > 1 }
             .map { (weekday, days) -> WeekdayConflict(weekday, days.map { it.label }) }
             .sortedBy { it.weekday }

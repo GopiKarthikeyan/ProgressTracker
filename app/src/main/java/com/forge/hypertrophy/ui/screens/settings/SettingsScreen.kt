@@ -30,7 +30,7 @@ import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.screens.routine.NumericEntry
 import com.forge.hypertrophy.ui.screens.routine.formatKg
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 
 private const val TRANSITION_REST_STEP_SECONDS = 15
 
@@ -210,7 +210,7 @@ private fun DefaultRestSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.settings_default_rest), style = MaterialTheme.typography.titleMedium)
-        Text(stringResource(R.string.settings_default_rest_hint), color = White.copy(alpha = 0.72f))
+        Text(stringResource(R.string.settings_default_rest_hint), color = Ink.copy(alpha = 0.72f))
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             EditorButton(
                 label = stringResource(R.string.settings_seconds_less),

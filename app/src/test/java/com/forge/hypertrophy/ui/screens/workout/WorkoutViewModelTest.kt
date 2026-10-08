@@ -30,7 +30,9 @@ import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
+import com.forge.hypertrophy.domain.model.ProgressionAction
 import com.forge.hypertrophy.domain.model.ProgressionRule
+import com.forge.hypertrophy.domain.model.SlotPrescription
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
@@ -76,10 +78,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -111,6 +115,29 @@ class WorkoutViewModelTest {
             assertState<WorkoutPosition.Summary>()
             assertSessionStatus(SessionStatus.COMPLETED)
             assertWidgetRefreshed()
+        }
+    }
+
+    @Test
+    fun aDoubleTapLogsOneSet() = workoutTest {
+        workoutRobot(sets = 3) {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSetTwiceWithoutWaiting()
+            assertSetLogged(count = 1)
+            assertState<WorkoutPosition.WorkingSet>()
+        }
+    }
+
+    @Test
+    fun restCountdownFollowsTheTimerSnapshot() = workoutTest {
+        workoutRobot {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSet()
+            assertTimerAdvancesWithTheClock()
         }
     }
 
@@ -189,6 +216,55 @@ class WorkoutViewModelTest {
         }
     }
 
+    @Test
+    fun fiveKgExerciseAtTheTopOfTheRangeSuggestsFiveKgMore() = workoutTest {
+        workoutRobot {
+            setIncrement(5.0)
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            adjustWeight(100.0)
+            adjustReps(3)
+            logSet()
+            val summary = completeWorkout()
+            val note = summary.summary!!.nextSession.single()
+            assertEquals(ProgressionAction.INCREASE, note.action)
+            assertEquals(105.0, note.weightKg!!, 0.001)
+        }
+    }
+
+    @Test
+    fun threeFlatSessionsSuggestAStall() = workoutTest {
+        workoutRobot {
+            seedFlatSessions(weightKg = 100.0, reps = 6, count = 2)
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSet()
+            val summary = completeWorkout()
+            val note = summary.summary!!.nextSession.single()
+            assertEquals(ProgressionAction.STALL, note.action)
+        }
+    }
+
+    @Test
+    fun returningToTheProgrammedExerciseRestoresItsNameAndBar() = workoutTest {
+        workoutRobot {
+            val other = addAlternative("other", barWeightKg = 15.0)
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            chooseAlternative(other)
+            val swapped = workingExercise()
+            chooseProgrammedExercise()
+            val restored = workingExercise()
+            assertEquals("other", swapped.first)
+            assertEquals(15.0, swapped.second, 0.001)
+            assertEquals("press", restored.first)
+            assertEquals(20.0, restored.second, 0.001)
+        }
+    }
+
     private fun workoutTest(block: suspend TestScope.() -> Unit) = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         try {
@@ -242,6 +318,13 @@ class WorkoutViewModelTest {
             }
         }
 
+        suspend fun adjustWeight(kg: Double) {
+            after(WorkoutEvent.Adjust(weightDeltaKg = kg)) { state ->
+                val working = state.position as? WorkoutPosition.WorkingSet
+                working != null && working.suggestion.weightKg == kg
+            }
+        }
+
         suspend fun checkOffPrep() {
             val itemId = routineRepo.checklistItems.values.first().id
             after(WorkoutEvent.CheckOff(itemId)) { it.position is WorkoutPosition.WorkingSet }
@@ -262,6 +345,21 @@ class WorkoutViewModelTest {
             }
         }
 
+        /**
+         * Two screen taps before either has finished writing. Serialised, the
+         * second tap lands on the rest screen and dismisses it, so the session
+         * ends up on set two with exactly one set written.
+         */
+        suspend fun logSetTwiceWithoutWaiting() {
+            viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN))
+            viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN))
+            scope.advanceUntilIdle()
+            awaitCollected { state ->
+                val working = state.position as? WorkoutPosition.WorkingSet
+                working != null && working.setNumber == 2
+            }
+        }
+
         /** Moves virtual time forward. Six seconds is past the 5s undo window. */
         fun advanceRest(seconds: Long) {
             scope.advanceTimeBy(seconds * 1_000)
@@ -274,12 +372,25 @@ class WorkoutViewModelTest {
             }
         }
 
-        suspend fun completeWorkout() {
+        suspend fun completeWorkout(): WorkoutUiState =
             after(WorkoutEvent.CompleteWorkout) { it.position is WorkoutPosition.Summary }
-        }
 
         suspend fun tick() {
-            after(WorkoutEvent.Tick(elapsed.elapsedRealtime())) { it.summary != null }
+            after(WorkoutEvent.Tick) { it.summary != null }
+        }
+
+        suspend fun assertTimerAdvancesWithTheClock() {
+            val spec = checkNotNull(timer.spec)
+            val now = elapsed.elapsedRealtime()
+            val initial = spec.anchorElapsedRealtime - now
+            check(initial > 2_000)
+            timer.refresh(now)
+            scope.runCurrent()
+            awaitCollected { it.timer.remainingMillis == initial }
+            scope.advanceTimeBy(2_000)
+            timer.refresh(elapsed.elapsedRealtime())
+            scope.runCurrent()
+            awaitCollected { it.timer.remainingMillis == initial - 2_000 }
         }
 
         suspend fun toggleShortOnTime() {
@@ -296,12 +407,86 @@ class WorkoutViewModelTest {
             }
         }
 
-        suspend fun addAlternative(name: String): Long {
+        suspend fun setIncrement(kg: Double) {
+            val exercise = exerciseRepo.exercises.values.first()
+            exerciseRepo.update(exercise.copy(loadIncrementKg = kg))
+        }
+
+        suspend fun seedFlatSessions(weightKg: Double, reps: Int, count: Int) {
+            val routine = routineRepo.slots.values.first { it.dayId == dayId }
+            val prescription = SlotPrescription(
+                exerciseId = routine.exerciseId,
+                category = routine.category,
+                sortOrder = routine.sortOrder,
+                metricType = routine.metricType,
+                setsMin = routine.setsMin,
+                setsMax = routine.setsMax,
+                repsLow = routine.repsLow,
+                repsHigh = routine.repsHigh,
+                isAmrap = routine.isAmrap,
+                holdTargetSec = routine.holdTargetSec,
+                blockDurationSec = routine.blockDurationSec,
+                restMinSec = routine.restMinSec,
+                restMaxSec = routine.restMaxSec,
+                restAsNeeded = routine.restAsNeeded,
+                isOptional = routine.isOptional,
+                skipReasonLabel = routine.skipReasonLabel,
+                targetSkillStepId = routine.targetSkillStepId,
+                progressionRule = routine.progressionRule,
+                incrementOverrideKg = routine.incrementOverrideKg,
+            )
+            repeat(count) { index ->
+                val whenAt = Instant.parse("2026-03-0${index + 1}T00:00:00Z")
+                val priorId = sessionRepo.insert(
+                    WorkoutSessionEntity(
+                        date = LocalDate.of(2026, 3, index + 1),
+                        dayId = dayId,
+                        kind = SessionKind.GYM,
+                        status = SessionStatus.COMPLETED,
+                        isDeload = false,
+                        isShortOnTime = false,
+                        readinessSleep = null,
+                        readinessSoreness = null,
+                        readinessEnergy = null,
+                        startedAt = whenAt,
+                        completedAt = whenAt,
+                    ),
+                )
+                val slotId = sessionRepo.insertSlot(
+                    SessionSlotEntity(
+                        sessionId = priorId,
+                        slotId = routine.id,
+                        prescriptionSnapshot = prescription,
+                        chosenAlternativeExerciseId = null,
+                        skipped = false,
+                        skipReason = null,
+                        formConfirmed = null,
+                    ),
+                )
+                sessionRepo.insertSet(
+                    SetEntryEntity(
+                        sessionSlotId = slotId,
+                        setNumber = 1,
+                        side = SetSide.BOTH,
+                        setType = SetType.WORKING,
+                        weightKg = weightKg,
+                        reps = reps,
+                        holdSec = null,
+                        rpe = null,
+                        jointFlags = emptyList(),
+                        entryMethod = EntryMethod.SCREEN,
+                        loggedAt = whenAt,
+                    ),
+                )
+            }
+        }
+
+        suspend fun addAlternative(name: String, barWeightKg: Double = 20.0): Long {
             val other = exerciseRepo.insert(
                 ExerciseEntity(
                     name = name,
                     equipment = Equipment.BARBELL,
-                    barWeightKg = 20.0,
+                    barWeightKg = barWeightKg,
                     loadIncrementKg = 2.5,
                     isUnilateral = false,
                     skillId = null,
@@ -321,6 +506,18 @@ class WorkoutViewModelTest {
             after(WorkoutEvent.ChooseAlternative(exerciseId)) {
                 sessionRepo.slots.values.first().chosenAlternativeExerciseId == exerciseId
             }
+        }
+
+        suspend fun chooseProgrammedExercise() {
+            after(WorkoutEvent.ChooseAlternative(null)) {
+                sessionRepo.slots.values.first().chosenAlternativeExerciseId == null
+            }
+        }
+
+        suspend fun workingExercise(): Pair<String, Double> {
+            val state = awaitCollected { it.position is WorkoutPosition.WorkingSet }
+            val slot = (state.position as WorkoutPosition.WorkingSet).slot
+            return slot.exerciseName to (slot.barWeightKg ?: -1.0)
         }
 
         fun captureRestEnd(): Long {
@@ -397,7 +594,7 @@ class WorkoutViewModelTest {
         }
 
         private fun setsForCurrentSlot(): List<SetEntryEntity> {
-            val slotId = sessionRepo.slots.values.first().id
+            val slotId = sessionRepo.slots.values.first { it.sessionId == sessionId }.id
             return sessionRepo.sets.values.filter { it.sessionSlotId == slotId }
         }
 
@@ -508,7 +705,8 @@ class WorkoutViewModelTest {
             routineRepo,
             exerciseRepo,
             preferences,
-            baselineRepo
+            baselineRepo,
+            skillRepo,
         ),
         WorkoutInteractors(
             start = StartWorkoutUseCase(
@@ -654,6 +852,8 @@ private class FakeWorkoutRepository(
             name = exercise.name,
             setupNotes = exercise.setupNotes,
             isUnilateral = exercise.isUnilateral,
+            equipment = exercise.equipment,
+            barWeightKg = exercise.barWeightKg,
         )
     }
 
@@ -738,6 +938,8 @@ private class FakeSessionRepository : SessionRepository {
     }
     override fun observeSets(sessionSlotId: Long): Flow<List<SetEntryEntity>> = setsFlow.map { it.filter { s -> s.sessionSlotId == sessionSlotId } }
     override suspend fun insertSet(entry: SetEntryEntity): Long {
+        // Room hops to its write executor here; yield so interleaving bugs surface.
+        yield()
         val id = (sets.keys.maxOrNull() ?: 0L) + 1
         val saved = entry.copy(id = id)
         sets[id] = saved

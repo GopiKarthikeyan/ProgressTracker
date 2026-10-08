@@ -11,7 +11,9 @@ import com.forge.hypertrophy.domain.engine.E1rmCalculator
 import com.forge.hypertrophy.domain.engine.LiftSample
 import com.forge.hypertrophy.domain.engine.LoadRounding
 import com.forge.hypertrophy.domain.engine.PrDetector
+import com.forge.hypertrophy.domain.engine.StartingWeight
 import com.forge.hypertrophy.domain.engine.StaticSkillEngine
+import com.forge.hypertrophy.domain.engine.slotSessionsForProgression
 import com.forge.hypertrophy.domain.model.LoggedSet
 import com.forge.hypertrophy.domain.model.SessionStatus
 import com.forge.hypertrophy.domain.model.SetType
@@ -66,7 +68,7 @@ class CompleteWorkoutUseCase @Inject constructor(
         return WorkoutSummary(
             prs = prNotes,
             stagePrompts = stagePrompts(machine),
-            nextSession = nextSessionNotes(machine),
+            nextSession = nextSessionNotes(sessionId, machine),
         )
     }
 
@@ -135,34 +137,56 @@ class CompleteWorkoutUseCase @Inject constructor(
         return prompts
     }
 
-    private fun nextSessionNotes(machine: WorkoutMachineState): List<NextSessionNote> = machine.slots.mapNotNull { slot ->
-        val low = slot.prescription.repsLow ?: return@mapNotNull null
-        val high = slot.prescription.repsHigh ?: return@mapNotNull null
-        if (slot.sets.isEmpty()) return@mapNotNull null
-        val hint = machine.baselineBySessionSlot[slot.sessionSlotId]
-        val awaiting = hint?.awaitingCalibration == true
-        val loggedWeight = slot.sets.mapNotNull { it.weightKg }.maxOrNull()
-        val suggestion = progression.suggest(
-            ProgressionInput(
-                rule = slot.prescription.progressionRule,
-                equipment = slot.equipment,
-                metricType = slot.prescription.metricType,
-                repsLow = low,
-                repsHigh = high,
-                exerciseIncrementKg = 2.5,
-                incrementOverrideKg = slot.prescription.incrementOverrideKg,
-                slotSessions = listOf(
-                    SlotSession(
-                        slot.sets.map { LoggedSet(it.weightKg, it.reps, SetType.WORKING) },
-                        calibration = awaiting,
-                    ),
+    private suspend fun nextSessionNotes(sessionId: Long, machine: WorkoutMachineState): List<NextSessionNote> {
+        val prior = sessions.completedSets().filter { it.sessionId != sessionId }
+        return machine.slots.mapNotNull { slot ->
+            val low = slot.prescription.repsLow ?: return@mapNotNull null
+            val high = slot.prescription.repsHigh ?: return@mapNotNull null
+            if (slot.sets.isEmpty()) return@mapNotNull null
+            val exercise = exercises.get(slot.activeExerciseId)
+            val routineId = slot.routineSlotId
+            val stored = routineId?.let { baselines.forSlot(it) }
+            val starting = stored?.let { StartingWeight(it.weightKg, it.repsHint, it.setAt) }
+            val hint = machine.baselineBySessionSlot[slot.sessionSlotId]
+            val awaiting = if (starting != null) starting.awaitingCalibration else hint?.awaitingCalibration == true
+            val loggedWeight = slot.sets.mapNotNull { it.weightKg }.maxOrNull()
+            val history = if (routineId == null) {
+                emptyList()
+            } else {
+                slotSessionsForProgression(
+                    prior.filter { it.slotId == routineId }
+                        .groupBy { it.sessionId }
+                        .values
+                        .map { rows ->
+                            rows.first().completedAt to rows.map { LoggedSet(it.weightKg, it.reps, it.setType) }
+                        },
+                    starting,
+                )
+            }
+            val increment = exercise?.loadIncrementKg ?: 2.5
+            val counted = listOf(
+                SlotSession(
+                    slot.sets.map { LoggedSet(it.weightKg, it.reps, SetType.WORKING) },
+                    calibration = awaiting,
                 ),
-                latestWeightFromAnySlotKg = loggedWeight,
-                baselineWeightKg = if (awaiting) loggedWeight else hint?.weightKg,
-                awaitingCalibration = awaiting && loggedWeight == null,
-            ),
-        )
-        NextSessionNote(slot.exerciseName, suggestion.action, suggestion.weightKg)
+            ) + history
+            val suggestion = progression.suggest(
+                ProgressionInput(
+                    rule = slot.prescription.progressionRule,
+                    equipment = slot.equipment,
+                    metricType = slot.prescription.metricType,
+                    repsLow = low,
+                    repsHigh = high,
+                    exerciseIncrementKg = increment,
+                    incrementOverrideKg = slot.prescription.incrementOverrideKg,
+                    slotSessions = counted,
+                    latestWeightFromAnySlotKg = loggedWeight,
+                    baselineWeightKg = if (awaiting) loggedWeight else starting?.weightKg ?: hint?.weightKg,
+                    awaitingCalibration = awaiting && loggedWeight == null,
+                ),
+            )
+            NextSessionNote(slot.exerciseName, suggestion.action, suggestion.weightKg)
+        }
     }
 
     private suspend fun sealCalibration(machine: WorkoutMachineState, at: Instant) {

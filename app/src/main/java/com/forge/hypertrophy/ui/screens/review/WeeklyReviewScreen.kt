@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,11 +21,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.engine.MuscleWeekComparison
 import com.forge.hypertrophy.ui.components.NumericText
+import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.screens.routine.formatKg
-import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Rose
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -56,7 +58,7 @@ fun WeeklyReviewContent(
                 } else {
                     ""
                 },
-                color = White,
+                color = Ink,
                 modifier = Modifier.weight(1f),
             )
             EditorButton(
@@ -67,35 +69,35 @@ fun WeeklyReviewContent(
         }
         Section(stringResource(R.string.review_sessions)) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.review_this_week), color = White, modifier = Modifier.weight(1f))
-                NumericText(state.sessionsCompleted.toString(), color = NeonAccent)
+                Text(stringResource(R.string.review_this_week), color = Ink, modifier = Modifier.weight(1f))
+                NumericText(state.sessionsCompleted.toString(), color = Rose)
             }
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(stringResource(R.string.review_last_week), color = White.copy(alpha = 0.72f), modifier = Modifier.weight(1f))
-                NumericText(state.previousSessionsCompleted.toString(), color = White.copy(alpha = 0.72f))
+                Text(stringResource(R.string.review_last_week), color = Ink.copy(alpha = 0.72f), modifier = Modifier.weight(1f))
+                NumericText(state.previousSessionsCompleted.toString(), color = Ink.copy(alpha = 0.72f))
             }
         }
         Section(stringResource(R.string.review_prs)) {
             if (state.prs.isEmpty()) {
-                Text(stringResource(R.string.review_prs_empty), color = White)
+                Text(stringResource(R.string.review_prs_empty), color = Ink)
             }
             state.prs.forEach { pr ->
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(pr.exerciseName, color = White, modifier = Modifier.weight(1f))
+                    Text(pr.exerciseName, color = Ink, modifier = Modifier.weight(1f))
                     NumericText(
                         stringResource(R.string.review_pr_value, formatKg(pr.weightKg), pr.reps, formatKg(pr.e1rmKg)),
-                        color = NeonAccent,
+                        color = Rose,
                     )
                 }
             }
         }
         Section(stringResource(R.string.review_stages)) {
             if (state.advancements.isEmpty()) {
-                Text(stringResource(R.string.review_stages_empty), color = White)
+                Text(stringResource(R.string.review_stages_empty), color = Ink)
             }
             state.advancements.forEach { step ->
                 Column {
-                    Text(step.skillName, color = White, style = MaterialTheme.typography.titleSmall)
+                    Text(step.skillName, color = Ink, style = MaterialTheme.typography.titleSmall)
                     Text(
                         stringResource(
                             R.string.review_stage_change,
@@ -104,14 +106,14 @@ fun WeeklyReviewContent(
                             step.toTierName,
                             step.toStage,
                         ),
-                        color = NeonAccent,
+                        color = Rose,
                     )
                 }
             }
         }
         Section(stringResource(R.string.review_volume)) {
             if (state.volume.isEmpty()) {
-                Text(stringResource(R.string.review_volume_empty), color = White)
+                Text(stringResource(R.string.review_volume_empty), color = Ink)
             }
             state.volume.forEach { VolumeRow(it) }
         }
@@ -127,23 +129,25 @@ private fun VolumeRow(row: MuscleWeekComparison) {
         else -> stringResource(R.string.review_delta_same)
     }
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(row.muscle, color = White, modifier = Modifier.weight(1f))
+        Text(row.muscle, color = Ink, modifier = Modifier.weight(1f))
         NumericText(
             pluralStringResource(R.plurals.review_sets, row.thisWeek.toInt(), formatSets(row.thisWeek)),
-            color = NeonAccent,
+            color = Rose,
         )
         NumericText(
             text = "  $deltaText",
-            color = White.copy(alpha = 0.72f),
+            color = Ink.copy(alpha = 0.72f),
         )
     }
 }
 
 @Composable
 private fun Section(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        Text(title, color = NeonAccent, style = MaterialTheme.typography.titleMedium)
-        content()
+    SurfaceCard {
+        Text(title, color = Rose, style = MaterialTheme.typography.titleMedium)
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
+            content()
+        }
     }
 }
 

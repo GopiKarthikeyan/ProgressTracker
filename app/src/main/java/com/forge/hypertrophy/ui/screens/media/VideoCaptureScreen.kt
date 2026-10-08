@@ -52,7 +52,7 @@ import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 import java.io.File
 
 @Composable
@@ -102,7 +102,7 @@ fun VideoCaptureScreen(
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
                 Text(stringResource(R.string.builder_back))
             }
-            Text(state.label, color = White, style = MaterialTheme.typography.titleMedium)
+            Text(state.label, color = Ink, style = MaterialTheme.typography.titleMedium)
         }
         Box(
             modifier = Modifier
@@ -112,7 +112,7 @@ fun VideoCaptureScreen(
             if (cameraGranted) {
                 Recorder(state, audioGranted, viewModel::onEvent)
             } else {
-                Text(stringResource(R.string.media_camera_permission), color = White)
+                Text(stringResource(R.string.media_camera_permission), color = Ink)
             }
             if (state.phase == CapturePhase.PRE_ROLL) {
                 NumericText(
@@ -128,7 +128,7 @@ fun VideoCaptureScreen(
         }
         CountdownBeeps(state.countdownLeft, active = state.phase == CapturePhase.PRE_ROLL)
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Text(stringResource(R.string.media_pre_roll), color = White, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.media_pre_roll), color = Ink, modifier = Modifier.weight(1f))
             Switch(
                 checked = state.preRollEnabled,
                 onCheckedChange = { viewModel.onEvent(VideoCaptureEvent.TogglePreRoll) },
@@ -137,7 +137,7 @@ fun VideoCaptureScreen(
         }
         when (state.phase) {
             CapturePhase.PROCESSING -> {
-                Text(stringResource(R.string.media_processing), color = White)
+                Text(stringResource(R.string.media_processing), color = Ink)
                 LinearProgressIndicator(
                     progress = { state.processingProgress },
                     modifier = Modifier.fillMaxWidth(),

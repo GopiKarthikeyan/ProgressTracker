@@ -27,6 +27,7 @@ import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.repository.SkillRepository
+import com.forge.hypertrophy.data.schedule.ScheduleReconciler
 import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SessionKind
@@ -43,6 +44,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -186,6 +188,29 @@ class DashboardViewModelTest {
         awaitUntil { widget.count > before }
     }
 
+    @Test
+    fun daysAwayShowsTheDayThatWasSaved() = runBlocking {
+        val programId = rollingProgram()
+        routineRepo.insertDay(day(programId, "push", 0))
+        routineRepo.insertDay(day(programId, "rest", 1, rest = true))
+        routineRepo.insertDay(day(programId, "pull", 2))
+        programRepo.setActive(programId)
+        preferences.setLastReconciledDate(LocalDate.of(2026, 10, 2))
+
+        val viewModel = dashboard()
+        awaitUntil { viewModel.uiState.value.today != null }
+
+        val savedIndex = programRepo.getById(programId)!!.rollingSequence
+        val savedDay = routineRepo.days(programId).sortedBy { it.sequenceIndex }[savedIndex]
+        val today = viewModel.uiState.value.today!!
+        assertEquals(savedDay.label, today.label)
+        assertEquals(savedDay.isRest, today.isRest)
+        assertEquals(2, savedIndex)
+        assertEquals("pull", today.label)
+        assertEquals(LocalDate.of(2026, 10, 4), preferences.lastReconciledDate.first())
+        assertEquals(setOf(LocalDate.of(2026, 10, 4)), cursor.autoCompletedRests.first())
+    }
+
     private fun rollingProgram(): Long = runBlocking {
         programRepo.insert(
             ProgramEntity(
@@ -225,6 +250,7 @@ class DashboardViewModelTest {
             clock = clock,
             widget = widget,
             baselines = baselines,
+            reconciler = ScheduleReconciler(programRepo, routineRepo, sessionRepo, preferences, cursor, clock),
         )
         activeViewModels.add(vm)
         return vm

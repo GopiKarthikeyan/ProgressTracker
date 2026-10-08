@@ -1,9 +1,13 @@
 package com.forge.hypertrophy.ui.screens.workout
 
+import android.content.Context
+import android.media.AudioManager
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,22 +16,43 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.nativeKeyCode
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
+import com.forge.hypertrophy.domain.engine.ReadinessAdvice
+import com.forge.hypertrophy.domain.model.EntryMethod
+import com.forge.hypertrophy.domain.workout.HandsFreeKeys
+import com.forge.hypertrophy.domain.workout.TimerPhase
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
+import com.forge.hypertrophy.ui.components.CircleActionButton
 import com.forge.hypertrophy.ui.components.NumericText
-import com.forge.hypertrophy.ui.screens.routine.EditorButton
-import com.forge.hypertrophy.ui.screens.routine.formatKg
-import com.forge.hypertrophy.ui.theme.Black
-import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.components.PrimaryButton
+import com.forge.hypertrophy.ui.components.ProgressRing
+import com.forge.hypertrophy.ui.components.SecondaryButton
+import com.forge.hypertrophy.ui.theme.Cream
+import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Rose
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @Composable
 fun WorkoutScreen(
@@ -36,11 +61,42 @@ fun WorkoutScreen(
     viewModel: WorkoutViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val view = LocalView.current
+    val context = LocalContext.current
+    val focus = remember { FocusRequester() }
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
+    }
+    LaunchedEffect(Unit) {
+        focus.requestFocus()
+        while (isActive) {
+            delay(1_000)
+            viewModel.onEvent(WorkoutEvent.Tick)
+        }
+    }
+    LaunchedEffect(state.handsFreePulse) {
+        if (state.handsFreePulse == 0) return@LaunchedEffect
+        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+    }
     WorkoutContent(
         state = state,
         onEvent = viewModel::onEvent,
         onBack = onBack,
-        modifier = modifier,
+        modifier = modifier
+            .focusRequester(focus)
+            .focusable()
+            .onPreviewKeyEvent { event ->
+                val code = event.key.nativeKeyCode
+                if (!HandsFreeKeys.isWorkoutKey(code)) return@onPreviewKeyEvent false
+                if (HandsFreeKeys.yieldsToActiveMedia(code) && context.musicActive()) {
+                    return@onPreviewKeyEvent false
+                }
+                if (event.type == KeyEventType.KeyDown && event.nativeKeyEvent.repeatCount == 0) {
+                    viewModel.onEvent(WorkoutEvent.Primary(EntryMethod.HARDWARE_KEY))
+                }
+                true
+            },
     )
 }
 
@@ -51,221 +107,205 @@ fun WorkoutContent(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val view = LocalView.current
+    val skipReason = stringResource(R.string.workout_skip_reason_default)
+    var moreOpen by remember { mutableStateOf(false) }
+    val working = state.position as? WorkoutPosition.WorkingSet
+    LaunchedEffect(working?.slot?.sessionSlotId) {
+        if (working == null) moreOpen = false
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(Cream)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp)
+                .padding(top = 8.dp, bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            WorkoutHeader(
+                title = headerTitle(state.position),
+                subtitle = headerSubtitle(state.position),
+                etaSeconds = if (
+                    state.position !is WorkoutPosition.Readiness &&
+                    state.position !is WorkoutPosition.Summary
+                ) {
+                    state.etaSeconds
+                } else {
+                    null
+                },
+                showMore = working != null,
+                onBack = onBack,
+                onMore = { moreOpen = true },
+            )
+            if (
+                state.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS &&
+                state.position !is WorkoutPosition.Readiness &&
+                state.position !is WorkoutPosition.Summary
+            ) {
+                Text(
+                    stringResource(R.string.workout_readiness_advice),
+                    color = Rose,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+            when (val pos = state.position) {
+                is WorkoutPosition.Readiness -> ReadinessCard(onEvent)
+                is WorkoutPosition.Prep -> PrepCard(pos, onEvent)
+                is WorkoutPosition.PracticeBlock -> PracticeBlockCard(state, pos.slot.sessionSlotId)
+                is WorkoutPosition.WorkingSet -> WorkingSetCard(pos, onEvent)
+                is WorkoutPosition.Resting -> RestCard(pos, state, onEvent)
+                is WorkoutPosition.Cooldown -> CooldownCard(pos, onEvent)
+                is WorkoutPosition.Summary -> SummaryCard(state.summary)
+            }
+            PrimaryAction(
+                state = state,
+                onEvent = onEvent,
+                onBack = onBack,
+                onUndo = {
+                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    onEvent(WorkoutEvent.Undo)
+                },
+            )
+        }
+        if (moreOpen && working != null) {
+            WorkoutMoreSheet(
+                pos = working,
+                jointFlags = state.jointFlags,
+                shortOnTime = state.shortOnTime,
+                cuesEnabled = state.cuesEnabled,
+                skipReason = skipReason,
+                onEvent = onEvent,
+                onDismiss = { moreOpen = false },
+            )
+        }
+    }
+}
+
+@Composable
+private fun PrimaryAction(
+    state: WorkoutUiState,
+    onEvent: (WorkoutEvent) -> Unit,
+    onBack: () -> Unit,
+    onUndo: () -> Unit,
+) {
+    val undo = state.undoUntilElapsedRealtime != null
+    val pos = state.position
+    val working = pos as? WorkoutPosition.WorkingSet
     Column(
-        modifier = modifier
-            .fillMaxSize()
-            .background(Black)
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-    ) {
-        Header(onBack = onBack, etaSeconds = state.etaSeconds)
-
-        when (val pos = state.position) {
-            is WorkoutPosition.Readiness -> ReadinessView(onEvent)
-            is WorkoutPosition.Prep -> PrepView(pos, onEvent)
-            is WorkoutPosition.PracticeBlock -> PracticeBlockView(pos, state, onEvent)
-            is WorkoutPosition.WorkingSet -> WorkingSetView(pos, state, onEvent)
-            is WorkoutPosition.Resting -> RestingView(pos, state, onEvent)
-            is WorkoutPosition.Cooldown -> CooldownView(pos, onEvent)
-            is WorkoutPosition.Summary -> SummaryView(state.summary, onBack)
-        }
-    }
-}
-
-@Composable
-private fun Header(onBack: () -> Unit, etaSeconds: Int) {
-    Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        EditorButton(label = stringResource(R.string.builder_back), onClick = onBack)
-        Column(horizontalAlignment = Alignment.End) {
-            Text(stringResource(R.string.workout_eta), color = White.copy(alpha = 0.7f), style = MaterialTheme.typography.labelSmall)
-            NumericText(formatDuration(etaSeconds), color = NeonAccent)
-        }
-    }
-}
-
-@Composable
-private fun ReadinessView(onEvent: (WorkoutEvent) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(stringResource(R.string.workout_readiness_title), color = White, style = MaterialTheme.typography.headlineSmall)
-        // Basic readiness inputs could go here
-        EditorButton(label = stringResource(R.string.workout_readiness_submit), onClick = { onEvent(WorkoutEvent.SubmitReadiness(5, 5, 5)) })
-        EditorButton(label = stringResource(R.string.workout_readiness_skip), onClick = { onEvent(WorkoutEvent.SkipReadiness) })
-    }
-}
-
-@Composable
-private fun PrepView(pos: WorkoutPosition.Prep, onEvent: (WorkoutEvent) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.workout_prep_title), color = NeonAccent, style = MaterialTheme.typography.titleMedium)
-        pos.items.forEach { item ->
-            EditorButton(
-                label = item.text,
-                onClick = { onEvent(WorkoutEvent.CheckOff(item.id)) },
-                enabled = !item.done
+        if (!undo && working?.needsFormCheck == true) {
+            SecondaryButton(
+                label = stringResource(R.string.workout_form_solid),
+                onClick = { onEvent(WorkoutEvent.ConfirmForm(working.slot.sessionSlotId)) },
+                accent = true,
             )
         }
-        if (pos.items.all { it.done }) {
-            EditorButton(label = stringResource(R.string.workout_start_first), onClick = { onEvent(WorkoutEvent.Primary(com.forge.hypertrophy.domain.model.EntryMethod.SCREEN)) })
-        }
-    }
-}
-
-@Composable
-private fun WorkingSetView(
-    pos: WorkoutPosition.WorkingSet,
-    state: WorkoutUiState,
-    onEvent: (WorkoutEvent) -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(pos.slot.exerciseName, color = NeonAccent, style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.workout_set_label, pos.setNumber, pos.setCount), color = White)
-        
-        val weight = pos.suggestion.weightKg ?: 0.0
-        val reps = pos.suggestion.reps ?: 0
-        
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            NumericText(text = stringResource(R.string.workout_weight_kg, weight), color = White, style = MaterialTheme.typography.headlineLarge)
-            Text(stringResource(R.string.workout_reps_multiplier), color = White, style = MaterialTheme.typography.headlineMedium)
-            NumericText(text = reps.toString(), color = White, style = MaterialTheme.typography.headlineLarge)
-        }
-
-        PlatesPerSide(pos.requiredPlates)
-
-        pos.regulation?.let { prompt ->
+        if (!undo && working?.suggestSkip == true) {
             Text(
-                text = stringResource(
-                    R.string.workout_regulation_suggestion,
-                    formatRpe(prompt.lastRpe),
-                    formatKg(prompt.suggestedWeightKg),
-                ),
-                color = White.copy(alpha = 0.7f),
-            )
-            EditorButton(
-                label = stringResource(R.string.workout_regulation_accept),
-                onClick = { onEvent(WorkoutEvent.AcceptRegulation) },
-                modifier = Modifier.fillMaxWidth(),
-            )
-            EditorButton(
-                label = stringResource(R.string.workout_regulation_dismiss),
-                onClick = { onEvent(WorkoutEvent.DismissRegulation) },
-                modifier = Modifier.fillMaxWidth(),
+                stringResource(R.string.workout_suggest_skip),
+                color = Rose,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
-
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            EditorButton(label = stringResource(R.string.workout_adjust_weight_minus), onClick = { onEvent(WorkoutEvent.Adjust(weightDeltaKg = -2.5)) })
-            EditorButton(label = stringResource(R.string.workout_adjust_weight_plus), onClick = { onEvent(WorkoutEvent.Adjust(weightDeltaKg = 2.5)) })
-            EditorButton(label = stringResource(R.string.workout_adjust_reps_minus), onClick = { onEvent(WorkoutEvent.Adjust(repDelta = -1)) })
-            EditorButton(label = stringResource(R.string.workout_adjust_reps_plus), onClick = { onEvent(WorkoutEvent.Adjust(repDelta = 1)) })
-        }
-
-        EditorButton(
-            label = stringResource(R.string.workout_log_set),
-            onClick = { onEvent(WorkoutEvent.Primary(com.forge.hypertrophy.domain.model.EntryMethod.SCREEN)) },
-            modifier = Modifier.fillMaxWidth()
-        )
-        
-        EditorButton(label = stringResource(R.string.workout_skip_exercise), onClick = { onEvent(WorkoutEvent.Skip("Not feeling it")) })
-    }
-}
-
-@Composable
-private fun RestingView(
-    pos: WorkoutPosition.Resting,
-    state: WorkoutUiState,
-    onEvent: (WorkoutEvent) -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(stringResource(R.string.workout_resting_title), color = White, style = MaterialTheme.typography.headlineSmall)
-        
-        val timer = state.timer
-        NumericText(
-            text = formatDuration((timer.remainingMillis / 1000).toInt()),
-            color = NeonAccent,
-            style = MaterialTheme.typography.displayLarge
-        )
-
-        EditorButton(label = stringResource(R.string.workout_skip_rest), onClick = { onEvent(WorkoutEvent.Primary(com.forge.hypertrophy.domain.model.EntryMethod.SCREEN)) })
-        
-        state.nextUp?.let { next ->
-            Text(stringResource(R.string.workout_next_up, next.exerciseName), color = White.copy(alpha = 0.7f))
-            PlatesPerSide(next.platesPerSideKg)
-        }
-    }
-}
-
-@Composable
-private fun PlatesPerSide(plates: List<Double>) {
-    if (plates.isEmpty()) return
-    Text(
-        text = stringResource(R.string.workout_plates_per_side, plates.joinToString(" + ", transform = ::formatKg)),
-        color = White.copy(alpha = 0.7f),
-    )
-}
-
-private fun formatRpe(rpe: Double): String {
-    return if (rpe % 1.0 == 0.0) rpe.toInt().toString() else formatKg(rpe)
-}
-
-@Composable
-private fun PracticeBlockView(
-    pos: WorkoutPosition.PracticeBlock,
-    state: WorkoutUiState,
-    onEvent: (WorkoutEvent) -> Unit
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(pos.slot.exerciseName, color = NeonAccent, style = MaterialTheme.typography.headlineSmall)
-        Text(stringResource(R.string.workout_timed_block), color = White)
-        
-        val timer = state.timer
-        NumericText(
-            text = formatDuration((timer.remainingMillis / 1000).toInt()),
-            color = NeonAccent,
-            style = MaterialTheme.typography.displayLarge
-        )
-
-        EditorButton(label = stringResource(R.string.workout_complete_block), onClick = { onEvent(WorkoutEvent.Primary(com.forge.hypertrophy.domain.model.EntryMethod.SCREEN)) })
-    }
-}
-
-@Composable
-private fun CooldownView(pos: WorkoutPosition.Cooldown, onEvent: (WorkoutEvent) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(R.string.workout_cooldown_title), color = NeonAccent, style = MaterialTheme.typography.titleMedium)
-        pos.items.forEach { item ->
-            EditorButton(
-                label = item.text,
-                onClick = { onEvent(WorkoutEvent.CheckOff(item.id)) },
-                enabled = !item.done
+        when {
+            undo -> PrimaryButton(label = stringResource(R.string.workout_undo), onClick = onUndo)
+            pos is WorkoutPosition.Resting -> {
+                val timer = state.timer
+                val fraction = restProgress(pos.slot.sessionSlotId to pos.round, timer)
+                ProgressRing(progress = fraction, size = 160.dp, stroke = 12.dp) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        NumericText(
+                            text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
+                            color = Ink,
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
+                        Text(
+                            stringResource(R.string.workout_skip_rest),
+                            color = Rose,
+                            style = MaterialTheme.typography.labelLarge,
+                            modifier = Modifier.padding(top = 4.dp),
+                        )
+                    }
+                }
+                // Whole ring area is tappable via the button below for 72dp accessibility.
+                PrimaryButton(
+                    label = stringResource(R.string.workout_skip_rest),
+                    onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+                )
+            }
+            pos is WorkoutPosition.WorkingSet -> CircleActionButton(
+                label = stringResource(R.string.workout_log_set),
+                onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+                size = 128.dp,
+            )
+            pos is WorkoutPosition.Prep && pos.items.all { it.done } -> CircleActionButton(
+                label = stringResource(R.string.workout_start_first),
+                onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+            )
+            pos is WorkoutPosition.PracticeBlock -> CircleActionButton(
+                label = stringResource(R.string.workout_complete_block),
+                onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+            )
+            pos is WorkoutPosition.Cooldown && pos.items.all { it.done } -> CircleActionButton(
+                label = stringResource(R.string.workout_finish),
+                onClick = { onEvent(WorkoutEvent.CompleteWorkout) },
+            )
+            pos is WorkoutPosition.Summary -> PrimaryButton(
+                label = stringResource(R.string.workout_done),
+                onClick = onBack,
             )
         }
-        if (pos.items.all { it.done }) {
-            EditorButton(label = stringResource(R.string.workout_finish), onClick = { onEvent(WorkoutEvent.CompleteWorkout) })
-        }
     }
 }
 
 @Composable
-private fun SummaryView(summary: WorkoutSummary?, onBack: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text(stringResource(R.string.workout_complete_title), color = NeonAccent, style = MaterialTheme.typography.headlineMedium)
-        
-        summary?.prs?.forEach { pr ->
-            Text(stringResource(R.string.workout_pr_summary, pr.exerciseName, pr.e1rmKg), color = White)
-        }
-        
-        EditorButton(label = stringResource(R.string.workout_done), onClick = onBack)
+private fun restProgress(key: Any, timer: com.forge.hypertrophy.domain.workout.TimerSnapshot): Float {
+    var ceiling by remember(key) { mutableStateOf(0L) }
+    if (
+        (timer.phase == TimerPhase.COUNTDOWN || timer.phase == TimerPhase.WARNING) &&
+        timer.remainingMillis > ceiling
+    ) {
+        ceiling = timer.remainingMillis
     }
+    if (timer.phase == TimerPhase.OVERTIME || timer.phase == TimerPhase.FINISHED) return 1f
+    if (ceiling <= 0L) return 0f
+    val done = (ceiling - timer.remainingMillis).coerceAtLeast(0)
+    return (done.toFloat() / ceiling.toFloat()).coerceIn(0f, 1f)
 }
 
-private fun formatDuration(seconds: Int): String {
-    val mins = seconds / 60
-    val secs = seconds % 60
-    return "%d:%02d".format(java.util.Locale.US, mins, secs)
+@Composable
+private fun headerTitle(position: WorkoutPosition): String = when (position) {
+    is WorkoutPosition.Readiness -> stringResource(R.string.workout_readiness_title)
+    is WorkoutPosition.Prep -> stringResource(R.string.workout_prep_title)
+    is WorkoutPosition.WorkingSet -> position.slot.exerciseName
+    is WorkoutPosition.Resting -> stringResource(R.string.workout_resting_title)
+    is WorkoutPosition.PracticeBlock -> position.slot.exerciseName
+    is WorkoutPosition.Cooldown -> stringResource(R.string.workout_cooldown_title)
+    is WorkoutPosition.Summary -> stringResource(R.string.workout_complete_title)
 }
+
+@Composable
+private fun headerSubtitle(position: WorkoutPosition): String? = when (position) {
+    is WorkoutPosition.WorkingSet -> stringResource(R.string.workout_set_label, position.setNumber, position.setCount)
+    is WorkoutPosition.Resting -> position.slot.exerciseName
+    is WorkoutPosition.PracticeBlock -> stringResource(R.string.workout_timed_block)
+    else -> null
+}
+
+internal fun clockText(phase: TimerPhase, remainingMillis: Long, elapsedMillis: Long): String {
+    val seconds = when (phase) {
+        TimerPhase.STOPWATCH, TimerPhase.OVERTIME -> (elapsedMillis / 1000L).toInt()
+        else -> (remainingMillis / 1000L).toInt()
+    }
+    val text = formatDuration(seconds)
+    return if (phase == TimerPhase.OVERTIME) "+$text" else text
+}
+
+private fun Context.musicActive(): Boolean =
+    (getSystemService(Context.AUDIO_SERVICE) as AudioManager).isMusicActive

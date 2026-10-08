@@ -194,8 +194,9 @@ object ProgramJsonValidator {
                     )
                 }
                 if (group != null) {
-                    val letter = supersetLetter(group)!!
-                    groupCounts[letter] = (groupCounts[letter] ?: 0) + 1
+                    supersetLetter(group)?.let { letter ->
+                        groupCounts[letter] = (groupCounts[letter] ?: 0) + 1
+                    }
                 }
                 slot.alternativeExerciseKeys.forEachIndexed { altIndex, alternative ->
                     if (alternative == slot.exerciseKey) {

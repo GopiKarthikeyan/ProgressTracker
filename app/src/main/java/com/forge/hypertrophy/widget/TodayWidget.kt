@@ -30,9 +30,9 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.forge.hypertrophy.MainActivity
 import com.forge.hypertrophy.R
-import com.forge.hypertrophy.ui.theme.Black
-import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Cream
+import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Rose
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -65,27 +65,27 @@ class TodayWidget : GlanceAppWidget() {
         Column(
             modifier = GlanceModifier
                 .fillMaxSize()
-                .background(ColorProvider(Black))
-                .cornerRadius(16.dp)
+                .background(ColorProvider(Cream))
+                .cornerRadius(24.dp)
                 .padding(16.dp)
                 .clickable(actionStartActivity(openToday)),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
                 text = context.getString(R.string.widget_today_title),
-                style = TextStyle(color = ColorProvider(NeonAccent), fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                style = TextStyle(color = ColorProvider(Rose), fontSize = 12.sp, fontWeight = FontWeight.Bold),
             )
             Spacer(GlanceModifier.height(4.dp))
             Text(
                 text = headline(context, summary),
-                style = TextStyle(color = ColorProvider(White), fontSize = 20.sp, fontWeight = FontWeight.Bold),
+                style = TextStyle(color = ColorProvider(Ink), fontSize = 20.sp, fontWeight = FontWeight.Bold),
                 maxLines = 2,
             )
             Spacer(GlanceModifier.height(8.dp))
             Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = context.resources.getQuantityString(R.plurals.widget_streak, summary.streak, summary.streak),
-                    style = TextStyle(color = ColorProvider(White), fontSize = 14.sp),
+                    style = TextStyle(color = ColorProvider(Ink), fontSize = 14.sp),
                 )
             }
         }

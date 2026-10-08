@@ -63,7 +63,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 const val SKIPPED_REASON = "skipped"
 
@@ -104,7 +107,9 @@ data class WorkoutUiState(
     val etaSeconds: Int = 0,
     val shortOnTime: Boolean = false,
     val undoUntilElapsedRealtime: Long? = null,
+    val handsFreePulse: Int = 0,
     val cuesEnabled: Boolean = false,
+    val jointFlags: Set<String> = emptySet(),
     val summary: WorkoutSummary? = null,
     val nextUp: NextUp? = null,
 )
@@ -127,7 +132,7 @@ sealed interface WorkoutEvent {
     data object ToggleShortOnTime : WorkoutEvent
     data object CompleteWorkout : WorkoutEvent
     data object Undo : WorkoutEvent
-    data class Tick(val nowElapsedRealtime: Long) : WorkoutEvent
+    data object Tick : WorkoutEvent
     data class Cues(val enabled: Boolean) : WorkoutEvent
     data class EditSetupNotes(val notes: String) : WorkoutEvent
 }
@@ -155,6 +160,14 @@ class WorkoutViewModel @Inject constructor(
     private var armed: String? = null
     private var cuesEnabled = false
     private val handsFree = HandsFreeGate()
+    private var handsFreePulse = 0
+
+    /**
+     * Events run one at a time. [machine] is mutated across suspension points
+     * (Room writes), so two quick taps or a key press during a write would
+     * otherwise both see the same position and log the set twice.
+     */
+    private val events = Mutex()
     private val originalBounds = mutableMapOf<Long, Pair<Int, Int>>()
     private val readiness = ReadinessAdvisor()
     private val estimator = SessionEstimator()
@@ -168,6 +181,11 @@ class WorkoutViewModel @Inject constructor(
             viewModelScope.launch { restore(requestedSessionId) }
         }
         viewModelScope.launch {
+            timer.snapshot.collect { snap ->
+                _uiState.update { it.copy(timer = snap) }
+            }
+        }
+        viewModelScope.launch {
             timer.commands.collect { command ->
                 when (command) {
                     TimerCommand.SKIP -> onEvent(WorkoutEvent.Skip(SKIPPED_REASON))
@@ -178,49 +196,54 @@ class WorkoutViewModel @Inject constructor(
     }
 
     fun onEvent(event: WorkoutEvent) {
+        if (event == WorkoutEvent.Tick) {
+            refreshClock()
+            return
+        }
         breadcrumbs.record(event.javaClass.simpleName)
         viewModelScope.launch {
-            when (event) {
-                is WorkoutEvent.Start -> start(event.dayId)
-                is WorkoutEvent.SubmitReadiness -> begin(event.sleep, event.soreness, event.energy)
-                WorkoutEvent.SkipReadiness -> begin(null, null, null)
-                is WorkoutEvent.CheckOff -> {
-                    machine = checkOff(machine, event.itemId)
-                    publish()
-                }
-                is WorkoutEvent.Primary -> primary(event.method)
-                is WorkoutEvent.Adjust -> {
-                    machine = adjustDraft(machine, event.weightDeltaKg, event.repDelta, event.holdDelta)
-                    publish()
-                }
-                is WorkoutEvent.Skip -> skip(event.reason)
-                is WorkoutEvent.ChooseAlternative -> choose(event.exerciseId)
-                is WorkoutEvent.MoveSlot -> move(event.from, event.to)
-                is WorkoutEvent.ConfirmForm -> {
-                    val slotId = (workoutPosition(machine) as? WorkoutPosition.WorkingSet)?.slot?.sessionSlotId
-                        ?: event.slotId
-                    machine = confirmForm(machine, slotId)
-                    persist(machine.slots.first { it.sessionSlotId == slotId })
-                    publish()
-                }
-                is WorkoutEvent.ToggleJoint -> toggleJoint(event.flag)
-                is WorkoutEvent.SetRpe -> setRpe(event.setId, event.rpe)
-                WorkoutEvent.AcceptRegulation -> acceptRegulation()
-                WorkoutEvent.DismissRegulation -> dismissRegulation()
-                WorkoutEvent.ToggleShortOnTime -> toggleShortOnTime()
-                WorkoutEvent.CompleteWorkout -> complete()
-                WorkoutEvent.Undo -> undo()
-                is WorkoutEvent.Tick -> {
-                    timer.refresh(event.nowElapsedRealtime)
-                    publish()
-                }
-                is WorkoutEvent.Cues -> {
-                    cuesEnabled = event.enabled
-                    armed = null
-                    publish()
-                }
-                is WorkoutEvent.EditSetupNotes -> editNotes(event.notes)
+            events.withLock { handle(event) }
+        }
+    }
+
+    private suspend fun handle(event: WorkoutEvent) {
+        when (event) {
+            is WorkoutEvent.Start -> start(event.dayId)
+            is WorkoutEvent.SubmitReadiness -> begin(event.sleep, event.soreness, event.energy)
+            WorkoutEvent.SkipReadiness -> begin(null, null, null)
+            is WorkoutEvent.CheckOff -> {
+                machine = checkOff(machine, event.itemId)
+                publish()
             }
+            is WorkoutEvent.Primary -> primary(event.method)
+            is WorkoutEvent.Adjust -> {
+                machine = adjustDraft(machine, event.weightDeltaKg, event.repDelta, event.holdDelta)
+                publish()
+            }
+            is WorkoutEvent.Skip -> skip(event.reason)
+            is WorkoutEvent.ChooseAlternative -> choose(event.exerciseId)
+            is WorkoutEvent.MoveSlot -> move(event.from, event.to)
+            is WorkoutEvent.ConfirmForm -> {
+                val slotId = (workoutPosition(machine) as? WorkoutPosition.WorkingSet)?.slot?.sessionSlotId
+                    ?: event.slotId
+                machine = confirmForm(machine, slotId)
+                persist(machine.slots.first { it.sessionSlotId == slotId })
+                publish()
+            }
+            is WorkoutEvent.ToggleJoint -> toggleJoint(event.flag)
+            is WorkoutEvent.SetRpe -> setRpe(event.setId, event.rpe)
+            WorkoutEvent.AcceptRegulation -> acceptRegulation()
+            WorkoutEvent.DismissRegulation -> dismissRegulation()
+            WorkoutEvent.ToggleShortOnTime -> toggleShortOnTime()
+            WorkoutEvent.CompleteWorkout -> complete()
+            WorkoutEvent.Undo -> undo()
+            WorkoutEvent.Tick -> refreshClock()
+            is WorkoutEvent.Cues -> {
+                cuesEnabled = event.enabled
+                armed = null
+                publish()
+            }
+            is WorkoutEvent.EditSetupNotes -> editNotes(event.notes)
         }
     }
 
@@ -251,16 +274,27 @@ class WorkoutViewModel @Inject constructor(
     private suspend fun primary(method: EntryMethod) {
         val now = elapsed.elapsedRealtime()
         if (method == EntryMethod.HARDWARE_KEY && !handsFree.accept(now)) return
-        when (val position = workoutPosition(machine)) {
-            is WorkoutPosition.WorkingSet -> logWorkingSet(position, method, now)
-            is WorkoutPosition.PracticeBlock -> endBlock(position)
+        val acted = when (val position = workoutPosition(machine)) {
+            is WorkoutPosition.WorkingSet -> {
+                logWorkingSet(position, method, now)
+                true
+            }
+            is WorkoutPosition.PracticeBlock -> {
+                endBlock(position)
+                true
+            }
             is WorkoutPosition.Resting -> {
                 machine = dismissRest(machine)
                 armed = null
                 timer.stop()
                 publish()
+                true
             }
-            else -> Unit
+            else -> false
+        }
+        if (acted && method == EntryMethod.HARDWARE_KEY) {
+            handsFreePulse += 1
+            publish()
         }
     }
 
@@ -311,13 +345,22 @@ class WorkoutViewModel @Inject constructor(
 
     private suspend fun choose(exerciseId: Long?) {
         val slot = currentSlot() ?: return
-        val exercise = exerciseId?.let { workouts.findExercise(it) }
+        val resolvedId = exerciseId ?: slot.prescription.exerciseId
+        val exercise = workouts.findExercise(resolvedId)
         machine = chooseAlternative(machine, slot.sessionSlotId, exerciseId)
         if (exercise != null) {
+            val hold = loadWorkout.skillHold(resolvedId, slot.prescription.metricType)
             machine = machine.copy(
                 slots = machine.slots.map { candidate ->
                     if (candidate.sessionSlotId == slot.sessionSlotId) {
-                        candidate.copy(exerciseName = exercise.name, setupNotes = exercise.setupNotes, unilateral = exercise.isUnilateral)
+                        candidate.copy(
+                            exerciseName = exercise.name,
+                            setupNotes = exercise.setupNotes,
+                            unilateral = exercise.isUnilateral,
+                            equipment = exercise.equipment,
+                            barWeightKg = exercise.barWeightKg,
+                            skillHold = hold,
+                        )
                     } else {
                         candidate
                     }
@@ -406,12 +449,14 @@ class WorkoutViewModel @Inject constructor(
         val summary = interactors.complete.execute(sessionId, machine)
         armed = null
         timer.stop()
+        handsFree.clearUndo()
         machine = machine.copy(started = true, prep = machine.prep.map { it.copy(done = true) }, cooldown = machine.cooldown.map { it.copy(done = true) })
         _uiState.value = _uiState.value.copy(
             sessionId = sessionId,
             position = WorkoutPosition.Summary,
             summary = summary,
             timer = TimerSnapshot.Idle,
+            undoUntilElapsedRealtime = null,
             nextUp = null,
         )
         runCatching { widget.refresh() }
@@ -439,7 +484,9 @@ class WorkoutViewModel @Inject constructor(
             etaSeconds = eta(),
             shortOnTime = session?.isShortOnTime == true,
             undoUntilElapsedRealtime = handsFree.undoUntilElapsedRealtime,
+            handsFreePulse = handsFreePulse,
             cuesEnabled = cuesEnabled,
+            jointFlags = machine.sessionJoints,
             summary = _uiState.value.summary,
             nextUp = nextUp(shown),
         )
@@ -508,6 +555,15 @@ class WorkoutViewModel @Inject constructor(
             }
             else -> Unit
         }
+    }
+
+    private fun refreshClock() {
+        val now = elapsed.elapsedRealtime()
+        timer.refresh(now)
+        val until = handsFree.undoUntilElapsedRealtime ?: return
+        if (now <= until) return
+        handsFree.clearUndo()
+        _uiState.update { it.copy(undoUntilElapsedRealtime = null) }
     }
 
     private fun restBounds(position: WorkoutPosition.Resting): Pair<Int, Int> =

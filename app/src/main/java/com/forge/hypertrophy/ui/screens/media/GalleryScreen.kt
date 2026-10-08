@@ -28,7 +28,8 @@ import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Ink
 
 @Composable
 fun GalleryScreen(
@@ -52,7 +53,7 @@ fun GalleryScreen(
             TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
                 Text(stringResource(R.string.builder_back))
             }
-            Text(stringResource(R.string.media_gallery), color = White, style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.media_gallery), color = Ink, style = MaterialTheme.typography.headlineSmall)
         }
         ClipsSection(state, viewModel::onEvent, onRecord, onCompare)
         PhysiqueSection(state, viewModel::onEvent, onPhysique)
@@ -68,7 +69,7 @@ private fun ClipsSection(
 ) {
     Text(stringResource(R.string.media_clips), color = NeonAccent, style = MaterialTheme.typography.titleMedium)
     if (state.exercises.isEmpty()) {
-        Text(stringResource(R.string.media_no_exercises), color = White)
+        Text(stringResource(R.string.media_no_exercises), color = Ink)
         return
     }
     Row(
@@ -89,25 +90,25 @@ private fun ClipsSection(
     }
     val exerciseId = state.selectedExerciseId
     if (exerciseId == null) {
-        Text(stringResource(R.string.media_pick_exercise), color = White)
+        Text(stringResource(R.string.media_pick_exercise), color = Ink)
         return
     }
     MediaButton(stringResource(R.string.media_record)) { onRecord(exerciseId, null) }
     if (state.recentSets.isNotEmpty()) {
-        Text(stringResource(R.string.media_attach_to_set), color = White)
+        Text(stringResource(R.string.media_attach_to_set), color = Ink)
         state.recentSets.forEach { set ->
             MediaButton(set.label) { onRecord(exerciseId, set.id) }
         }
     }
     if (state.clips.isEmpty()) {
-        Text(stringResource(R.string.media_no_clips), color = White)
+        Text(stringResource(R.string.media_no_clips), color = Ink)
         return
     }
     state.clips.forEach { clip ->
         val chosen = clip.id in state.compareIds
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(clip.label, color = if (chosen) NeonAccent else White)
-            clip.capturedOn?.let { NumericText(it.toString(), color = White) }
+            Text(clip.label, color = if (chosen) NeonAccent else Ink)
+            clip.capturedOn?.let { NumericText(it.toString(), color = Ink) }
             Row(modifier = Modifier.fillMaxWidth()) {
                 TextButton(
                     onClick = { onEvent(GalleryEvent.ToggleCompare(clip.id)) },
@@ -169,15 +170,15 @@ private fun PhysiqueSection(
     if (beforeBitmap != null && afterBitmap != null) {
         PhysiqueSlider(beforeBitmap, afterBitmap)
         Row(modifier = Modifier.fillMaxWidth()) {
-            NumericText(state.before?.capturedOn?.toString() ?: "", color = White, modifier = Modifier.weight(1f))
-            NumericText(state.after?.capturedOn?.toString() ?: "", color = White)
+            NumericText(state.before?.capturedOn?.toString() ?: "", color = Ink, modifier = Modifier.weight(1f))
+            NumericText(state.after?.capturedOn?.toString() ?: "", color = Ink)
         }
     } else {
-        Text(stringResource(R.string.media_no_photos), color = White)
+        Text(stringResource(R.string.media_no_photos), color = Ink)
     }
-    Text(stringResource(R.string.media_milestones), color = White)
+    Text(stringResource(R.string.media_milestones), color = Ink)
     if (state.milestones.isEmpty()) {
-        Text(stringResource(R.string.media_no_milestones), color = White)
+        Text(stringResource(R.string.media_no_milestones), color = Ink)
     }
     state.milestones.forEach { milestone ->
         val photoOn = milestone.photoOn

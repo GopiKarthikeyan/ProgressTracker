@@ -89,6 +89,8 @@ class RoomWorkoutRepository @Inject constructor(
             name = exercise.name,
             setupNotes = exercise.setupNotes,
             isUnilateral = exercise.isUnilateral,
+            equipment = exercise.equipment,
+            barWeightKg = exercise.barWeightKg,
         )
     }
 

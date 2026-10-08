@@ -1,19 +1,23 @@
 package com.forge.hypertrophy.domain.usecase
 
+import com.forge.hypertrophy.data.entity.ExerciseEntity
 import com.forge.hypertrophy.data.entity.SessionSlotEntity
 import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
+import com.forge.hypertrophy.data.repository.SkillRepository
 import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.SessionStatus
 import com.forge.hypertrophy.domain.model.SetType
+import com.forge.hypertrophy.domain.model.SkillStageTargets
 import com.forge.hypertrophy.domain.workout.BaselineHint
 import com.forge.hypertrophy.domain.workout.ChecklistStep
 import com.forge.hypertrophy.domain.workout.ExerciseChoice
 import com.forge.hypertrophy.domain.workout.RecordedSet
+import com.forge.hypertrophy.domain.workout.SkillHoldHint
 import com.forge.hypertrophy.domain.workout.WorkoutMachineState
 import com.forge.hypertrophy.domain.workout.WorkoutSlot
 import kotlinx.coroutines.flow.first
@@ -25,6 +29,7 @@ class LoadWorkoutUseCase @Inject constructor(
     private val exercises: ExerciseRepository,
     private val preferences: TrainingPreferencesRepository,
     private val baselines: BaselineRepository,
+    private val skills: SkillRepository,
 ) {
     suspend fun execute(sessionId: Long): WorkoutMachineState {
         val session = sessions.get(sessionId) ?: return WorkoutMachineState()
@@ -77,6 +82,33 @@ class LoadWorkoutUseCase @Inject constructor(
             chosenAlternativeExerciseId = entity.chosenAlternativeExerciseId,
             formConfirmed = entity.formConfirmed == true,
             sets = sessions.sets(entity.id).map { it.toRecorded() },
+            skillHold = skillHoldFor(exercise, prescription.metricType),
+        )
+    }
+
+    suspend fun skillHold(exerciseId: Long, metric: MetricType): SkillHoldHint? {
+        val exercise = exercises.get(exerciseId) ?: return null
+        return skillHoldFor(exercise, metric)
+    }
+
+    private suspend fun skillHoldFor(
+        exercise: ExerciseEntity?,
+        metric: MetricType,
+    ): SkillHoldHint? {
+        if (metric != MetricType.HOLD && metric != MetricType.HOLD_OR_REPS) return null
+        val skillId = exercise?.skillId ?: return null
+        val steps = skills.getSteps(skillId)
+        if (steps.isEmpty()) return null
+        val progress = skills.getProgress(skillId)
+        val step = steps.firstOrNull { it.id == progress?.currentStepId } ?: steps.first()
+        return SkillHoldHint(
+            stage = (progress?.stage ?: 1).coerceIn(1, 3),
+            targets = SkillStageTargets(
+                stage1TotalSec = step.stage1TotalSec,
+                stage2TotalLowSec = step.stage2TotalLowSec,
+                stage2TotalHighSec = step.stage2TotalHighSec,
+                stage3UnbrokenSec = step.stage3UnbrokenSec,
+            ),
         )
     }
 

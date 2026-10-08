@@ -1,4 +1,5 @@
 import java.util.Locale
+import java.util.Properties
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty
@@ -16,12 +17,39 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+// Release signing stays out of the repo. Copy keystore.properties.example to
+// keystore.properties (gitignored) and point storeFile at a keystore kept
+// outside this tree. The same four values can come from the environment,
+// which overrides the file, so CI never needs the properties file.
+val keystoreProperties = Properties().apply {
+    val file = rootProject.file("keystore.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+
+fun signingValue(environmentName: String, propertyName: String): String? =
+    System.getenv(environmentName)?.takeIf { it.isNotBlank() }
+        ?: keystoreProperties.getProperty(propertyName)?.takeIf { it.isNotBlank() }
+
+val releaseStoreFile = signingValue("HYPERTROPHY_STORE_FILE", "storeFile")
+val releaseStorePassword = signingValue("HYPERTROPHY_STORE_PASSWORD", "storePassword")
+val releaseKeyAlias = signingValue("HYPERTROPHY_KEY_ALIAS", "keyAlias")
+val releaseKeyPassword = signingValue("HYPERTROPHY_KEY_PASSWORD", "keyPassword")
+val releaseSigningValues = listOf(releaseStoreFile, releaseStorePassword, releaseKeyAlias, releaseKeyPassword)
+if (releaseSigningValues.any { it != null } && releaseSigningValues.any { it == null }) {
+    error(
+        "Release signing is incomplete. Set storeFile, storePassword, keyAlias, and keyPassword " +
+            "in keystore.properties, or the HYPERTROPHY_STORE_FILE, HYPERTROPHY_STORE_PASSWORD, " +
+            "HYPERTROPHY_KEY_ALIAS, and HYPERTROPHY_KEY_PASSWORD environment variables.",
+    )
+}
+val releaseKeystore = releaseStoreFile?.let { rootProject.file(it) }
+
 android {
     namespace = "com.forge.hypertrophy"
+    // 37.0 is the stable platform. 37.2 is a preview, and the current AndroidX
+    // libraries refuse to compile against anything older than 37.
     compileSdk {
-        version = release(37) {
-            minorApiLevel = 2
-        }
+        version = release(37)
     }
 
     defaultConfig {
@@ -34,8 +62,25 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        if (releaseKeystore != null) {
+            create("release") {
+                storeFile = releaseKeystore
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (releaseKeystore != null) {
+                if (!releaseKeystore.isFile) {
+                    error("Release keystore not found: ${releaseKeystore.absolutePath}")
+                }
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -93,6 +138,59 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("debug")
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+/**
+ * Mechanical half of docs/REVIEW_CHECKLISTS.md. Fails the build on the
+ * project rules that a grep can catch: Android imports or ambient time in
+ * the domain layer, a destructive Room fallback, network code outside the
+ * weather repository, and pounds anywhere in production code.
+ */
+abstract class CheckProjectRulesTask : DefaultTask() {
+    @get:org.gradle.api.tasks.InputDirectory
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val mainSources: DirectoryProperty
+
+    @TaskAction
+    fun check() {
+        val root = mainSources.get().asFile
+        val violations = mutableListOf<String>()
+        root.walkTopDown().filter { it.isFile && it.extension == "kt" }.forEach { file ->
+            val relative = file.relativeTo(root).path
+            val inDomain = relative.contains("/domain/")
+            val isWeather = relative.endsWith("data/weather/WeatherRepository.kt")
+            file.readLines().forEachIndexed { index, raw ->
+                val line = raw.trim()
+                if (line.startsWith("//") || line.startsWith("*")) return@forEachIndexed
+                fun flag(rule: String) = violations.add("$relative:${index + 1}: $rule")
+                if (inDomain && line.startsWith("import android")) flag("domain imports android.*")
+                if (inDomain && Regex("""\b(LocalDate|LocalDateTime|Instant|ZonedDateTime)\.now\(""").containsMatchIn(line)) {
+                    flag("domain reads ambient time; use the injected Clock")
+                }
+                if (inDomain && line.contains("System.currentTimeMillis()")) flag("domain reads ambient time; use the injected Clock")
+                if (line.contains("fallbackToDestructiveMigration")) flag("destructive migration fallback is forbidden")
+                if (!isWeather && Regex("""\b(HttpURLConnection|OkHttpClient|Retrofit|HttpClient)\b""").containsMatchIn(line)) {
+                    flag("network code outside WeatherRepository")
+                }
+                if (Regex("""\b(lbs?|pounds?)\b""", RegexOption.IGNORE_CASE).containsMatchIn(line)) flag("kg only")
+            }
+        }
+        if (violations.isNotEmpty()) {
+            throw org.gradle.api.GradleException(
+                "Project rule violations:\n" + violations.joinToString("\n") { "  $it" },
+            )
+        }
+    }
+}
+
+val checkProjectRules = tasks.register("checkProjectRules", CheckProjectRulesTask::class.java) {
+    group = "verification"
+    description = "Fails on project rule violations that can be detected mechanically."
+    mainSources.set(layout.projectDirectory.dir("src/main/java"))
+}
+
+tasks.named("check") {
+    dependsOn(checkProjectRules)
 }
 
 dependencies {

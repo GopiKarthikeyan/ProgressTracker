@@ -13,7 +13,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 
 @Composable
 fun DiagnosticsScreen(
@@ -43,11 +43,11 @@ fun DiagnosticsContent(
     modifier: Modifier = Modifier,
 ) {
     BuilderColumn(title = stringResource(R.string.diagnostics_title), onBack = onBack, modifier = modifier) {
-        if (state.files.isEmpty()) Text(stringResource(R.string.diagnostics_empty), color = White)
+        if (state.files.isEmpty()) Text(stringResource(R.string.diagnostics_empty), color = Ink)
         state.files.forEach { name ->
             EditorButton(label = name, onClick = { onEvent(DiagnosticsEvent.Open(name)) })
         }
-        if (state.body.isNotEmpty()) Text(state.body, color = White)
+        if (state.body.isNotEmpty()) Text(state.body, color = Ink)
         EditorButton(label = stringResource(R.string.diagnostics_share), onClick = { onEvent(DiagnosticsEvent.Share) })
         EditorButton(label = stringResource(R.string.diagnostics_clear), onClick = { onEvent(DiagnosticsEvent.Clear) })
     }

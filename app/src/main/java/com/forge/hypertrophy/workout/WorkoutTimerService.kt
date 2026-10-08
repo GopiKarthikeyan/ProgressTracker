@@ -92,6 +92,7 @@ class WorkoutTimerService : Service() {
 
     private fun show(spec: TimerSpec) {
         val now = clock.elapsedRealtime()
+        timer.refresh(now)
         val snapshot = projectTimer(spec, now)
         val notification = workoutTimerNotification(this, snapshot, wallClockWhen(spec, now))
         startWorkoutForeground(notification)
@@ -101,9 +102,10 @@ class WorkoutTimerService : Service() {
             dualPulse()
             chime()
         }
-        if (spec.speak && !spec.cue.isNullOrBlank() && spokenForAnchor != spec.anchorElapsedRealtime) {
+        // Wait for the engine instead of marking the cue spoken while TTS is still initialising.
+        if (speechReady && spec.speak && !spec.cue.isNullOrBlank() && spokenForAnchor != spec.anchorElapsedRealtime) {
             spokenForAnchor = spec.anchorElapsedRealtime
-            if (speechReady) speech?.speak(spec.cue, TextToSpeech.QUEUE_FLUSH, null, "workout-cue")
+            speech?.speak(spec.cue, TextToSpeech.QUEUE_FLUSH, null, "workout-cue")
         }
         if (tickJob == null) {
             tickJob = scope.launch {

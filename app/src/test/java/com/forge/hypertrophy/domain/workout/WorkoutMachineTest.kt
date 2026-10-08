@@ -4,6 +4,7 @@ import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
 import com.forge.hypertrophy.domain.model.SetSide
+import com.forge.hypertrophy.domain.model.SkillStageTargets
 import com.forge.hypertrophy.domain.model.SlotCategory
 import com.forge.hypertrophy.domain.model.SlotPrescription
 import org.junit.Assert.assertEquals
@@ -64,6 +65,28 @@ class WorkoutMachineTest {
         val state = started(slot(1, 0, null, sets = 1), optional).copy(sessionJoints = setOf("knee"))
         assertFalse(suggestSkip(state.slots.first(), state))
         assertTrue(suggestSkip(optional, state))
+    }
+
+    @Test
+    fun aHoldWithoutItsOwnTargetUsesTheSkillStage() {
+        val hint = SkillHoldHint(stage = 1, targets = SkillStageTargets(stage1TotalSec = 12))
+        val fresh = suggestionFor(holdSlot(skillHold = hint), emptyMap())
+        assertEquals(12, fresh.holdSec)
+        assertFalse(fresh.fromPreviousSession)
+
+        val logged = holdSlot(skillHold = hint).copy(
+            sets = listOf(RecordedSet(1, 1, SetSide.BOTH, null, null, 5, null, emptyList(), EntryMethod.SCREEN)),
+        )
+        assertEquals(7, suggestionFor(logged, emptyMap()).holdSec)
+    }
+
+    @Test
+    fun anExplicitHoldTargetBeatsTheSkillStage() {
+        val suggestion = suggestionFor(
+            holdSlot(holdTargetSec = 30, skillHold = SkillHoldHint(stage = 1, targets = SkillStageTargets())),
+            emptyMap(),
+        )
+        assertEquals(30, suggestion.holdSec)
     }
 
     @Test
@@ -129,5 +152,24 @@ class WorkoutMachineTest {
         exerciseName = "slot-$id",
         setupNotes = "",
         unilateral = unilateral,
+    )
+
+    private fun holdSlot(holdTargetSec: Int? = null, skillHold: SkillHoldHint? = null) = WorkoutSlot(
+        sessionSlotId = 1,
+        sortOrder = 0,
+        prescription = SlotPrescription(
+            exerciseId = 1,
+            category = SlotCategory.SKILL,
+            sortOrder = 0,
+            metricType = MetricType.HOLD,
+            setsMin = 4,
+            setsMax = 5,
+            holdTargetSec = holdTargetSec,
+            progressionRule = ProgressionRule.NONE,
+        ),
+        exerciseName = "hold",
+        setupNotes = "",
+        unilateral = false,
+        skillHold = skillHold,
     )
 }

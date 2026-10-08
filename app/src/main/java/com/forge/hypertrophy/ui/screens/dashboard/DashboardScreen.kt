@@ -6,11 +6,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -29,15 +33,22 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.ui.components.NumericText
-import com.forge.hypertrophy.ui.screens.routine.EditorButton
+import com.forge.hypertrophy.ui.components.PrimaryButton
+import com.forge.hypertrophy.ui.components.ProgressRing
+import com.forge.hypertrophy.ui.components.SecondaryButton
+import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.screens.routine.formatKg
-import com.forge.hypertrophy.ui.theme.Black
 import com.forge.hypertrophy.ui.theme.CardioBlue
-import com.forge.hypertrophy.ui.theme.EmptyDay
-import com.forge.hypertrophy.ui.theme.NeonAccent
+import com.forge.hypertrophy.ui.theme.Cream
+import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Muted
 import com.forge.hypertrophy.ui.theme.RecoveryAmber
 import com.forge.hypertrophy.ui.theme.RestGray
+import com.forge.hypertrophy.ui.theme.Rose
+import com.forge.hypertrophy.ui.theme.Sand
 import com.forge.hypertrophy.ui.theme.White
+import java.time.DayOfWeek
+import java.time.format.TextStyle
 import java.util.Locale
 
 @Composable
@@ -71,20 +82,31 @@ fun DashboardContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Black)
+            .background(Cream)
             .verticalScroll(rememberScrollState())
-            .padding(16.dp),
+            .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.headlineSmall, color = White)
+        Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.headlineMedium, color = Ink)
         Notice(state.notice, onEvent, onOpenWorkout)
-        EditorButton(label = stringResource(R.string.review_open), onClick = onOpenWeeklyReview)
-        EditorButton(label = stringResource(R.string.session_list_open), onClick = onOpenSessions)
-        TodaySection(state.today, onEvent, onOpenWorkout)
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            SecondaryButton(
+                label = stringResource(R.string.review_open),
+                onClick = onOpenWeeklyReview,
+                modifier = Modifier.weight(1f),
+            )
+            SecondaryButton(
+                label = stringResource(R.string.session_list_open),
+                onClick = onOpenSessions,
+                modifier = Modifier.weight(1f),
+            )
+        }
+        WeekChips(state.heatmap)
         StreakSection(state.currentStreak, state.bestStreak)
-        HeatmapSection(state.heatmap)
+        TodaySection(state.today, onEvent, onOpenWorkout)
         RecordsSection(state.records)
         SkillsSection(state.skills)
+        HeatmapSection(state.heatmap)
         BodySection(state, onEvent)
         VolumeSection(state.volume)
         StallSection(state.stalls)
@@ -96,7 +118,7 @@ fun DashboardContent(
 private fun Notice(
     notice: DashboardNotice?,
     onEvent: (DashboardEvent) -> Unit,
-    onOpenWorkout: (Long) -> Unit
+    onOpenWorkout: (Long) -> Unit,
 ) {
     if (notice == null) return
     val text = when (notice) {
@@ -106,13 +128,65 @@ private fun Notice(
         DashboardNotice.WEIGH_IN_INVALID -> R.string.dashboard_notice_invalid
         DashboardNotice.SCHEDULE_REJECTED -> R.string.dashboard_notice_rejected
     }
-    Column {
-        Text(stringResource(text), color = NeonAccent)
+    SurfaceCard(color = Sand) {
+        Text(stringResource(text), color = Rose)
+        Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (notice == DashboardNotice.WORKOUT_STARTED || notice == DashboardNotice.ALREADY_IN_PROGRESS) {
-                EditorButton(stringResource(R.string.workout_resume), { onOpenWorkout(0L) }) // ViewModel will pick up the active one
+                PrimaryButton(
+                    label = stringResource(R.string.workout_resume),
+                    onClick = { onOpenWorkout(0L) },
+                    modifier = Modifier.weight(1f),
+                )
             }
-            EditorButton(stringResource(R.string.dashboard_dismiss), { onEvent(DashboardEvent.DismissNotice) })
+            SecondaryButton(
+                label = stringResource(R.string.dashboard_dismiss),
+                onClick = { onEvent(DashboardEvent.DismissNotice) },
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun WeekChips(cells: List<HeatmapCell>) {
+    val today = java.time.LocalDate.now()
+    val start = today.with(DayOfWeek.MONDAY)
+    val byDate = cells.associateBy { it.date }
+    val week = (0..6).map { offset ->
+        val date = start.plusDays(offset.toLong())
+        byDate[date] ?: HeatmapCell(date, null)
+    }
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_week), color = Muted, style = MaterialTheme.typography.labelLarge)
+        Spacer(Modifier.height(12.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            week.forEach { cell ->
+                val trained = cell.kind == SessionKind.GYM || cell.kind == SessionKind.CARDIO
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .background(if (trained) Rose else Sand, RoundedCornerShape(14.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = cell.date.dayOfMonth.toString(),
+                            color = if (trained) White else Ink,
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                    }
+                    Text(
+                        text = cell.date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(3),
+                        color = Muted,
+                        style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                }
+            }
         }
     }
 }
@@ -121,30 +195,31 @@ private fun Notice(
 private fun TodaySection(
     today: TodayCard?,
     onEvent: (DashboardEvent) -> Unit,
-    onOpenWorkout: (Long) -> Unit
+    onOpenWorkout: (Long) -> Unit,
 ) {
-    Section(stringResource(R.string.dashboard_today)) {
+    SurfaceCard(color = Sand) {
+        Text(stringResource(R.string.dashboard_today), color = Muted, style = MaterialTheme.typography.labelLarge)
         if (today == null) {
-            Text(stringResource(R.string.dashboard_empty_program), color = White)
-            return@Section
+            Text(stringResource(R.string.dashboard_empty_program), color = Ink)
+            return@SurfaceCard
         }
-        Text(today.label, color = White, style = MaterialTheme.typography.titleMedium)
+        Text(today.label, color = Ink, style = MaterialTheme.typography.headlineSmall)
         Text(
             if (today.mode == ScheduleMode.FIXED) {
                 stringResource(R.string.dashboard_mode_fixed)
             } else {
                 stringResource(R.string.dashboard_mode_rolling)
             },
-            color = White.copy(alpha = 0.72f),
+            color = Muted,
         )
         if (today.isRest) {
-            Text(stringResource(R.string.dashboard_rest_day), color = White)
+            Text(stringResource(R.string.dashboard_rest_day), color = Rose)
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.dashboard_estimate), color = White, modifier = Modifier.weight(1f))
-            NumericText(formatDuration(today.estimatedSeconds), color = NeonAccent)
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
+            Text(stringResource(R.string.dashboard_estimate), color = Ink, modifier = Modifier.weight(1f))
+            NumericText(formatDuration(today.estimatedSeconds), color = Rose)
         }
-        EditorButton(
+        PrimaryButton(
             label = if (today.startEnabled) stringResource(R.string.dashboard_start) else stringResource(R.string.dashboard_resume),
             onClick = {
                 if (today.startEnabled) {
@@ -154,28 +229,31 @@ private fun TodaySection(
                 }
             },
         )
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            EditorButton(
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            SecondaryButton(
                 label = stringResource(R.string.dashboard_start_short),
                 onClick = { onEvent(DashboardEvent.Start(shortOnTime = true)) },
                 enabled = today.startEnabled,
                 modifier = Modifier.weight(1f),
             )
-            NumericText(formatDuration(today.shortEstimatedSeconds), color = NeonAccent)
+            NumericText(formatDuration(today.shortEstimatedSeconds), color = Rose)
         }
+        Spacer(Modifier.height(8.dp))
         if (today.mode == ScheduleMode.ROLLING) {
-            EditorButton(
+            SecondaryButton(
                 label = stringResource(R.string.dashboard_take_rest),
                 onClick = { onEvent(DashboardEvent.TakeRestNow) },
                 enabled = today.takeRestEnabled,
             )
-            EditorButton(
+            Spacer(Modifier.height(8.dp))
+            SecondaryButton(
                 label = stringResource(R.string.dashboard_skip),
                 onClick = { onEvent(DashboardEvent.SkipToNext) },
                 enabled = today.skipEnabled,
             )
         } else {
-            EditorButton(
+            SecondaryButton(
                 label = stringResource(R.string.dashboard_swap),
                 onClick = { onEvent(DashboardEvent.SwapWithTomorrow) },
                 enabled = today.swapEnabled,
@@ -186,23 +264,40 @@ private fun TodaySection(
 
 @Composable
 private fun StreakSection(current: Int, best: Int) {
-    Section(stringResource(R.string.dashboard_streak)) {
-        Row {
-            Text(stringResource(R.string.dashboard_streak_current), color = White, modifier = Modifier.weight(1f))
-            NumericText(current.toString(), color = NeonAccent)
-        }
-        Row {
-            Text(stringResource(R.string.dashboard_streak_best), color = White, modifier = Modifier.weight(1f))
-            NumericText(best.toString(), color = NeonAccent)
+    Column {
+        Text(stringResource(R.string.dashboard_streak), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            SurfaceCard(modifier = Modifier.weight(1f), color = White) {
+                Text(stringResource(R.string.dashboard_streak_current), color = Muted, style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    val progress = if (best <= 0) 0f else (current.toFloat() / best.toFloat()).coerceIn(0f, 1f)
+                    ProgressRing(progress = progress, size = 88.dp, stroke = 8.dp) {
+                        NumericText(current.toString(), color = Ink, style = MaterialTheme.typography.headlineSmall)
+                    }
+                }
+            }
+            SurfaceCard(modifier = Modifier.weight(1f), color = White) {
+                Text(stringResource(R.string.dashboard_streak_best), color = Muted, style = MaterialTheme.typography.labelLarge)
+                Spacer(Modifier.height(8.dp))
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    ProgressRing(progress = if (best > 0) 1f else 0f, size = 88.dp, stroke = 8.dp) {
+                        NumericText(best.toString(), color = Ink, style = MaterialTheme.typography.headlineSmall)
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
 private fun HeatmapSection(cells: List<HeatmapCell>) {
-    Section(stringResource(R.string.dashboard_heatmap)) {
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_heatmap), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
         if (cells.none { it.kind != null }) {
-            Text(stringResource(R.string.dashboard_heatmap_empty), color = White)
+            Text(stringResource(R.string.dashboard_heatmap_empty), color = Muted)
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -214,12 +309,13 @@ private fun HeatmapSection(cells: List<HeatmapCell>) {
                         Box(
                             modifier = Modifier
                                 .size(12.dp)
-                                .background(kindColor(cell.kind)),
+                                .background(kindColor(cell.kind), RoundedCornerShape(3.dp)),
                         )
                     }
                 }
             }
         }
+        Spacer(Modifier.height(8.dp))
         Legend(SessionKind.GYM, R.string.dashboard_kind_gym)
         Legend(SessionKind.CARDIO, R.string.dashboard_kind_cardio)
         Legend(SessionKind.ACTIVE_RECOVERY, R.string.dashboard_kind_recovery)
@@ -230,30 +326,35 @@ private fun HeatmapSection(cells: List<HeatmapCell>) {
 @Composable
 private fun Legend(kind: SessionKind, label: Int) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(modifier = Modifier.size(12.dp).background(kindColor(kind)))
-        Text(stringResource(label), color = White)
+        Box(modifier = Modifier.size(12.dp).background(kindColor(kind), RoundedCornerShape(3.dp)))
+        Text(stringResource(label), color = Ink)
     }
 }
 
 @Composable
 private fun RecordsSection(records: List<ExerciseRecordUi>) {
-    Section(stringResource(R.string.dashboard_records)) {
+    Column {
+        Text(stringResource(R.string.dashboard_records), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(12.dp))
         if (records.isEmpty()) {
-            Text(stringResource(R.string.dashboard_records_empty), color = White)
-            return@Section
+            SurfaceCard { Text(stringResource(R.string.dashboard_records_empty), color = Muted) }
+            return
         }
-        records.forEach { record ->
-            Text(record.name, color = White)
-            Row {
-                Text(stringResource(R.string.dashboard_e1rm), color = White, modifier = Modifier.weight(1f))
-                NumericText(
-                    record.bestE1rmKg?.let(::formatKg) ?: stringResource(R.string.dashboard_none),
-                    color = NeonAccent,
-                )
-            }
-            Row {
-                Text(stringResource(R.string.dashboard_weight_reps), color = White, modifier = Modifier.weight(1f))
-                NumericText(weightReps(record), color = NeonAccent)
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            records.forEach { record ->
+                SurfaceCard(modifier = Modifier.width(200.dp), color = Sand) {
+                    Text(record.name, color = Ink, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.dashboard_e1rm), color = Muted, style = MaterialTheme.typography.labelMedium)
+                    NumericText(
+                        record.bestE1rmKg?.let(::formatKg) ?: stringResource(R.string.dashboard_none),
+                        color = Rose,
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    Text(weightReps(record), color = Muted, style = MaterialTheme.typography.bodyMedium)
+                }
             }
         }
     }
@@ -261,36 +362,30 @@ private fun RecordsSection(records: List<ExerciseRecordUi>) {
 
 @Composable
 private fun SkillsSection(skills: List<SkillLadderUi>) {
-    Section(stringResource(R.string.dashboard_skills)) {
+    Column {
+        Text(stringResource(R.string.dashboard_skills), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(12.dp))
         if (skills.isEmpty()) {
-            Text(stringResource(R.string.dashboard_skills_empty), color = White)
-            return@Section
+            SurfaceCard { Text(stringResource(R.string.dashboard_skills_empty), color = Muted) }
+            return
         }
-        skills.forEach { skill ->
-            Text(skill.name, color = White)
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                skill.tierNames.forEachIndexed { index, name ->
-                    val current = index == skill.currentTier
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            modifier = Modifier
-                                .size(width = 28.dp, height = 8.dp)
-                                .background(if (current) NeonAccent else if (index < skill.currentTier) NeonAccent.copy(alpha = 0.4f) else EmptyDay),
-                        )
-                        Text(name, color = White, style = MaterialTheme.typography.labelSmall)
-                    }
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            skills.forEach { skill ->
+                SurfaceCard(modifier = Modifier.width(220.dp), color = Sand) {
+                    Text(skill.name, color = Ink, style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.dashboard_stage) + " " + skill.stage,
+                        color = Rose,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                    Text(
+                        skill.maxHoldSec?.let { "${it}s" } ?: stringResource(R.string.dashboard_none),
+                        color = Muted,
+                    )
                 }
-            }
-            Row {
-                Text(stringResource(R.string.dashboard_stage), color = White, modifier = Modifier.weight(1f))
-                NumericText(skill.stage.toString(), color = NeonAccent)
-            }
-            Row {
-                Text(stringResource(R.string.dashboard_hold), color = White, modifier = Modifier.weight(1f))
-                NumericText(
-                    skill.maxHoldSec?.toString() ?: stringResource(R.string.dashboard_none),
-                    color = NeonAccent,
-                )
             }
         }
     }
@@ -298,22 +393,24 @@ private fun SkillsSection(skills: List<SkillLadderUi>) {
 
 @Composable
 private fun BodySection(state: DashboardUiState, onEvent: (DashboardEvent) -> Unit) {
-    Section(stringResource(R.string.dashboard_body)) {
-        Text(stringResource(R.string.dashboard_weight), color = White)
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_body), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.dashboard_weight), color = Muted)
         if (state.weight.samples.isEmpty()) {
-            Text(stringResource(R.string.dashboard_weight_empty), color = White)
+            Text(stringResource(R.string.dashboard_weight_empty), color = Ink)
         } else {
-            Text(stringResource(R.string.dashboard_average), color = White.copy(alpha = 0.72f))
             CompositionChart(state.weight.samples, state.weight.average)
         }
-        Text(stringResource(R.string.dashboard_body_fat), color = White)
+        Spacer(Modifier.height(8.dp))
+        Text(stringResource(R.string.dashboard_body_fat), color = Muted)
         if (state.bodyFat.samples.isEmpty()) {
-            Text(stringResource(R.string.dashboard_body_fat_empty), color = White)
+            Text(stringResource(R.string.dashboard_body_fat_empty), color = Ink)
         } else {
-            Text(stringResource(R.string.dashboard_average), color = White.copy(alpha = 0.72f))
             CompositionChart(state.bodyFat.samples, state.bodyFat.average)
         }
-        Text(stringResource(R.string.dashboard_weigh_in), color = White)
+        Spacer(Modifier.height(12.dp))
+        Text(stringResource(R.string.dashboard_weigh_in), color = Ink, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
             value = state.weightDraft,
             onValueChange = { onEvent(DashboardEvent.WeightDraft(it)) },
@@ -322,6 +419,7 @@ private fun BodySection(state: DashboardUiState, onEvent: (DashboardEvent) -> Un
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, fontFeatureSettings = "tnum"),
         )
+        Spacer(Modifier.height(8.dp))
         OutlinedTextField(
             value = state.bodyFatDraft,
             onValueChange = { onEvent(DashboardEvent.BodyFatDraft(it)) },
@@ -330,21 +428,27 @@ private fun BodySection(state: DashboardUiState, onEvent: (DashboardEvent) -> Un
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyLarge.copy(fontFamily = FontFamily.Monospace, fontFeatureSettings = "tnum"),
         )
-        EditorButton(stringResource(R.string.dashboard_save_weigh_in), { onEvent(DashboardEvent.SaveWeighIn) })
+        Spacer(Modifier.height(8.dp))
+        PrimaryButton(
+            label = stringResource(R.string.dashboard_save_weigh_in),
+            onClick = { onEvent(DashboardEvent.SaveWeighIn) },
+        )
     }
 }
 
 @Composable
 private fun VolumeSection(volume: List<MuscleVolumeUi>) {
-    Section(stringResource(R.string.dashboard_volume)) {
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_volume), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
         if (volume.isEmpty()) {
-            Text(stringResource(R.string.dashboard_volume_empty), color = White)
-            return@Section
+            Text(stringResource(R.string.dashboard_volume_empty), color = Muted)
+            return@SurfaceCard
         }
         volume.forEach { muscle ->
-            Row {
-                Text(muscle.muscle, color = White, modifier = Modifier.weight(1f))
-                NumericText(formatSets(muscle.sets), color = NeonAccent)
+            Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                Text(muscle.muscle, color = Ink, modifier = Modifier.weight(1f))
+                NumericText(formatSets(muscle.sets), color = Rose)
             }
         }
     }
@@ -352,23 +456,27 @@ private fun VolumeSection(volume: List<MuscleVolumeUi>) {
 
 @Composable
 private fun StallSection(stalls: List<String>) {
-    Section(stringResource(R.string.dashboard_stalls)) {
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_stalls), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
         if (stalls.isEmpty()) {
-            Text(stringResource(R.string.dashboard_stalls_empty), color = White)
-            return@Section
+            Text(stringResource(R.string.dashboard_stalls_empty), color = Muted)
+            return@SurfaceCard
         }
         stalls.forEach { name ->
-            Text(name, color = NeonAccent)
+            Text(name, color = Rose)
         }
     }
 }
 
 @Composable
 private fun DeloadSection(deload: DeloadStatus?) {
-    Section(stringResource(R.string.dashboard_deload)) {
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_deload), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
         if (deload == null) {
-            Text(stringResource(R.string.dashboard_deload_empty), color = White)
-            return@Section
+            Text(stringResource(R.string.dashboard_deload_empty), color = Muted)
+            return@SurfaceCard
         }
         Text(
             if (deload.rotationComplete) {
@@ -376,22 +484,14 @@ private fun DeloadSection(deload: DeloadStatus?) {
             } else {
                 stringResource(R.string.dashboard_deload_active)
             },
-            color = NeonAccent,
+            color = Rose,
         )
         deload.startedOn?.let { started ->
             Row {
-                Text(stringResource(R.string.dashboard_started), color = White, modifier = Modifier.weight(1f))
-                NumericText(started.toString(), color = NeonAccent)
+                Text(stringResource(R.string.dashboard_started), color = Ink, modifier = Modifier.weight(1f))
+                NumericText(started.toString(), color = Rose)
             }
         }
-    }
-}
-
-@Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        Text(title, color = NeonAccent, style = MaterialTheme.typography.titleMedium)
-        content()
     }
 }
 
@@ -403,11 +503,11 @@ private fun weightReps(record: ExerciseRecordUi): String {
 }
 
 private fun kindColor(kind: SessionKind?): Color = when (kind) {
-    SessionKind.GYM -> NeonAccent
+    SessionKind.GYM -> Rose
     SessionKind.CARDIO -> CardioBlue
     SessionKind.ACTIVE_RECOVERY -> RecoveryAmber
     SessionKind.REST -> RestGray
-    null -> EmptyDay
+    null -> Sand
 }
 
 internal fun formatDuration(seconds: Int): String {

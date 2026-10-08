@@ -1,5 +1,6 @@
 package com.forge.hypertrophy.domain.repository
 
+import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.SessionStatus
 import com.forge.hypertrophy.domain.workout.RecordedSet
 import com.forge.hypertrophy.domain.workout.WorkoutSlot
@@ -14,6 +15,8 @@ data class ExerciseDetails(
     val name: String,
     val setupNotes: String,
     val isUnilateral: Boolean,
+    val equipment: Equipment,
+    val barWeightKg: Double?,
 )
 
 interface WorkoutRepository {

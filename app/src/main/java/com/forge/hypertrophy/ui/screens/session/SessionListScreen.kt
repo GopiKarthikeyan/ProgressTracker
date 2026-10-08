@@ -10,7 +10,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
-import com.forge.hypertrophy.ui.theme.White
+import com.forge.hypertrophy.ui.theme.Ink
 
 @Composable
 fun SessionListScreen(
@@ -32,7 +32,7 @@ fun SessionListContent(
 ) {
     BuilderColumn(title = stringResource(R.string.session_list_title), onBack = onBack, modifier = modifier) {
         if (state.loaded && state.sessions.isEmpty()) {
-            Text(stringResource(R.string.session_list_empty), color = White)
+            Text(stringResource(R.string.session_list_empty), color = Ink)
         }
         state.sessions.forEach { session ->
             val edited = if (session.edited) stringResource(R.string.session_edited_mark) else ""

@@ -15,11 +15,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -33,7 +31,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.forge.hypertrophy.R
-import com.forge.hypertrophy.ui.theme.Black
+import com.forge.hypertrophy.ui.components.PrimaryButton
+import com.forge.hypertrophy.ui.components.SecondaryButton
+import com.forge.hypertrophy.ui.theme.Cream
 
 @Composable
 fun OnboardingScreen(
@@ -71,7 +71,7 @@ fun OnboardingScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Black,
+        containerColor = Cream,
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -109,12 +109,10 @@ private fun NotificationsStep(onAllow: () -> Unit) {
         text = stringResource(R.string.onboarding_notifications_body),
         style = MaterialTheme.typography.bodyLarge,
     )
-    Button(
+    PrimaryButton(
+        label = stringResource(R.string.onboarding_notifications_action),
         onClick = onAllow,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(stringResource(R.string.onboarding_notifications_action))
-    }
+    )
 }
 
 @Composable
@@ -142,18 +140,14 @@ private fun BatteryStep(
             color = MaterialTheme.colorScheme.primary,
         )
     }
-    Button(
+    PrimaryButton(
+        label = stringResource(R.string.onboarding_battery_action),
         onClick = onExempt,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(stringResource(R.string.onboarding_battery_action))
-    }
-    TextButton(
+    )
+    SecondaryButton(
+        label = stringResource(R.string.onboarding_battery_continue),
         onClick = onContinue,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Text(stringResource(R.string.onboarding_battery_continue))
-    }
+    )
 }
 
 private fun Context.deviceStatusEvent(): OnboardingEvent.DeviceStatus {
