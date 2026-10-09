@@ -144,11 +144,11 @@ class DashboardViewModel @Inject constructor(
     private suspend fun start(shortOnTime: Boolean) {
         gate.withLock {
             val loaded = loader.load() ?: return
-            if (sessions.observeInProgress().first().isNotEmpty()) {
+            val today = clock.localToday()
+            if (sessions.observeInProgress().first().any { it.kind == SessionKind.GYM && it.date == today }) {
                 _uiState.value = _uiState.value.copy(notice = DashboardNotice.ALREADY_IN_PROGRESS)
                 return
             }
-            val today = clock.localToday()
             val day = loaded.snapshot.dayOn(today, today) ?: return
             val transition = preferences.transitionRestSeconds.first()
             val entities = loaded.slots.filter { it.dayId == day.id }.sortedBy { it.sortOrder }
@@ -257,7 +257,8 @@ class DashboardViewModel @Inject constructor(
                 transition,
             )
         } ?: 0
-        val inProgress = sessions.observeInProgress().first().isNotEmpty()
+        val openToday = sessions.observeInProgress().first()
+            .firstOrNull { it.kind == SessionKind.GYM && it.date == today }
         val kept = _uiState.value
         _uiState.value = kept.copy(
             today = plan?.let {
@@ -270,11 +271,13 @@ class DashboardViewModel @Inject constructor(
                     takeRestEnabled = snapshot.mode == ScheduleMode.ROLLING && snapshot.days.any { day -> day.isRest },
                     skipEnabled = snapshot.mode == ScheduleMode.ROLLING && snapshot.days.isNotEmpty(),
                     swapEnabled = snapshot.mode == ScheduleMode.FIXED && snapshot.dayOn(today.plusDays(1), today) != null,
-                    startEnabled = !inProgress,
+                    startEnabled = openToday == null,
+                    activeSessionId = openToday?.id,
                 )
             },
             currentStreak = streaks.streak(snapshot, today),
             bestStreak = streaks.bestStreak(snapshot, today),
+            activeSessionId = openToday?.id,
         )
         publishHistory(program, snapshot, loaded.slots)
         runCatching { widget.refresh() }

@@ -25,6 +25,7 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.ReorderableColumn
+import com.forge.hypertrophy.ui.components.ToggleChip
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.screens.routine.NumericEntry
@@ -83,16 +84,18 @@ private fun ScheduleSection(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.settings_schedule_mode))
-        Row {
-            EditorButton(
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ToggleChip(
                 label = stringResource(R.string.settings_mode_fixed),
+                selected = state.scheduleMode == ScheduleMode.FIXED,
                 onClick = { onEvent(SettingsEvent.ScheduleModeChanged(ScheduleMode.FIXED)) },
-                enabled = state.scheduleMode != ScheduleMode.FIXED,
+                modifier = Modifier.weight(1f),
             )
-            EditorButton(
+            ToggleChip(
                 label = stringResource(R.string.settings_mode_rolling),
+                selected = state.scheduleMode == ScheduleMode.ROLLING,
                 onClick = { onEvent(SettingsEvent.ScheduleModeChanged(ScheduleMode.ROLLING)) },
-                enabled = state.scheduleMode != ScheduleMode.ROLLING,
+                modifier = Modifier.weight(1f),
             )
         }
         when (state.scheduleMode) {

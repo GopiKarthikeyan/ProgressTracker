@@ -195,7 +195,12 @@ class ImportPreviewViewModelTest {
 
     private fun preview(document: ProgramJson, preferences: ProgramImportPreferences) =
         ImportPreviewViewModel(
-            savedStateHandle = SavedStateHandle(mapOf("uri" to "content://picked/program.json")),
+            savedStateHandle = SavedStateHandle(
+                mapOf(
+                    "uri" to "content://picked/program.json",
+                    "sample" to false,
+                ),
+            ),
             documents = FakeDocumentStore(document),
             sampleProgram = UnavailableSample,
             importer = ProgramImporter(
@@ -205,6 +210,29 @@ class ImportPreviewViewModelTest {
             ),
             programs = programRepo,
         ).also { activeViewModels.add(it) }
+
+    @Test
+    fun sampleRouteLoadsBundledProgram() = runBlocking {
+        val sample = object : SampleProgramProvider {
+            override val available: Boolean = true
+            override suspend fun program(): ProgramJson = programDocument()
+        }
+        val viewModel = ImportPreviewViewModel(
+            savedStateHandle = SavedStateHandle(mapOf("uri" to null, "sample" to true)),
+            documents = FakeDocumentStore(programDocument()),
+            sampleProgram = sample,
+            importer = ProgramImporter(
+                StubDatabase(programRepo, routineRepo, exerciseRepo, skillRepo, sessionRepo),
+                clock,
+                RecordingPreferences(),
+            ),
+            programs = programRepo,
+        ).also { activeViewModels.add(it) }
+        awaitUntil { !viewModel.uiState.value.loading }
+        assertEquals("Protocol", viewModel.uiState.value.programName)
+        assertTrue(viewModel.uiState.value.canConfirm)
+        assertFalse(viewModel.uiState.value.unreadable)
+    }
 
     private class FakeDocumentStore(private val document: ProgramJson) : ProgramDocumentStore {
         override suspend fun read(uri: String): ProgramJson = document

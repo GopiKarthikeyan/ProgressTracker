@@ -68,6 +68,22 @@ class WorkoutMachineTest {
     }
 
     @Test
+    fun prepStaysUntilLeavePrepEvenWhenEveryItemIsChecked() {
+        val items = listOf(ChecklistStep(1, "Wrists", done = true), ChecklistStep(2, "Hips", done = true))
+        val withPrep = started(slot(1, 0, null, sets = 1)).copy(prep = items, leftPrep = false)
+        assertTrue(workoutPosition(withPrep) is WorkoutPosition.Prep)
+        val after = leavePrep(withPrep)
+        assertTrue(after.leftPrep)
+        assertTrue(workoutPosition(after) is WorkoutPosition.WorkingSet)
+    }
+
+    @Test
+    fun emptyPrepSkipsStraightToWork() {
+        val state = started(slot(1, 0, null, sets = 1))
+        assertTrue(workoutPosition(state) is WorkoutPosition.WorkingSet)
+    }
+
+    @Test
     fun aHoldWithoutItsOwnTargetUsesTheSkillStage() {
         val hint = SkillHoldHint(stage = 1, targets = SkillStageTargets(stage1TotalSec = 12))
         val fresh = suggestionFor(holdSlot(skillHold = hint), emptyMap())
@@ -97,6 +113,74 @@ class WorkoutMachineTest {
     }
 
     @Test
+    fun extraSetExtendsOnlyTheCurrentExercise() {
+        var state = started(slot(1, 0, group = 1, sets = 2), slot(2, 1, group = 1, sets = 2))
+        state = addExtraSet(state)
+        val extended = workoutPosition(state) as WorkoutPosition.WorkingSet
+        assertEquals(1L, extended.slot.sessionSlotId)
+        assertEquals(1, extended.setNumber)
+        assertEquals(3, extended.setCount)
+        assertEquals(2, state.slots.first { it.sessionSlotId == 1L }.prescription.setsMin)
+        assertEquals(2, state.slots.first { it.sessionSlotId == 2L }.prescription.setsMax)
+    }
+
+    @Test
+    fun extraSetDuringRestAddsAnotherRound() {
+        var state = started(slot(1, 0, null, sets = 2))
+        state = log(state)
+        assertEquals(RestKind.BETWEEN_SETS, (workoutPosition(state) as WorkoutPosition.Resting).kind)
+        state = addExtraSet(state)
+        assertEquals(3, state.slots.single().prescription.setsMax)
+        state = dismissRest(state)
+        state = log(state)
+        assertTrue(workoutPosition(state) is WorkoutPosition.Resting)
+        state = dismissRest(state)
+        val third = workoutPosition(state) as WorkoutPosition.WorkingSet
+        assertEquals(3, third.setNumber)
+        assertEquals(3, third.setCount)
+    }
+
+    @Test
+    fun extraSetLeavesTimedBlocksAlone() {
+        val timed = slot(1, 0, null, sets = 1).let { current ->
+            current.copy(prescription = current.prescription.copy(metricType = MetricType.TIMED_BLOCK))
+        }
+        var state = started(timed)
+        state = addExtraSet(state)
+        assertEquals(1, state.slots.single().prescription.setsMax)
+        state = logBlock(
+            state,
+            RecordedSet(1, 1, SetSide.BOTH, null, null, null, null, emptyList(), EntryMethod.SCREEN),
+        )
+        assertTrue(workoutPosition(state) is WorkoutPosition.Resting)
+        state = addExtraSet(state)
+        assertEquals(1, state.slots.single().prescription.setsMax)
+    }
+
+    @Test
+    fun resumeContinuesAtTheUnfinishedExercise() {
+        val finished = slot(1, 0, null, sets = 2).copy(
+            sets = listOf(recorded(1, 1), recorded(2, 2)),
+        )
+        val current = slot(2, 1, null, sets = 2).copy(sets = listOf(recorded(3, 1)))
+        val state = started(finished, current).copy(
+            dismissedRests = restoredDismissedRests(listOf(finished, current)),
+        )
+        val resting = workoutPosition(state) as WorkoutPosition.Resting
+        assertEquals(2L, resting.slot.sessionSlotId)
+        assertEquals(1, resting.round)
+    }
+
+    @Test
+    fun resumeKeepsTheRestBeforeTheNextUnloggedSet() {
+        val current = slot(1, 0, null, sets = 2).copy(sets = listOf(recorded(1, 1)))
+        val state = started(current).copy(dismissedRests = restoredDismissedRests(listOf(current)))
+        val resting = workoutPosition(state) as WorkoutPosition.Resting
+        assertEquals(1L, resting.slot.sessionSlotId)
+        assertEquals(1, resting.round)
+    }
+
+    @Test
     fun spokenCueMatchesTheSetScript() {
         assertEquals(
             "Set 2 of 3, weighted pull-ups, plus 20 kg, 5 to 8 reps",
@@ -115,6 +199,18 @@ class WorkoutMachineTest {
         )
         return workoutPosition(logged) as WorkoutPosition.Resting
     }
+
+    private fun recorded(id: Long, setNumber: Int) = RecordedSet(
+        id = id,
+        setNumber = setNumber,
+        side = SetSide.BOTH,
+        weightKg = null,
+        reps = 5,
+        holdSec = null,
+        rpe = null,
+        jointFlags = emptyList(),
+        entryMethod = EntryMethod.SCREEN,
+    )
 
     private fun log(state: WorkoutMachineState): WorkoutMachineState {
         val working = workoutPosition(state) as WorkoutPosition.WorkingSet

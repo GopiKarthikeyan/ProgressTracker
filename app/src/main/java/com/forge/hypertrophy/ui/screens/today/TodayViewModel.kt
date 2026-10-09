@@ -2,19 +2,23 @@ package com.forge.hypertrophy.ui.screens.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
-import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.schedule.ScheduleLoader
+import com.forge.hypertrophy.data.schedule.ScheduleReconciler
 import com.forge.hypertrophy.domain.engine.ReadinessCheck
 import com.forge.hypertrophy.domain.model.ScheduleSnapshot
+import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.WorkoutPlan
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.usecase.GetTodaysWorkoutUseCase
 import com.forge.hypertrophy.domain.usecase.StartWorkoutUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -28,6 +32,7 @@ data class TodayUiState(
     val scheduledDayId: Long? = null,
     val isRestDay: Boolean = false,
     val isInProgress: Boolean = false,
+    val completedToday: Boolean = false,
     val activeSessionId: Long? = null,
     val sessionToOpen: Long? = null,
 )
@@ -35,6 +40,7 @@ data class TodayUiState(
 sealed interface TodayEvent {
     data object StartWorkout : TodayEvent
     data object OpenedSession : TodayEvent
+    data object Refresh : TodayEvent
 }
 
 @HiltViewModel
@@ -46,6 +52,7 @@ class TodayViewModel @Inject constructor(
     private val cursor: ScheduleCursorRepository,
     private val clock: Clock,
     private val startWorkout: StartWorkoutUseCase,
+    private val reconciler: ScheduleReconciler,
 ) : ViewModel() {
     private val loader = ScheduleLoader(programs, routines, sessions, preferences, cursor)
     private val getToday = GetTodaysWorkoutUseCase(clock)
@@ -56,32 +63,65 @@ class TodayViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            sessions.observeInProgress().collect { inProgress ->
-                val program = programs.observeActive().first()
-                val open = inProgress.firstOrNull()
-                val plan = if (program != null) {
-                    loader.load(program)?.let { loaded ->
-                        planFor(
-                            loaded.snapshot,
-                            open?.readinessSleep,
-                            open?.readinessSoreness,
-                            open?.readinessEnergy,
-                        )
-                    }
-                } else {
-                    null
+            sessions.observeInProgress().collect { refresh(it) }
+        }
+    }
+
+    fun onEvent(event: TodayEvent) {
+        when (event) {
+            TodayEvent.StartWorkout -> {
+                val current = _uiState.value
+                val dayId = current.scheduledDayId ?: return
+                if (startInFlight || current.isRestDay || current.isInProgress || current.sessionToOpen != null) {
+                    return
                 }
-                _uiState.update { current ->
-                    TodayUiState(
-                        dayLabel = plan?.day?.label,
-                        scheduledDayId = plan?.day?.id,
-                        isRestDay = plan?.day?.isRest == true,
-                        isInProgress = inProgress.isNotEmpty(),
-                        activeSessionId = inProgress.firstOrNull()?.id,
-                        sessionToOpen = current.sessionToOpen,
-                    )
+                startInFlight = true
+                viewModelScope.launch {
+                    val id = try {
+                        startWorkout.execute(dayId)
+                    } catch (_: IllegalArgumentException) {
+                        startInFlight = false
+                        return@launch
+                    }
+                    _uiState.update { it.copy(sessionToOpen = id) }
                 }
             }
+            TodayEvent.OpenedSession -> {
+                startInFlight = false
+                _uiState.update { it.copy(sessionToOpen = null) }
+            }
+            TodayEvent.Refresh -> viewModelScope.launch {
+                refresh(sessions.observeInProgress().first())
+            }
+        }
+    }
+
+    private suspend fun refresh(inProgress: List<WorkoutSessionEntity>) {
+        runCatching { reconciler.reconcile() }
+        val today = clock.instant().atZone(clock.zone).toLocalDate()
+        val openToday = inProgress.openGymToday(today)
+        val program = programs.observeActive().first()
+        val loaded = program?.let { loader.load(it) }
+        val plan = loaded?.let {
+            planFor(
+                it.snapshot,
+                openToday?.readinessSleep,
+                openToday?.readinessSoreness,
+                openToday?.readinessEnergy,
+            )
+        }
+        val completedToday = today in (loaded?.snapshot?.explicitCompletions ?: emptySet()) ||
+            today in (loaded?.snapshot?.autoCompletedRests ?: emptySet())
+        _uiState.update { current ->
+            TodayUiState(
+                dayLabel = plan?.day?.label,
+                scheduledDayId = plan?.day?.id,
+                isRestDay = plan?.day?.isRest == true,
+                isInProgress = openToday != null,
+                completedToday = openToday == null && completedToday,
+                activeSessionId = openToday?.id,
+                sessionToOpen = current.sessionToOpen,
+            )
         }
     }
 
@@ -107,28 +147,7 @@ class TodayViewModel @Inject constructor(
         val budget = ((full?.estimatedSeconds ?: 0) / 2).coerceAtLeast(1)
         return getToday.today(snapshot, ReadinessCheck(sleep, soreness, energy), transition, budget)
     }
-
-    fun onEvent(event: TodayEvent) {
-        when (event) {
-            TodayEvent.StartWorkout -> {
-                val current = _uiState.value
-                val dayId = current.scheduledDayId ?: return
-                if (startInFlight || current.isRestDay || current.isInProgress || current.sessionToOpen != null) return
-                startInFlight = true
-                viewModelScope.launch {
-                    val id = try {
-                        startWorkout.execute(dayId)
-                    } catch (_: IllegalArgumentException) {
-                        startInFlight = false
-                        return@launch
-                    }
-                    _uiState.update { it.copy(sessionToOpen = id) }
-                }
-            }
-            TodayEvent.OpenedSession -> {
-                startInFlight = false
-                _uiState.update { it.copy(sessionToOpen = null) }
-            }
-        }
-    }
 }
+
+internal fun List<WorkoutSessionEntity>.openGymToday(today: LocalDate): WorkoutSessionEntity? =
+    firstOrNull { it.kind == SessionKind.GYM && it.date == today }

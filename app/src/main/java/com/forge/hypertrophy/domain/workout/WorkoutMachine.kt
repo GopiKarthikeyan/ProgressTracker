@@ -71,6 +71,10 @@ data class WorkoutMachineState(
     val prep: List<ChecklistStep> = emptyList(),
     val cooldown: List<ChecklistStep> = emptyList(),
     val started: Boolean = false,
+    /** False until the athlete confirms prep (Start First) or prep was already skipped on resume. */
+    val leftPrep: Boolean = false,
+    /** False until Finish is pressed on cooldown (or the session was already completed). */
+    val leftCooldown: Boolean = false,
     val transitionRestSeconds: Int = 120,
     val draft: SetSuggestion? = null,
     val dismissedRests: Set<String> = emptySet(),
@@ -138,11 +142,13 @@ private sealed interface AgendaItem {
 
 fun workoutPosition(state: WorkoutMachineState): WorkoutPosition {
     if (!state.started) return WorkoutPosition.Readiness
-    if (state.prep.any { !it.done }) return WorkoutPosition.Prep(state.prep)
+    // Stay on Prep until leavePrep — including when every item is checked — so
+    // Start First Exercise is reachable. Empty prep skips this phase.
+    if (state.prep.isNotEmpty() && !state.leftPrep) return WorkoutPosition.Prep(state.prep)
     val agenda = agenda(state.slots)
     val index = currentIndex(agenda, state.dismissedRests)
     if (index == null) {
-        return if (state.cooldown.any { !it.done }) {
+        return if (state.cooldown.isNotEmpty() && !state.leftCooldown) {
             WorkoutPosition.Cooldown(state.cooldown)
         } else {
             WorkoutPosition.Summary
@@ -196,17 +202,61 @@ fun suggestSkip(slot: WorkoutSlot, state: WorkoutMachineState): Boolean {
 
 fun restKey(slotId: Long, round: Int, kind: RestKind): String = "$slotId:$round:$kind"
 
+/**
+ * Rest dismissals live only in memory. On resume, any rest already passed
+ * (a later set or block is logged) is treated as dismissed so the session
+ * continues at the unfinished exercise instead of the first rest.
+ */
+fun restoredDismissedRests(slots: List<WorkoutSlot>): Set<String> {
+    val items = agenda(slots)
+    return items.mapIndexedNotNull { index, item ->
+        val rest = item as? AgendaItem.Rest ?: return@mapIndexedNotNull null
+        val passed = items.drop(index + 1).any { later ->
+            when (later) {
+                is AgendaItem.Work -> later.slot.sets.any { it.setNumber == later.setNumber && it.side == later.side }
+                is AgendaItem.Block -> later.slot.sets.isNotEmpty()
+                is AgendaItem.Rest -> false
+            }
+        }
+        if (passed) restKey(rest.slot.sessionSlotId, rest.round, rest.kind) else null
+    }.toSet()
+}
+
 fun checkOff(state: WorkoutMachineState, itemId: Long): WorkoutMachineState = state.copy(
     prep = state.prep.mark(itemId),
     cooldown = state.cooldown.mark(itemId),
     draft = null,
 )
 
+fun leavePrep(state: WorkoutMachineState): WorkoutMachineState =
+    state.copy(leftPrep = true, draft = null)
+
+fun leaveCooldown(state: WorkoutMachineState): WorkoutMachineState =
+    state.copy(leftCooldown = true, draft = null)
+
 fun dismissRest(state: WorkoutMachineState): WorkoutMachineState {
     val resting = workoutPosition(state) as? WorkoutPosition.Resting ?: return state
     return state.copy(
         dismissedRests = state.dismissedRests + restKey(resting.slot.sessionSlotId, resting.round, resting.kind),
         draft = null,
+    )
+}
+
+/**
+ * Adds one working set to the exercise on screen, for this session only.
+ * The program template is not involved. Timed blocks stay as they are.
+ */
+fun addExtraSet(state: WorkoutMachineState): WorkoutMachineState {
+    val slot = when (val position = workoutPosition(state)) {
+        is WorkoutPosition.WorkingSet -> position.slot
+        is WorkoutPosition.Resting -> position.slot
+        else -> return state
+    }
+    if (slot.skipped || slot.prescription.metricType == MetricType.TIMED_BLOCK) return state
+    return state.copy(
+        slots = state.slots.replace(slot.sessionSlotId) { current ->
+            current.copy(prescription = current.prescription.copy(setsMax = current.prescription.setsMax + 1))
+        },
     )
 }
 

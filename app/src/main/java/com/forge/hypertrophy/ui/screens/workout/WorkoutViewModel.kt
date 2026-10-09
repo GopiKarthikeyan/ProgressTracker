@@ -36,12 +36,14 @@ import com.forge.hypertrophy.domain.workout.WorkoutPositionTransitionValidator
 import com.forge.hypertrophy.domain.workout.WorkoutSlot
 import com.forge.hypertrophy.domain.workout.WorkoutTimer
 import com.forge.hypertrophy.widget.TodayWidgetRefresher
+import com.forge.hypertrophy.domain.workout.addExtraSet
 import com.forge.hypertrophy.domain.workout.adjustDraft
 import com.forge.hypertrophy.domain.workout.blockTimer
 import com.forge.hypertrophy.domain.workout.checkOff
 import com.forge.hypertrophy.domain.workout.chooseAlternative
 import com.forge.hypertrophy.domain.workout.confirmForm
 import com.forge.hypertrophy.domain.workout.dismissRest
+import com.forge.hypertrophy.domain.workout.leavePrep
 import com.forge.hypertrophy.domain.workout.logBlock
 import com.forge.hypertrophy.domain.workout.logCurrentSet
 import com.forge.hypertrophy.domain.workout.moveSlot
@@ -131,6 +133,7 @@ sealed interface WorkoutEvent {
     data object DismissRegulation : WorkoutEvent
     data object ToggleShortOnTime : WorkoutEvent
     data object CompleteWorkout : WorkoutEvent
+    data object AddSet : WorkoutEvent
     data object Undo : WorkoutEvent
     data object Tick : WorkoutEvent
     data class Cues(val enabled: Boolean) : WorkoutEvent
@@ -156,6 +159,8 @@ class WorkoutViewModel @Inject constructor(
     val uiState: StateFlow<WorkoutUiState> = _uiState.asStateFlow()
 
     private var sessionId: Long = 0L
+    private var sessionReady = false
+    private var pendingReadiness: ReadinessCheck? = null
     private var machine = WorkoutMachineState()
     private var armed: String? = null
     private var cuesEnabled = false
@@ -178,7 +183,9 @@ class WorkoutViewModel @Inject constructor(
 
     init {
         if (requestedSessionId != 0L) {
-            viewModelScope.launch { restore(requestedSessionId) }
+            viewModelScope.launch {
+                events.withLock { restore(requestedSessionId) }
+            }
         }
         viewModelScope.launch {
             timer.snapshot.collect { snap ->
@@ -236,6 +243,7 @@ class WorkoutViewModel @Inject constructor(
             WorkoutEvent.DismissRegulation -> dismissRegulation()
             WorkoutEvent.ToggleShortOnTime -> toggleShortOnTime()
             WorkoutEvent.CompleteWorkout -> complete()
+            WorkoutEvent.AddSet -> addSet()
             WorkoutEvent.Undo -> undo()
             WorkoutEvent.Tick -> refreshClock()
             is WorkoutEvent.Cues -> {
@@ -259,22 +267,41 @@ class WorkoutViewModel @Inject constructor(
             originalBounds.putIfAbsent(slot.sessionSlotId, slot.prescription.setsMin to slot.prescription.setsMax)
         }
         resumeClock()
-        publish()
+        sessionReady = true
+        val pending = pendingReadiness
+        pendingReadiness = null
+        val applied = pending != null && !machine.started &&
+            begin(pending.sleep, pending.soreness, pending.energy)
+        if (!applied) publish()
     }
 
-    private suspend fun begin(sleep: Int?, soreness: Int?, energy: Int?) {
-        if (workouts.findSession(sessionId) == null) return
+    private suspend fun begin(sleep: Int?, soreness: Int?, energy: Int?): Boolean {
+        if (!sessionReady) {
+            pendingReadiness = ReadinessCheck(sleep, soreness, energy)
+            return false
+        }
+        if (workouts.findSession(sessionId) == null) return false
         val advice = readiness.advise(ReadinessCheck(sleep, soreness, energy))
-        if (!workouts.beginSession(sessionId, sleep, soreness, energy, clock.instant())) return
+        if (!workouts.beginSession(sessionId, sleep, soreness, energy, clock.instant())) return false
         machine = machine.copy(started = true)
         _uiState.value = _uiState.value.copy(advice = advice)
         publish()
+        return true
     }
 
     private suspend fun primary(method: EntryMethod) {
         val now = elapsed.elapsedRealtime()
         if (method == EntryMethod.HARDWARE_KEY && !handsFree.accept(now)) return
         val acted = when (val position = workoutPosition(machine)) {
+            is WorkoutPosition.Prep -> {
+                if (position.items.all { it.done }) {
+                    machine = leavePrep(machine)
+                    publish()
+                    true
+                } else {
+                    false
+                }
+            }
             is WorkoutPosition.WorkingSet -> {
                 logWorkingSet(position, method, now)
                 true
@@ -419,6 +446,18 @@ class WorkoutViewModel @Inject constructor(
         publish()
     }
 
+    private suspend fun addSet() {
+        val slotId = when (val position = workoutPosition(machine)) {
+            is WorkoutPosition.WorkingSet -> position.slot.sessionSlotId
+            is WorkoutPosition.Resting -> position.slot.sessionSlotId
+            else -> return
+        }
+        machine = addExtraSet(machine)
+        val slot = machine.slots.firstOrNull { it.sessionSlotId == slotId } ?: return
+        persist(slot)
+        publish()
+    }
+
     private suspend fun undo() {
         val pending = handsFree.undoSetId
         val id = handsFree.takeUndo(elapsed.elapsedRealtime())
@@ -445,12 +484,29 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun complete() {
+        if (workouts.findSession(sessionId)?.status == SessionStatus.COMPLETED) {
+            if (_uiState.value.position !is WorkoutPosition.Summary && accept(WorkoutPosition.Summary)) {
+                _uiState.value = _uiState.value.copy(
+                    position = WorkoutPosition.Summary,
+                    timer = TimerSnapshot.Idle,
+                    undoUntilElapsedRealtime = null,
+                    nextUp = null,
+                )
+            }
+            return
+        }
         if (!accept(WorkoutPosition.Summary)) return
         val summary = interactors.complete.execute(sessionId, machine)
         armed = null
         timer.stop()
         handsFree.clearUndo()
-        machine = machine.copy(started = true, prep = machine.prep.map { it.copy(done = true) }, cooldown = machine.cooldown.map { it.copy(done = true) })
+        machine = machine.copy(
+            started = true,
+            leftPrep = true,
+            leftCooldown = true,
+            prep = machine.prep.map { it.copy(done = true) },
+            cooldown = machine.cooldown.map { it.copy(done = true) },
+        )
         _uiState.value = _uiState.value.copy(
             sessionId = sessionId,
             position = WorkoutPosition.Summary,
@@ -463,6 +519,16 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun publish() {
+        val open = workouts.findSession(sessionId)
+        if (
+            machine.started &&
+            open != null &&
+            open.status != SessionStatus.COMPLETED &&
+            workoutPosition(machine) == WorkoutPosition.Summary
+        ) {
+            complete()
+            if (workouts.findSession(sessionId)?.status == SessionStatus.COMPLETED) return
+        }
         val session = workouts.findSession(sessionId)
         val finished = session?.status == SessionStatus.COMPLETED
         val position = if (finished) WorkoutPosition.Summary else workoutPosition(machine)

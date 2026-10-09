@@ -30,6 +30,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -139,18 +140,24 @@ private fun RoundIconButton(onClick: () -> Unit, content: @Composable () -> Unit
 }
 
 @Composable
-internal fun ReadinessCard(onEvent: (WorkoutEvent) -> Unit) {
+internal fun ReadinessCard(
+    sessionReady: Boolean,
+    onEvent: (WorkoutEvent) -> Unit,
+) {
     var sleep by remember { mutableStateOf<Int?>(null) }
     var soreness by remember { mutableStateOf<Int?>(null) }
     var energy by remember { mutableStateOf<Int?>(null) }
-    var submitted by remember { mutableStateOf(false) }
+    LaunchedEffect(sessionReady, sleep, soreness, energy) {
+        val nextSleep = sleep
+        val nextSoreness = soreness
+        val nextEnergy = energy
+        if (!sessionReady || nextSleep == null || nextSoreness == null || nextEnergy == null) return@LaunchedEffect
+        onEvent(WorkoutEvent.SubmitReadiness(nextSleep, nextSoreness, nextEnergy))
+    }
     fun choose(nextSleep: Int?, nextSoreness: Int?, nextEnergy: Int?) {
         sleep = nextSleep
         soreness = nextSoreness
         energy = nextEnergy
-        if (submitted || nextSleep == null || nextSoreness == null || nextEnergy == null) return
-        submitted = true
-        onEvent(WorkoutEvent.SubmitReadiness(nextSleep, nextSoreness, nextEnergy))
     }
     SurfaceCard {
         Text(
@@ -604,6 +611,13 @@ internal fun WorkoutMoreSheet(
                     if (row.size == 1) Spacer(Modifier.weight(1f))
                 }
             }
+            SecondaryButton(
+                label = stringResource(R.string.workout_add_set),
+                onClick = {
+                    onEvent(WorkoutEvent.AddSet)
+                    onDismiss()
+                },
+            )
             SecondaryButton(
                 label = stringResource(R.string.workout_skip_exercise),
                 onClick = {

@@ -3,6 +3,7 @@ package com.forge.hypertrophy.widget
 import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.schedule.ScheduleLoader
 import com.forge.hypertrophy.domain.engine.StreakCalculator
+import com.forge.hypertrophy.domain.model.SessionKind
 import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -39,7 +40,7 @@ class TodaySummaryProvider @Inject constructor(
             isRest = day?.isRest == true,
             streak = streaks.streak(snapshot, today),
             completedToday = today in snapshot.explicitCompletions || today in snapshot.autoCompletedRests,
-            inProgress = sessions.observeInProgress().first().isNotEmpty(),
+            inProgress = sessions.observeInProgress().first().any { it.kind == SessionKind.GYM && it.date == today },
         )
     }
 }

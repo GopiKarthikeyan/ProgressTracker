@@ -152,7 +152,10 @@ fun WorkoutContent(
                 )
             }
             when (val pos = state.position) {
-                is WorkoutPosition.Readiness -> ReadinessCard(onEvent)
+                is WorkoutPosition.Readiness -> ReadinessCard(
+                    sessionReady = state.sessionId != null,
+                    onEvent = onEvent,
+                )
                 is WorkoutPosition.Prep -> PrepCard(pos, onEvent)
                 is WorkoutPosition.PracticeBlock -> PracticeBlockCard(state, pos.slot.sessionSlotId)
                 is WorkoutPosition.WorkingSet -> WorkingSetCard(pos, onEvent)
@@ -238,12 +241,22 @@ private fun PrimaryAction(
                     label = stringResource(R.string.workout_skip_rest),
                     onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
                 )
+                SecondaryButton(
+                    label = stringResource(R.string.workout_add_set),
+                    onClick = { onEvent(WorkoutEvent.AddSet) },
+                )
             }
-            pos is WorkoutPosition.WorkingSet -> CircleActionButton(
-                label = stringResource(R.string.workout_log_set),
-                onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
-                size = 128.dp,
-            )
+            pos is WorkoutPosition.WorkingSet -> {
+                SecondaryButton(
+                    label = stringResource(R.string.workout_add_set),
+                    onClick = { onEvent(WorkoutEvent.AddSet) },
+                )
+                CircleActionButton(
+                    label = stringResource(R.string.workout_log_set),
+                    onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+                    size = 128.dp,
+                )
+            }
             pos is WorkoutPosition.Prep && pos.items.all { it.done } -> CircleActionButton(
                 label = stringResource(R.string.workout_start_first),
                 onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },

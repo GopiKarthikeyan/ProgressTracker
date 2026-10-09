@@ -23,6 +23,9 @@
     <string name="builder_back">Back</string>
     <string name="builder_save">Save</string>
     <string name="builder_add">Add</string>
+    <string name="builder_add_day">Add day</string>
+    <string name="builder_untitled_day">Untitled day</string>
+    <string name="builder_open_day">Open day</string>
     <string name="builder_archive">Archive</string>
     <string name="builder_delete">Delete</string>
     <string name="builder_up">Up</string>
@@ -395,6 +398,10 @@
     <string name="settings_clip_lead">Lead trim (s)</string>
     <string name="settings_clip_tail">Tail trim (s)</string>
     <string name="settings_backup_progress">Backup in progress</string>
+    <plurals name="builder_exercise_count">
+        <item quantity="one">%1$d exercise</item>
+        <item quantity="other">%1$d exercises</item>
+    </plurals>
     <string-array name="builder_weekdays">
         <item>Mon</item>
         <item>Tue</item>
@@ -471,6 +478,7 @@
     <string name="workout_joint_back">Back</string>
     <string name="workout_warmup_step">%1$s kg × %2$d</string>
     <string name="workout_log_set">Log Set</string>
+    <string name="workout_add_set">Add set</string>
     <string name="workout_skip_exercise">Skip Exercise</string>
     <string name="workout_skip_reason_default">Not feeling it</string>
     <string name="workout_resting_title">Resting</string>
@@ -489,6 +497,7 @@
     <string name="workout_done">Done</string>
     <string name="workout_undo">Undo last set</string>
     <string name="workout_start">Start Workout</string>
+    <string name="workout_restart">Restart again</string>
     <string name="workout_resume">Resume Workout</string>
     <string name="dashboard_resume">Resume</string>
 </resources>

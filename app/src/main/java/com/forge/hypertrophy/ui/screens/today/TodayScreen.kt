@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -19,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.components.PrimaryButton
@@ -39,6 +43,16 @@ fun TodayScreen(
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.onEvent(TodayEvent.Refresh)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     LaunchedEffect(state.sessionToOpen) {
         val sessionId = state.sessionToOpen ?: return@LaunchedEffect
         onOpenWorkout(sessionId)
@@ -101,7 +115,9 @@ fun TodayScreen(
                     onClick = { onOpenWorkout(state.activeSessionId ?: 0L) },
                 )
                 state.scheduledDayId != null && !state.isRestDay -> PrimaryButton(
-                    label = stringResource(R.string.workout_start),
+                    label = stringResource(
+                        if (state.completedToday) R.string.workout_restart else R.string.workout_start,
+                    ),
                     onClick = { viewModel.onEvent(TodayEvent.StartWorkout) },
                 )
                 state.isRestDay -> Text(

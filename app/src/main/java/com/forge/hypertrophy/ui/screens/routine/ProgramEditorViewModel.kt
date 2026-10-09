@@ -18,6 +18,9 @@ import kotlinx.coroutines.launch
 data class DayRow(
     val id: Long,
     val label: String,
+    val dayOfWeek: Int?,
+    val isRest: Boolean,
+    val slotCount: Int,
 )
 
 data class ProgramEditorUiState(
@@ -31,6 +34,7 @@ sealed interface ProgramEditorEvent {
     data object AddDay : ProgramEditorEvent
     data class DeleteDay(val id: Long) : ProgramEditorEvent
     data class MoveDay(val from: Int, val to: Int) : ProgramEditorEvent
+    data object Refresh : ProgramEditorEvent
 }
 
 @HiltViewModel
@@ -55,9 +59,7 @@ class ProgramEditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             routines.observeDays(programId).collect { days ->
-                _uiState.update { state ->
-                    state.copy(days = days.map { DayRow(it.id, it.label) })
-                }
+                publishDays(days, countsFor(days))
             }
         }
     }
@@ -69,6 +71,35 @@ class ProgramEditorViewModel @Inject constructor(
             ProgramEditorEvent.AddDay -> addDay()
             is ProgramEditorEvent.DeleteDay -> viewModelScope.launch { routines.deleteDay(event.id) }
             is ProgramEditorEvent.MoveDay -> move(event.from, event.to)
+            ProgramEditorEvent.Refresh -> refresh()
+        }
+    }
+
+    private fun refresh() {
+        viewModelScope.launch {
+            val days = routines.observeDays(programId).first()
+            publishDays(days, countsFor(days))
+        }
+    }
+
+    private suspend fun countsFor(days: List<RoutineDayEntity>): Map<Long, Int> {
+        if (days.isEmpty()) return emptyMap()
+        return routines.slotsForDays(days.map { it.id }).groupingBy { it.dayId }.eachCount()
+    }
+
+    private fun publishDays(days: List<RoutineDayEntity>, counts: Map<Long, Int>) {
+        _uiState.update { state ->
+            state.copy(
+                days = days.map { day ->
+                    DayRow(
+                        id = day.id,
+                        label = day.label,
+                        dayOfWeek = day.dayOfWeek,
+                        isRest = day.isRest,
+                        slotCount = counts[day.id] ?: 0,
+                    )
+                },
+            )
         }
     }
 

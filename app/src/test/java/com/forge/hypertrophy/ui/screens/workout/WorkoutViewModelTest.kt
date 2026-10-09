@@ -119,6 +119,19 @@ class WorkoutViewModelTest {
     }
 
     @Test
+    fun leavingTheFinishedWorkoutClearsResume() = workoutTest {
+        workoutRobot {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSet()
+            skipRest()
+            assertState<WorkoutPosition.Summary>()
+            assertSessionStatus(SessionStatus.COMPLETED)
+        }
+    }
+
+    @Test
     fun aDoubleTapLogsOneSet() = workoutTest {
         workoutRobot(sets = 3) {
             startSession()
@@ -248,6 +261,14 @@ class WorkoutViewModelTest {
     }
 
     @Test
+    fun readinessChosenBeforeTheSessionLoadsStillOpensPrep() = workoutTest {
+        workoutRobot {
+            startSession()
+            reopenAndSubmitReadiness()
+        }
+    }
+
+    @Test
     fun returningToTheProgrammedExerciseRestoresItsNameAndBar() = workoutTest {
         workoutRobot {
             val other = addAlternative("other", barWeightKg = 15.0)
@@ -301,6 +322,20 @@ class WorkoutViewModelTest {
             sessionId = state.sessionId!!
         }
 
+        suspend fun reopenAndSubmitReadiness() {
+            val reopened = newViewModel(sessionId)
+            reopened.onEvent(WorkoutEvent.SubmitReadiness(3, 3, 3))
+            scope.runCurrent()
+            reopened.uiState.test(timeout = 5.seconds) {
+                var latest = awaitItem()
+                while (latest.position !is WorkoutPosition.Prep && latest.position !is WorkoutPosition.Summary) {
+                    latest = awaitItem()
+                }
+                assertTrue(latest.position is WorkoutPosition.Prep)
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
         suspend fun submitReadiness(sleep: Int, soreness: Int, energy: Int) {
             after(WorkoutEvent.SubmitReadiness(sleep, soreness, energy)) {
                 it.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS
@@ -327,7 +362,15 @@ class WorkoutViewModelTest {
 
         suspend fun checkOffPrep() {
             val itemId = routineRepo.checklistItems.values.first().id
-            after(WorkoutEvent.CheckOff(itemId)) { it.position is WorkoutPosition.WorkingSet }
+            after(WorkoutEvent.CheckOff(itemId)) {
+                val prep = it.position as? WorkoutPosition.Prep
+                prep != null && prep.items.all { step -> step.done }
+            }
+            after(WorkoutEvent.Primary(EntryMethod.SCREEN)) { it.position is WorkoutPosition.WorkingSet }
+        }
+
+        suspend fun skipRest() {
+            after(WorkoutEvent.Primary(EntryMethod.SCREEN)) { it.position is WorkoutPosition.Summary }
         }
 
         suspend fun logSet(method: EntryMethod = EntryMethod.SCREEN) {

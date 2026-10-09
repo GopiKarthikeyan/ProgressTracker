@@ -88,7 +88,7 @@ fun DashboardContent(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.headlineMedium, color = Ink)
-        Notice(state.notice, onEvent, onOpenWorkout)
+        Notice(state.notice, state.activeSessionId, onEvent, onOpenWorkout)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SecondaryButton(
                 label = stringResource(R.string.review_open),
@@ -117,6 +117,7 @@ fun DashboardContent(
 @Composable
 private fun Notice(
     notice: DashboardNotice?,
+    activeSessionId: Long?,
     onEvent: (DashboardEvent) -> Unit,
     onOpenWorkout: (Long) -> Unit,
 ) {
@@ -135,7 +136,7 @@ private fun Notice(
             if (notice == DashboardNotice.WORKOUT_STARTED || notice == DashboardNotice.ALREADY_IN_PROGRESS) {
                 PrimaryButton(
                     label = stringResource(R.string.workout_resume),
-                    onClick = { onOpenWorkout(0L) },
+                    onClick = { onOpenWorkout(activeSessionId ?: 0L) },
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -225,7 +226,7 @@ private fun TodaySection(
                 if (today.startEnabled) {
                     onEvent(DashboardEvent.Start(shortOnTime = false))
                 } else {
-                    onOpenWorkout(0L)
+                    onOpenWorkout(today.activeSessionId ?: 0L)
                 }
             },
         )

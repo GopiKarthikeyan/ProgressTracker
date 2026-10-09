@@ -14,6 +14,7 @@ data class TodayCard(
     val skipEnabled: Boolean,
     val swapEnabled: Boolean,
     val startEnabled: Boolean,
+    val activeSessionId: Long? = null,
 )
 
 data class HeatmapCell(
@@ -79,6 +80,7 @@ data class DashboardUiState(
     val weightDraft: String = "",
     val bodyFatDraft: String = "",
     val notice: DashboardNotice? = null,
+    val activeSessionId: Long? = null,
 )
 
 sealed interface DashboardEvent {

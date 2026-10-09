@@ -16,14 +16,17 @@ import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
+import com.forge.hypertrophy.data.schedule.ScheduleReconciler
 import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.usecase.StartWorkoutUseCase
 import com.forge.hypertrophy.domain.model.ScheduleMode
+import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
 import com.forge.hypertrophy.ui.screens.routine.awaitUntil
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,7 +48,7 @@ import org.junit.Test
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TodayViewModelTest {
-    private val clock: Clock = Clock.fixed(Instant.parse("2026-10-05T12:00:00Z"), ZoneOffset.UTC)
+    private val clock = MutableClock(Instant.parse("2026-10-05T12:00:00Z"), ZoneOffset.UTC)
     private val programRepo = FakeProgramRepository()
     private val routineRepo = FakeRoutineRepository()
     private val sessionRepo = FakeSessionRepository()
@@ -56,6 +59,12 @@ class TodayViewModelTest {
     @Before
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        clock.instant = Instant.parse("2026-10-05T12:00:00Z")
+        programRepo.reset()
+        routineRepo.reset()
+        sessionRepo.reset()
+        preferences.reset()
+        cursor.reset()
     }
 
     @After
@@ -172,7 +181,7 @@ class TodayViewModelTest {
             WorkoutSessionEntity(
                 date = LocalDate.of(2026, 10, 5),
                 dayId = 1L,
-                kind = com.forge.hypertrophy.domain.model.SessionKind.GYM,
+                kind = SessionKind.GYM,
                 status = SessionStatus.IN_PROGRESS,
                 isDeload = false,
                 isShortOnTime = false,
@@ -188,6 +197,150 @@ class TodayViewModelTest {
         awaitUntil { viewModel.uiState.value.isInProgress }
         assertTrue(viewModel.uiState.value.isInProgress)
         assertEquals(sessionId, viewModel.uiState.value.activeSessionId)
+        assertFalse(viewModel.uiState.value.completedToday)
+    }
+
+    @Test
+    fun completedGymSessionAllowsRestart() = runBlocking {
+        clock.instant = Instant.parse("2026-10-09T12:00:00Z")
+        val programId = programRepo.insert(
+            ProgramEntity(
+                name = "fixed",
+                scheduleMode = ScheduleMode.FIXED,
+                rollingSequence = 0,
+                deloadActive = false,
+                deloadStartedOn = null,
+            ),
+        )
+        val fridayId = routineRepo.insertDay(
+            RoutineDayEntity(
+                programId = programId,
+                label = "Legs, Shoulders & Heavy Hinge",
+                sequenceIndex = 4,
+                dayOfWeek = 5,
+                isRest = false,
+            ),
+        )
+        programRepo.setActive(programId)
+        sessionRepo.insert(
+            WorkoutSessionEntity(
+                date = LocalDate.of(2026, 10, 9),
+                dayId = fridayId,
+                kind = SessionKind.GYM,
+                status = SessionStatus.COMPLETED,
+                isDeload = false,
+                isShortOnTime = false,
+                readinessSleep = 3,
+                readinessSoreness = 3,
+                readinessEnergy = 3,
+                startedAt = clock.instant().minusSeconds(3_600),
+                completedAt = clock.instant(),
+            ),
+        )
+
+        val viewModel = today()
+        awaitUntil { viewModel.uiState.value.completedToday }
+        assertTrue(viewModel.uiState.value.completedToday)
+        assertFalse(viewModel.uiState.value.isInProgress)
+        assertEquals(fridayId, viewModel.uiState.value.scheduledDayId)
+        viewModel.onEvent(TodayEvent.StartWorkout)
+        awaitUntil { viewModel.uiState.value.sessionToOpen != null }
+        assertEquals(fridayId, sessionRepo.sessions.getValue(viewModel.uiState.value.sessionToOpen!!).dayId)
+    }
+
+    @Test
+    fun thursdayInProgressDoesNotHideFridaysDay() = runBlocking {
+        clock.instant = Instant.parse("2026-10-09T12:00:00Z")
+        val programId = programRepo.insert(
+            ProgramEntity(
+                name = "fixed",
+                scheduleMode = ScheduleMode.FIXED,
+                rollingSequence = 0,
+                deloadActive = false,
+                deloadStartedOn = null,
+            ),
+        )
+        routineRepo.insertDay(
+            RoutineDayEntity(
+                programId = programId,
+                label = "Pull (Horizontal) & OAP Maintenance",
+                sequenceIndex = 3,
+                dayOfWeek = 4,
+                isRest = false,
+            ),
+        )
+        val fridayId = routineRepo.insertDay(
+            RoutineDayEntity(
+                programId = programId,
+                label = "Legs, Shoulders & Heavy Hinge",
+                sequenceIndex = 4,
+                dayOfWeek = 5,
+                isRest = false,
+            ),
+        )
+        programRepo.setActive(programId)
+        sessionRepo.insert(
+            WorkoutSessionEntity(
+                date = LocalDate.of(2026, 10, 8),
+                dayId = 1L,
+                kind = SessionKind.GYM,
+                status = SessionStatus.IN_PROGRESS,
+                isDeload = false,
+                isShortOnTime = false,
+                readinessSleep = null,
+                readinessSoreness = null,
+                readinessEnergy = null,
+                startedAt = clock.instant(),
+                completedAt = null,
+            ),
+        )
+
+        val viewModel = today()
+        awaitUntil { viewModel.uiState.value.dayLabel == "Legs, Shoulders & Heavy Hinge" }
+        assertEquals("Legs, Shoulders & Heavy Hinge", viewModel.uiState.value.dayLabel)
+        assertEquals(fridayId, viewModel.uiState.value.scheduledDayId)
+        assertFalse(viewModel.uiState.value.isInProgress)
+        assertNull(viewModel.uiState.value.activeSessionId)
+    }
+
+    @Test
+    fun refreshMovesFromThursdayToFriday() = runBlocking {
+        clock.instant = Instant.parse("2026-10-08T12:00:00Z")
+        val programId = programRepo.insert(
+            ProgramEntity(
+                name = "fixed",
+                scheduleMode = ScheduleMode.FIXED,
+                rollingSequence = 0,
+                deloadActive = false,
+                deloadStartedOn = null,
+            ),
+        )
+        routineRepo.insertDay(
+            RoutineDayEntity(
+                programId = programId,
+                label = "Pull (Horizontal) & OAP Maintenance",
+                sequenceIndex = 3,
+                dayOfWeek = 4,
+                isRest = false,
+            ),
+        )
+        routineRepo.insertDay(
+            RoutineDayEntity(
+                programId = programId,
+                label = "Legs, Shoulders & Heavy Hinge",
+                sequenceIndex = 4,
+                dayOfWeek = 5,
+                isRest = false,
+            ),
+        )
+        programRepo.setActive(programId)
+
+        val viewModel = today()
+        awaitUntil { viewModel.uiState.value.dayLabel == "Pull (Horizontal) & OAP Maintenance" }
+        clock.instant = Instant.parse("2026-10-09T12:00:00Z")
+        viewModel.onEvent(TodayEvent.Refresh)
+        awaitUntil { viewModel.uiState.value.dayLabel == "Legs, Shoulders & Heavy Hinge" }
+        assertEquals("Legs, Shoulders & Heavy Hinge", viewModel.uiState.value.dayLabel)
     }
 
     private fun today(): TodayViewModel {
@@ -199,9 +352,19 @@ class TodayViewModelTest {
             cursor = cursor,
             clock = clock,
             startWorkout = StartWorkoutUseCase(sessionRepo, routineRepo, programRepo, clock),
+            reconciler = ScheduleReconciler(programRepo, routineRepo, sessionRepo, preferences, cursor, clock),
         )
         activeViewModels.add(vm)
         return vm
+    }
+
+    private class MutableClock(
+        @Volatile var instant: Instant,
+        private val zone: ZoneId,
+    ) : Clock() {
+        override fun getZone(): ZoneId = zone
+        override fun withZone(zone: ZoneId): Clock = MutableClock(instant, zone)
+        override fun instant(): Instant = instant
     }
 
     private class MemoryCursor : ScheduleCursorRepository {
@@ -212,6 +375,12 @@ class TodayViewModelTest {
         override val fixedSwaps = swaps
         override val rollingDayByDate = rolling
         override val autoCompletedRests = rests
+
+        fun reset() {
+            swaps.value = emptyMap()
+            rolling.value = emptyMap()
+            rests.value = emptySet()
+        }
 
         override suspend fun save(
             fixedSwaps: Map<LocalDate, Long>,
@@ -237,6 +406,14 @@ class TodayViewModelTest {
         override val activeTimerEndElapsedRealtime: Flow<Long?> = end
         override val defaultRestSeconds: Flow<Int> = defaultRest
 
+        fun reset() {
+            reconciled.value = null
+            plates.value = emptyList()
+            rest.value = 120
+            end.value = null
+            defaultRest.value = 90
+        }
+
         override suspend fun setLastReconciledDate(date: LocalDate?) {
             reconciled.value = date
         }
@@ -257,6 +434,11 @@ class TodayViewModelTest {
     private class FakeProgramRepository : ProgramRepository {
         val programs = mutableMapOf<Long, ProgramEntity>()
         private val flow = MutableStateFlow(emptyList<ProgramEntity>())
+
+        fun reset() {
+            programs.clear()
+            flow.value = emptyList()
+        }
 
         override fun observe(): Flow<ProgramEntity?> = flow.map { it.find { p -> p.isActive } }
         override fun observeAll(): Flow<List<ProgramEntity>> = flow
@@ -288,6 +470,13 @@ class TodayViewModelTest {
         val slots = mutableMapOf<Long, RoutineSlotEntity>()
         private val daysFlow = MutableStateFlow(emptyList<RoutineDayEntity>())
         private val slotsFlow = MutableStateFlow(emptyList<RoutineSlotEntity>())
+
+        fun reset() {
+            days.clear()
+            slots.clear()
+            daysFlow.value = emptyList()
+            slotsFlow.value = emptyList()
+        }
 
         override fun observeDays(programId: Long): Flow<List<RoutineDayEntity>> = daysFlow.map { it.filter { d -> d.programId == programId } }
         override suspend fun getDay(id: Long): RoutineDayEntity? = days[id]
@@ -340,6 +529,11 @@ class TodayViewModelTest {
         val sessions = mutableMapOf<Long, WorkoutSessionEntity>()
         private val sessionsFlow = MutableStateFlow(emptyList<WorkoutSessionEntity>())
 
+        fun reset() {
+            sessions.clear()
+            sessionsFlow.value = emptyList()
+        }
+
         override fun observe(id: Long): Flow<WorkoutSessionEntity?> = sessionsFlow.map { it.find { s -> s.id == id } }
         override fun observeInProgress(): Flow<List<WorkoutSessionEntity>> = sessionsFlow.map { it.filter { s -> s.status == SessionStatus.IN_PROGRESS } }
         override suspend fun get(id: Long): WorkoutSessionEntity? = sessions[id]
@@ -366,7 +560,10 @@ class TodayViewModelTest {
         override suspend fun deleteSet(id: Long) {}
         override suspend fun allSlots(): List<SessionSlotEntity> = emptyList()
         override suspend fun sets(sessionSlotId: Long): List<SetEntryEntity> = emptyList()
-        override suspend fun completedDays(): List<CompletedSessionDay> = emptyList()
+        override suspend fun completedDays(): List<CompletedSessionDay> =
+            sessions.values
+                .filter { it.status == SessionStatus.COMPLETED }
+                .map { CompletedSessionDay(date = it.date, kind = it.kind) }
         override suspend fun completedSets(): List<CompletedSetRow> = emptyList()
         override suspend fun getSet(id: Long): SetEntryEntity? = null
         override suspend fun getSlot(id: Long): SessionSlotEntity? = null

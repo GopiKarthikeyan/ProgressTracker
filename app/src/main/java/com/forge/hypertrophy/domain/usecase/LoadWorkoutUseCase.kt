@@ -20,6 +20,7 @@ import com.forge.hypertrophy.domain.workout.RecordedSet
 import com.forge.hypertrophy.domain.workout.SkillHoldHint
 import com.forge.hypertrophy.domain.workout.WorkoutMachineState
 import com.forge.hypertrophy.domain.workout.WorkoutSlot
+import com.forge.hypertrophy.domain.workout.restoredDismissedRests
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -46,6 +47,10 @@ class LoadWorkoutUseCase @Inject constructor(
                 ChecklistStep(it.id, it.text, done = session.status == SessionStatus.COMPLETED)
             },
             started = session.startedAt != null,
+            // Mid-workout resume has already left prep; a completed session has left cooldown.
+            leftPrep = progressed,
+            leftCooldown = session.status == SessionStatus.COMPLETED,
+            dismissedRests = restoredDismissedRests(workoutSlots),
             transitionRestSeconds = preferences.transitionRestSeconds.first(),
             previousByExercise = previousSets(sessionId, workoutSlots),
             ownHistoryBySessionSlot = ownHistory(sessionId, workoutSlots),

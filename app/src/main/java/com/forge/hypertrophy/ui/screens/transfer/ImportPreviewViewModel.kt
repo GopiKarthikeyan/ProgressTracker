@@ -3,6 +3,7 @@ package com.forge.hypertrophy.ui.screens.transfer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.storage.ProgramDocumentStore
 import com.forge.hypertrophy.data.transfer.ImportMode
@@ -13,6 +14,7 @@ import com.forge.hypertrophy.data.transfer.ProgramJson
 import com.forge.hypertrophy.data.transfer.ProgramJsonIssue
 import com.forge.hypertrophy.data.transfer.SampleProgramProvider
 import com.forge.hypertrophy.domain.model.ScheduleMode
+import com.forge.hypertrophy.ui.navigation.ImportPreviewRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,8 +66,10 @@ class ImportPreviewViewModel @Inject constructor(
     private val importer: ProgramImporter,
     private val programs: ProgramRepository,
 ) : ViewModel() {
-    private val uri: String? = savedStateHandle.get<String>("uri")
-    private val sample: Boolean = savedStateHandle.get<Boolean>("sample") == true
+    // Type-safe Navigation uses toRoute; JVM unit tests populate the handle with plain keys.
+    private val route = runCatching { savedStateHandle.toRoute<ImportPreviewRoute>() }.getOrNull()
+    private val uri: String? = route?.uri ?: savedStateHandle.get<String>("uri")
+    private val sample: Boolean = route?.sample ?: (savedStateHandle.get<Boolean>("sample") == true)
     private val _uiState = MutableStateFlow(ImportPreviewUiState())
     val uiState: StateFlow<ImportPreviewUiState> = _uiState.asStateFlow()
 

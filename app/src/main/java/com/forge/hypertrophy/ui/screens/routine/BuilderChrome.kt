@@ -1,9 +1,12 @@
 package com.forge.hypertrophy.ui.screens.routine
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -23,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
+import com.forge.hypertrophy.ui.theme.Cream
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -33,27 +37,33 @@ fun BuilderColumn(
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(16.dp),
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    Column(
+    Box(
         modifier = modifier
-            .fillMaxWidth()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp),
-        verticalArrangement = verticalArrangement,
-        content = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (onBack != null) {
-                    TextButton(
-                        onClick = onBack,
-                        modifier = Modifier.heightIn(min = TouchTargets.Editor),
-                    ) {
-                        Text(stringResource(R.string.builder_back))
+            .fillMaxSize()
+            .background(Cream),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = verticalArrangement,
+            content = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (onBack != null) {
+                        TextButton(
+                            onClick = onBack,
+                            modifier = Modifier.heightIn(min = TouchTargets.Editor),
+                        ) {
+                            Text(stringResource(R.string.builder_back))
+                        }
                     }
+                    Text(text = title, style = MaterialTheme.typography.headlineSmall)
                 }
-                Text(text = title, style = MaterialTheme.typography.headlineSmall)
-            }
-            content()
-        },
-    )
+                content()
+            },
+        )
+    }
 }
 
 @Composable
