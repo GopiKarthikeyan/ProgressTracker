@@ -48,6 +48,7 @@ sealed interface BaselineSetupEvent {
     data class StepWeight(val slotId: Long, val direction: Int) : BaselineSetupEvent
     data class StepReps(val slotId: Long, val direction: Int) : BaselineSetupEvent
     data class Calibrate(val slotId: Long) : BaselineSetupEvent
+    data object SkipAll : BaselineSetupEvent
     data object Save : BaselineSetupEvent
 }
 
@@ -75,6 +76,7 @@ class BaselineSetupViewModel @Inject constructor(
             is BaselineSetupEvent.StepWeight -> stepWeight(event.slotId, event.direction)
             is BaselineSetupEvent.StepReps -> stepReps(event.slotId, event.direction)
             is BaselineSetupEvent.Calibrate -> toggleCalibrate(event.slotId)
+            BaselineSetupEvent.SkipAll -> skipAll()
             BaselineSetupEvent.Save -> viewModelScope.launch { save() }
         }
     }
@@ -165,6 +167,16 @@ class BaselineSetupViewModel @Inject constructor(
 
     private fun toggleCalibrate(slotId: Long) {
         updateSlot(slotId) { it.copy(calibrate = !it.calibrate) }
+    }
+
+    private fun skipAll() {
+        _uiState.update { state ->
+            state.copy(
+                days = state.days.map { day ->
+                    day.copy(slots = day.slots.map { it.copy(calibrate = true) })
+                },
+            )
+        }
     }
 
     private suspend fun save() {

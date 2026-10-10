@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -22,11 +23,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Cream
+import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -92,8 +96,16 @@ fun NumericEntry(
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(text = label, modifier = Modifier.weight(1f))
+        Text(
+            text = label,
+            color = Ink,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(min = 72.dp, max = 112.dp),
+        )
         EditorButton(
             label = stringResource(R.string.builder_minus),
             onClick = { onValue(value?.minus(1)?.coerceAtLeast(0)) },
@@ -101,6 +113,8 @@ fun NumericEntry(
         NumericText(
             text = value?.toString() ?: stringResource(R.string.builder_none),
             color = NeonAccent,
+            modifier = Modifier.widthIn(min = 48.dp),
+            textAlign = TextAlign.Center,
         )
         EditorButton(
             label = stringResource(R.string.builder_plus),

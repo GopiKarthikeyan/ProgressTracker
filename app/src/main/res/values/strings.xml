@@ -4,6 +4,7 @@
     <string name="today_workout_plan">Workout Plan</string>
     <string name="today_rest_day">Rest day</string>
     <string name="today_no_program">No program loaded</string>
+    <string name="today_load_program">Load program</string>
     <string name="nav_routine">Routine</string>
     <string name="nav_dashboard">Dashboard</string>
     <string name="dashboard_week">This week</string>
@@ -94,8 +95,8 @@
     <string name="builder_progression">Progression</string>
     <string name="builder_exercise">Exercise</string>
     <string name="builder_day_label">Day label</string>
-    <string name="builder_minus">Decrease</string>
-    <string name="builder_plus">Increase</string>
+    <string name="builder_minus">−</string>
+    <string name="builder_plus">+</string>
     <string name="builder_error_sets">Sets min cannot be above sets max.</string>
     <string name="builder_error_reps">Reps low cannot be above reps high.</string>
     <string name="builder_error_rest">Rest min cannot be above rest max.</string>
@@ -142,7 +143,7 @@
     <string name="import_unreadable">This document could not be read as a program.</string>
     <string name="import_errors">Errors</string>
     <string name="import_warnings">Warnings</string>
-    <string name="import_days">Days</string>
+    <string name="import_days">Days (incl. rest)</string>
     <string name="import_slots">Slots</string>
     <string name="import_new_exercises">New exercises</string>
     <string name="import_new_skills">New skills</string>
@@ -367,10 +368,15 @@
     <string name="baseline_empty">No weighted slots in the active program.</string>
     <string name="baseline_saved">Starting weights saved.</string>
     <string name="baseline_save">Save starting weights</string>
+    <string name="baseline_done">Done</string>
     <string name="baseline_skip">Skip — calibrate in first session</string>
+    <string name="baseline_skip_all">Skip all</string>
+    <string name="baseline_weight">kg</string>
+    <string name="baseline_reps">reps</string>
     <string name="baseline_calibrating">No suggestion until the first session.</string>
     <string name="baseline_minus">−</string>
     <string name="baseline_plus">+</string>
+    <string name="onboarding_notifications_skip">Not now</string>
     <string name="session_list_open">Sessions</string>
     <string name="session_list_title">Sessions</string>
     <string name="session_list_empty">No sessions yet.</string>
@@ -413,10 +419,13 @@
     </string-array>
     <string name="workout_eta">ETA</string>
     <string name="workout_readiness_title">How are you feeling?</string>
-    <string name="workout_readiness_scale">Poor, OK, or Great. The last score starts the session.</string>
+    <string name="workout_readiness_scale">Rate each. The last score starts the session.</string>
     <string name="workout_readiness_poor">Poor</string>
     <string name="workout_readiness_ok">OK</string>
     <string name="workout_readiness_great">Great</string>
+    <string name="workout_readiness_soreness_high">Very sore</string>
+    <string name="workout_readiness_soreness_mid">A bit sore</string>
+    <string name="workout_readiness_soreness_low">Fresh</string>
     <string name="workout_readiness_sleep">Sleep</string>
     <string name="workout_readiness_soreness">Soreness</string>
     <string name="workout_readiness_energy">Energy</string>
@@ -479,6 +488,7 @@
     <string name="workout_warmup_step">%1$s kg × %2$d</string>
     <string name="workout_log_set">Log Set</string>
     <string name="workout_add_set">Add set</string>
+    <string name="workout_remove_set">Remove set</string>
     <string name="workout_skip_exercise">Skip Exercise</string>
     <string name="workout_skip_reason_default">Not feeling it</string>
     <string name="workout_resting_title">Resting</string>

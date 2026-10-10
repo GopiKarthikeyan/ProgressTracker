@@ -158,26 +158,34 @@ fun MainScaffold(
         }
     }
 
+    val showBottomBar = currentDestination?.hierarchy?.any { destination ->
+        destination.hasRoute<ImportPreviewRoute>() ||
+            destination.hasRoute<BaselineSetupRoute>() ||
+            destination.hasRoute<WorkoutRoute>()
+    } != true
+
     Scaffold(
         modifier = modifier,
         containerColor = Cream,
         bottomBar = {
-            FloatingTabBar(
-                selected = { destination ->
-                    currentDestination
-                        ?.hierarchy
-                        ?.any { it.hasRoute(destination.route::class) } == true
-                },
-                onSelect = { destination ->
-                    navController.navigate(destination.route) {
-                        popUpTo(navController.graph.findStartDestination().id) {
-                            saveState = true
+            if (showBottomBar) {
+                FloatingTabBar(
+                    selected = { destination ->
+                        currentDestination
+                            ?.hierarchy
+                            ?.any { it.hasRoute(destination.route::class) } == true
+                    },
+                    onSelect = { destination ->
+                        navController.navigate(destination.route) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
                         }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
-                },
-            )
+                    },
+                )
+            }
         },
     ) { innerPadding ->
         NavHost(
@@ -191,6 +199,15 @@ fun MainScaffold(
                 TodayScreen(
                     onOpenCardio = { navController.navigate(CardioRoute) },
                     onOpenGallery = { navController.navigate(GalleryRoute) },
+                    onOpenRoutine = {
+                        navController.navigate(RoutineRoute) {
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                            }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
                     onOpenWorkout = { navController.navigate(WorkoutRoute(it)) },
                 )
             }
@@ -238,7 +255,10 @@ fun MainScaffold(
                 )
             }
             composable<BaselineSetupRoute> {
-                BaselineSetupScreen(onBack = { navController.popBackStack() })
+                BaselineSetupScreen(
+                    onBack = { navController.popBackStack() },
+                    onDone = { navController.popBackStack() },
+                )
             }
             composable<SessionListRoute> {
                 SessionListScreen(

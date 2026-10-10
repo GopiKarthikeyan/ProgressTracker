@@ -1,8 +1,10 @@
 package com.forge.hypertrophy.ui.screens.transfer
 
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -12,12 +14,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.data.transfer.ImportMode
 import com.forge.hypertrophy.ui.components.NumericText
+import com.forge.hypertrophy.ui.components.PrimaryButton
+import com.forge.hypertrophy.ui.components.ToggleChip
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
-import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -66,12 +70,16 @@ private fun PreviewBody(
         CountRow(stringResource(R.string.import_archive_count), state.archiveCount)
     }
     Text(stringResource(R.string.import_mode))
-    FlowRow {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(top = 4.dp),
+    ) {
         ImportMode.entries.forEach { mode ->
-            EditorButton(
+            ToggleChip(
                 label = stringResource(mode.labelRes()),
+                selected = state.mode == mode,
                 onClick = { onEvent(ImportPreviewEvent.Mode(mode)) },
-                enabled = state.mode != mode,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -85,10 +93,11 @@ private fun PreviewBody(
     if (!state.canConfirm) {
         Text(stringResource(R.string.import_blocked), color = MaterialTheme.colorScheme.error)
     }
-    EditorButton(
+    PrimaryButton(
         label = stringResource(R.string.import_confirm),
         onClick = { onEvent(ImportPreviewEvent.Confirm) },
         enabled = state.canConfirm && !state.importing,
+        modifier = Modifier.fillMaxWidth(),
     )
 }
 

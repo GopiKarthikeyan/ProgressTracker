@@ -56,6 +56,7 @@ fun SettingsScreen(
                 Text(programName)
                 ScheduleSection(state, weekdays, viewModel::onEvent)
             }
+            EditorButton(label = stringResource(R.string.settings_load_sample), onClick = onLoadSample)
         }
         PlateSection(state, viewModel::onEvent)
         TransitionRestSection(state, viewModel::onEvent)
@@ -66,12 +67,6 @@ fun SettingsScreen(
             EditorButton(label = stringResource(R.string.settings_starting_weights), onClick = onOpenBaselines)
             EditorButton(label = stringResource(R.string.settings_snapshots), onClick = onOpenSnapshots)
             EditorButton(label = stringResource(R.string.settings_diagnostics), onClick = onOpenDiagnostics)
-        }
-        if (state.developerVisible) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.settings_developer), style = MaterialTheme.typography.titleMedium)
-                EditorButton(label = stringResource(R.string.settings_load_sample), onClick = onLoadSample)
-            }
         }
     }
 }

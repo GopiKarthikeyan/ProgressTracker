@@ -15,7 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -38,6 +37,7 @@ import com.forge.hypertrophy.ui.theme.Sand
 fun TodayScreen(
     onOpenCardio: () -> Unit,
     onOpenGallery: () -> Unit,
+    onOpenRoutine: () -> Unit,
     onOpenWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TodayViewModel = hiltViewModel(),
@@ -59,6 +59,7 @@ fun TodayScreen(
         viewModel.onEvent(TodayEvent.OpenedSession)
     }
 
+    val hasProgram = state.scheduledDayId != null || state.dayLabel != null
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -72,12 +73,62 @@ fun TodayScreen(
                 color = Ink,
                 style = MaterialTheme.typography.headlineMedium,
             )
-            Text(
-                text = state.dayLabel ?: stringResource(R.string.today_no_program),
-                color = Muted,
-                style = MaterialTheme.typography.titleMedium,
-            )
+            if (hasProgram && state.dayLabel != null) {
+                Text(
+                    text = state.dayLabel!!,
+                    color = Muted,
+                    style = MaterialTheme.typography.titleMedium,
+                )
+            }
         }
+
+        SurfaceCard(color = Sand) {
+            Text(
+                text = stringResource(R.string.today_workout_plan),
+                color = Muted,
+                style = MaterialTheme.typography.labelLarge,
+            )
+            when {
+                state.isInProgress -> {
+                    SpacerBelowLabel()
+                    PrimaryButton(
+                        label = stringResource(R.string.workout_resume),
+                        onClick = { onOpenWorkout(state.activeSessionId ?: 0L) },
+                    )
+                }
+                state.scheduledDayId != null && !state.isRestDay -> {
+                    SpacerBelowLabel()
+                    PrimaryButton(
+                        label = stringResource(
+                            if (state.completedToday) R.string.workout_restart else R.string.workout_start,
+                        ),
+                        onClick = { viewModel.onEvent(TodayEvent.StartWorkout) },
+                    )
+                }
+                state.isRestDay -> {
+                    Text(
+                        text = stringResource(R.string.today_rest_day),
+                        color = Rose,
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.padding(top = 8.dp),
+                    )
+                }
+                else -> {
+                    Text(
+                        text = stringResource(R.string.today_no_program),
+                        color = Ink,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                    )
+                    PrimaryButton(
+                        label = stringResource(R.string.today_load_program),
+                        onClick = onOpenRoutine,
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -94,44 +145,10 @@ fun TodayScreen(
                 modifier = Modifier.weight(1f),
             )
         }
-
-        Spacer(Modifier.weight(1f))
-
-        SurfaceCard(color = Sand) {
-            Text(
-                text = stringResource(R.string.today_workout_plan),
-                color = Muted,
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Text(
-                text = state.dayLabel ?: stringResource(R.string.today_no_program),
-                color = Ink,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-            )
-            when {
-                state.isInProgress -> PrimaryButton(
-                    label = stringResource(R.string.workout_resume),
-                    onClick = { onOpenWorkout(state.activeSessionId ?: 0L) },
-                )
-                state.scheduledDayId != null && !state.isRestDay -> PrimaryButton(
-                    label = stringResource(
-                        if (state.completedToday) R.string.workout_restart else R.string.workout_start,
-                    ),
-                    onClick = { viewModel.onEvent(TodayEvent.StartWorkout) },
-                )
-                state.isRestDay -> Text(
-                    text = stringResource(R.string.today_rest_day),
-                    color = Rose,
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                else -> HeightPlaceholder()
-            }
-        }
     }
 }
 
 @Composable
-private fun HeightPlaceholder() {
-    Spacer(Modifier.height(0.dp))
+private fun SpacerBelowLabel() {
+    Spacer(Modifier.height(16.dp))
 }

@@ -48,6 +48,8 @@ import com.forge.hypertrophy.domain.workout.logBlock
 import com.forge.hypertrophy.domain.workout.logCurrentSet
 import com.forge.hypertrophy.domain.workout.moveSlot
 import com.forge.hypertrophy.domain.workout.projectTimer
+import com.forge.hypertrophy.domain.workout.canRemoveExtraSet
+import com.forge.hypertrophy.domain.workout.removeExtraSet
 import com.forge.hypertrophy.domain.workout.removeSet
 import com.forge.hypertrophy.domain.workout.restKey
 import com.forge.hypertrophy.domain.workout.restTimer
@@ -114,6 +116,7 @@ data class WorkoutUiState(
     val jointFlags: Set<String> = emptySet(),
     val summary: WorkoutSummary? = null,
     val nextUp: NextUp? = null,
+    val canRemoveSet: Boolean = false,
 )
 
 sealed interface WorkoutEvent {
@@ -134,6 +137,7 @@ sealed interface WorkoutEvent {
     data object ToggleShortOnTime : WorkoutEvent
     data object CompleteWorkout : WorkoutEvent
     data object AddSet : WorkoutEvent
+    data object RemoveSet : WorkoutEvent
     data object Undo : WorkoutEvent
     data object Tick : WorkoutEvent
     data class Cues(val enabled: Boolean) : WorkoutEvent
@@ -244,6 +248,7 @@ class WorkoutViewModel @Inject constructor(
             WorkoutEvent.ToggleShortOnTime -> toggleShortOnTime()
             WorkoutEvent.CompleteWorkout -> complete()
             WorkoutEvent.AddSet -> addSet()
+            WorkoutEvent.RemoveSet -> removeExtra()
             WorkoutEvent.Undo -> undo()
             WorkoutEvent.Tick -> refreshClock()
             is WorkoutEvent.Cues -> {
@@ -458,6 +463,21 @@ class WorkoutViewModel @Inject constructor(
         publish()
     }
 
+    private suspend fun removeExtra() {
+        val slotId = when (val position = workoutPosition(machine)) {
+            is WorkoutPosition.WorkingSet -> position.slot.sessionSlotId
+            is WorkoutPosition.Resting -> position.slot.sessionSlotId
+            else -> return
+        }
+        val floor = originalBounds[slotId]?.second
+            ?: machine.slots.firstOrNull { it.sessionSlotId == slotId }?.prescription?.setsMin
+            ?: return
+        machine = removeExtraSet(machine, floor)
+        val slot = machine.slots.firstOrNull { it.sessionSlotId == slotId } ?: return
+        persist(slot)
+        publish()
+    }
+
     private suspend fun undo() {
         val pending = handsFree.undoSetId
         val id = handsFree.takeUndo(elapsed.elapsedRealtime())
@@ -542,6 +562,13 @@ class WorkoutViewModel @Inject constructor(
         } else {
             syncTimer(shown)
         }
+        val removeFloor = when (val pos = shown) {
+            is WorkoutPosition.WorkingSet -> originalBounds[pos.slot.sessionSlotId]?.second
+                ?: pos.slot.prescription.setsMin
+            is WorkoutPosition.Resting -> originalBounds[pos.slot.sessionSlotId]?.second
+                ?: pos.slot.prescription.setsMin
+            else -> null
+        }
         _uiState.value = WorkoutUiState(
             sessionId = sessionId,
             position = shown,
@@ -555,6 +582,7 @@ class WorkoutViewModel @Inject constructor(
             jointFlags = machine.sessionJoints,
             summary = _uiState.value.summary,
             nextUp = nextUp(shown),
+            canRemoveSet = removeFloor != null && canRemoveExtraSet(machine, removeFloor),
         )
     }
 

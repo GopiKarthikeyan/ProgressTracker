@@ -60,21 +60,18 @@ fun ProgramEditorScreen(
     }
     BuilderColumn(title = stringResource(R.string.builder_days), onBack = onBack, modifier = modifier) {
         SurfaceCard {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = { viewModel.onEvent(ProgramEditorEvent.Name(it)) },
                     label = { Text(stringResource(R.string.builder_program_name)) },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                 )
                 EditorButton(
                     label = stringResource(R.string.builder_save),
                     onClick = { viewModel.onEvent(ProgramEditorEvent.SaveName) },
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
@@ -140,10 +137,12 @@ private fun DayCard(
         exerciseCount != null -> exerciseCount
         else -> null
     }
+    val upDescription = stringResource(R.string.builder_up)
+    val downDescription = stringResource(R.string.builder_down)
     SurfaceCard(modifier = Modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             DayDragHandle(
@@ -176,27 +175,27 @@ private fun DayCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                TextButton(
-                    onClick = { onMove(index, index - 1) },
-                    enabled = index > 0,
-                    modifier = Modifier.sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor),
-                ) {
-                    Text(stringResource(R.string.builder_up))
-                }
-                TextButton(
-                    onClick = { onMove(index, index + 1) },
-                    enabled = index < lastIndex,
-                    modifier = Modifier.sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor),
-                ) {
-                    Text(stringResource(R.string.builder_down))
-                }
+            TextButton(
+                onClick = { onMove(index, index - 1) },
+                enabled = index > 0,
+                modifier = Modifier
+                    .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
+                    .semantics { contentDescription = upDescription },
+            ) {
+                Text("▲")
+            }
+            TextButton(
+                onClick = { onMove(index, index + 1) },
+                enabled = index < lastIndex,
+                modifier = Modifier
+                    .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
+                    .semantics { contentDescription = downDescription },
+            ) {
+                Text("▼")
             }
         }
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
             EditorButton(

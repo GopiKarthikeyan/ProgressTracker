@@ -179,6 +179,7 @@ fun WorkoutContent(
                 jointFlags = state.jointFlags,
                 shortOnTime = state.shortOnTime,
                 cuesEnabled = state.cuesEnabled,
+                canRemoveSet = state.canRemoveSet,
                 skipReason = skipReason,
                 onEvent = onEvent,
                 onDismiss = { moreOpen = false },
@@ -245,12 +246,24 @@ private fun PrimaryAction(
                     label = stringResource(R.string.workout_add_set),
                     onClick = { onEvent(WorkoutEvent.AddSet) },
                 )
+                if (state.canRemoveSet) {
+                    SecondaryButton(
+                        label = stringResource(R.string.workout_remove_set),
+                        onClick = { onEvent(WorkoutEvent.RemoveSet) },
+                    )
+                }
             }
             pos is WorkoutPosition.WorkingSet -> {
                 SecondaryButton(
                     label = stringResource(R.string.workout_add_set),
                     onClick = { onEvent(WorkoutEvent.AddSet) },
                 )
+                if (state.canRemoveSet) {
+                    SecondaryButton(
+                        label = stringResource(R.string.workout_remove_set),
+                        onClick = { onEvent(WorkoutEvent.RemoveSet) },
+                    )
+                }
                 CircleActionButton(
                     label = stringResource(R.string.workout_log_set),
                     onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },

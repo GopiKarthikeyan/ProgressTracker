@@ -85,6 +85,7 @@ fun OnboardingScreen(
                     onAllow = {
                         permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     },
+                    onNotNow = { onEvent(OnboardingEvent.NotificationsResult(granted = false)) },
                 )
                 OnboardingPhase.Battery -> BatteryStep(
                     exempt = state.batteryExempt,
@@ -100,7 +101,10 @@ fun OnboardingScreen(
 }
 
 @Composable
-private fun NotificationsStep(onAllow: () -> Unit) {
+private fun NotificationsStep(
+    onAllow: () -> Unit,
+    onNotNow: () -> Unit,
+) {
     Text(
         text = stringResource(R.string.onboarding_notifications_title),
         style = MaterialTheme.typography.headlineMedium,
@@ -112,6 +116,10 @@ private fun NotificationsStep(onAllow: () -> Unit) {
     PrimaryButton(
         label = stringResource(R.string.onboarding_notifications_action),
         onClick = onAllow,
+    )
+    SecondaryButton(
+        label = stringResource(R.string.onboarding_notifications_skip),
+        onClick = onNotNow,
     )
 }
 
@@ -139,15 +147,20 @@ private fun BatteryStep(
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.primary,
         )
+        PrimaryButton(
+            label = stringResource(R.string.onboarding_battery_continue),
+            onClick = onContinue,
+        )
+    } else {
+        PrimaryButton(
+            label = stringResource(R.string.onboarding_battery_action),
+            onClick = onExempt,
+        )
+        SecondaryButton(
+            label = stringResource(R.string.onboarding_battery_continue),
+            onClick = onContinue,
+        )
     }
-    PrimaryButton(
-        label = stringResource(R.string.onboarding_battery_action),
-        onClick = onExempt,
-    )
-    SecondaryButton(
-        label = stringResource(R.string.onboarding_battery_continue),
-        onClick = onContinue,
-    )
 }
 
 private fun Context.deviceStatusEvent(): OnboardingEvent.DeviceStatus {

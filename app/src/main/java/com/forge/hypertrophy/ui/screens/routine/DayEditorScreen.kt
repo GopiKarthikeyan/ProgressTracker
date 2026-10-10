@@ -19,8 +19,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.model.CardioType
 import com.forge.hypertrophy.domain.model.ChecklistPhase
-import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.ReorderableColumn
+import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -176,38 +176,36 @@ private fun ChecklistSection(
         Text(title)
         EditorButton(label = stringResource(R.string.builder_add), onClick = onAdd)
         items.forEach { item ->
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                OutlinedTextField(
-                    value = item.text,
-                    onValueChange = { onEvent(DayEditorEvent.ChecklistText(item.id, it)) },
-                    label = { Text(stringResource(R.string.builder_checklist_text)) },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+            SurfaceCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = item.text,
+                            onValueChange = { onEvent(DayEditorEvent.ChecklistText(item.id, it)) },
+                            label = { Text(stringResource(R.string.builder_checklist_text)) },
+                            modifier = Modifier.weight(1f),
+                            singleLine = true,
+                        )
+                        EditorButton(
+                            label = stringResource(R.string.builder_delete),
+                            onClick = { onEvent(DayEditorEvent.DeleteChecklist(item.id)) },
+                        )
+                    }
                     NumericEntry(
                         label = stringResource(R.string.builder_reps),
                         value = item.reps,
                         onValue = { onEvent(DayEditorEvent.ChecklistReps(item.id, it)) },
-                        modifier = Modifier.weight(1f)
                     )
                     NumericEntry(
                         label = stringResource(R.string.builder_seconds),
                         value = item.seconds,
                         onValue = { onEvent(DayEditorEvent.ChecklistSeconds(item.id, it)) },
-                        modifier = Modifier.weight(1f)
                     )
                 }
-                if (item.seconds != null) {
-                    NumericText(text = item.seconds.toString(), color = NeonAccent)
-                }
-                EditorButton(
-                    label = stringResource(R.string.builder_delete),
-                    onClick = { onEvent(DayEditorEvent.DeleteChecklist(item.id)) },
-                )
             }
         }
     }

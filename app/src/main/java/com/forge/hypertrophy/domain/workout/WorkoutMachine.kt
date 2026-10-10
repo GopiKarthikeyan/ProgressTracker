@@ -260,6 +260,41 @@ fun addExtraSet(state: WorkoutMachineState): WorkoutMachineState {
     )
 }
 
+/**
+ * Drops one unlogged extra set from the exercise on screen.
+ * [minimumSetsMax] is the planned ceiling (before extras); never goes below
+ * that or below the highest logged set number.
+ */
+fun removeExtraSet(state: WorkoutMachineState, minimumSetsMax: Int): WorkoutMachineState {
+    val slot = when (val position = workoutPosition(state)) {
+        is WorkoutPosition.WorkingSet -> position.slot
+        is WorkoutPosition.Resting -> position.slot
+        else -> return state
+    }
+    if (slot.skipped || slot.prescription.metricType == MetricType.TIMED_BLOCK) return state
+    val loggedMax = slot.sets.maxOfOrNull { it.setNumber } ?: 0
+    val floor = maxOf(minimumSetsMax, loggedMax).coerceAtLeast(0)
+    if (slot.prescription.setsMax <= floor) return state
+    return state.copy(
+        slots = state.slots.replace(slot.sessionSlotId) { current ->
+            current.copy(prescription = current.prescription.copy(setsMax = current.prescription.setsMax - 1))
+        },
+        draft = null,
+    )
+}
+
+fun canRemoveExtraSet(state: WorkoutMachineState, minimumSetsMax: Int): Boolean {
+    val slot = when (val position = workoutPosition(state)) {
+        is WorkoutPosition.WorkingSet -> position.slot
+        is WorkoutPosition.Resting -> position.slot
+        else -> return false
+    }
+    if (slot.skipped || slot.prescription.metricType == MetricType.TIMED_BLOCK) return false
+    val loggedMax = slot.sets.maxOfOrNull { it.setNumber } ?: 0
+    val floor = maxOf(minimumSetsMax, loggedMax).coerceAtLeast(0)
+    return slot.prescription.setsMax > floor
+}
+
 fun logCurrentSet(state: WorkoutMachineState, entry: RecordedSet): WorkoutMachineState {
     val working = workoutPosition(state) as? WorkoutPosition.WorkingSet ?: return state
     return state.copy(

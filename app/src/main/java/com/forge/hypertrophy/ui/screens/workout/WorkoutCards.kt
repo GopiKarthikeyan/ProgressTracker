@@ -20,6 +20,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.forge.hypertrophy.ui.components.PillShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -166,11 +170,38 @@ internal fun ReadinessCard(
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(12.dp))
-        ScoreRow(stringResource(R.string.workout_readiness_sleep), sleep) { choose(it, soreness, energy) }
+        ScoreRow(
+            title = stringResource(R.string.workout_readiness_sleep),
+            selected = sleep,
+            labels = listOf(
+                R.string.workout_readiness_poor,
+                R.string.workout_readiness_ok,
+                R.string.workout_readiness_great,
+            ),
+            onSelect = { choose(it, soreness, energy) },
+        )
         Spacer(Modifier.height(12.dp))
-        ScoreRow(stringResource(R.string.workout_readiness_soreness), soreness) { choose(sleep, it, energy) }
+        ScoreRow(
+            title = stringResource(R.string.workout_readiness_soreness),
+            selected = soreness,
+            labels = listOf(
+                R.string.workout_readiness_soreness_high,
+                R.string.workout_readiness_soreness_mid,
+                R.string.workout_readiness_soreness_low,
+            ),
+            onSelect = { choose(sleep, it, energy) },
+        )
         Spacer(Modifier.height(12.dp))
-        ScoreRow(stringResource(R.string.workout_readiness_energy), energy) { choose(sleep, soreness, it) }
+        ScoreRow(
+            title = stringResource(R.string.workout_readiness_energy),
+            selected = energy,
+            labels = listOf(
+                R.string.workout_readiness_poor,
+                R.string.workout_readiness_ok,
+                R.string.workout_readiness_great,
+            ),
+            onSelect = { choose(sleep, soreness, it) },
+        )
         Spacer(Modifier.height(12.dp))
         SecondaryButton(
             label = stringResource(R.string.workout_readiness_skip),
@@ -180,16 +211,18 @@ internal fun ReadinessCard(
 }
 
 @Composable
-private fun ScoreRow(title: String, selected: Int?, onSelect: (Int) -> Unit) {
+private fun ScoreRow(
+    title: String,
+    selected: Int?,
+    labels: List<Int>,
+    onSelect: (Int) -> Unit,
+) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, color = Ink, style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(
-                1 to R.string.workout_readiness_poor,
-                2 to R.string.workout_readiness_ok,
-                3 to R.string.workout_readiness_great,
-            ).forEach { (score, label) ->
-                ToggleChip(
+            labels.forEachIndexed { index, label ->
+                val score = index + 1
+                ScoreChip(
                     label = stringResource(label),
                     selected = selected == score,
                     onClick = { onSelect(score) },
@@ -197,6 +230,36 @@ private fun ScoreRow(title: String, selected: Int?, onSelect: (Int) -> Unit) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ScoreChip(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = TouchTargets.Workout),
+        shape = PillShape,
+        border = BorderStroke(
+            width = if (selected) 2.dp else 1.dp,
+            color = if (selected) Rose else Ink.copy(alpha = 0.28f),
+        ),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) Rose else White,
+            contentColor = if (selected) White else Ink,
+        ),
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -510,6 +573,7 @@ internal fun WorkoutMoreSheet(
     jointFlags: Set<String>,
     shortOnTime: Boolean,
     cuesEnabled: Boolean,
+    canRemoveSet: Boolean,
     skipReason: String,
     onEvent: (WorkoutEvent) -> Unit,
     onDismiss: () -> Unit,
@@ -618,6 +682,15 @@ internal fun WorkoutMoreSheet(
                     onDismiss()
                 },
             )
+            if (canRemoveSet) {
+                SecondaryButton(
+                    label = stringResource(R.string.workout_remove_set),
+                    onClick = {
+                        onEvent(WorkoutEvent.RemoveSet)
+                        onDismiss()
+                    },
+                )
+            }
             SecondaryButton(
                 label = stringResource(R.string.workout_skip_exercise),
                 onClick = {

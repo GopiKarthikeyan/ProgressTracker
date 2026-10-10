@@ -141,6 +141,27 @@ class WorkoutMachineTest {
     }
 
     @Test
+    fun removeExtraSetPeelsBackUnloggedExtrasOnly() {
+        var state = started(slot(1, 0, null, sets = 2))
+        assertFalse(canRemoveExtraSet(state, minimumSetsMax = 2))
+        state = addExtraSet(state)
+        assertTrue(canRemoveExtraSet(state, minimumSetsMax = 2))
+        assertEquals(3, state.slots.single().prescription.setsMax)
+        state = removeExtraSet(state, minimumSetsMax = 2)
+        assertEquals(2, state.slots.single().prescription.setsMax)
+        assertFalse(canRemoveExtraSet(state, minimumSetsMax = 2))
+        state = addExtraSet(state)
+        state = log(state)
+        state = dismissRest(state)
+        state = log(state)
+        // Extra set still unlogged — can remove back to planned ceiling.
+        assertTrue(canRemoveExtraSet(state, minimumSetsMax = 2))
+        state = removeExtraSet(state, minimumSetsMax = 2)
+        assertEquals(2, state.slots.single().prescription.setsMax)
+        assertFalse(canRemoveExtraSet(state, minimumSetsMax = 2))
+    }
+
+    @Test
     fun extraSetLeavesTimedBlocksAlone() {
         val timed = slot(1, 0, null, sets = 1).let { current ->
             current.copy(prescription = current.prescription.copy(metricType = MetricType.TIMED_BLOCK))
