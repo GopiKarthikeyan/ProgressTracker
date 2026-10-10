@@ -5,8 +5,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 
 @Entity(
     tableName = "cardio_log",
@@ -38,5 +39,9 @@ data class CardioLogEntity(
     val gearId: Long?,
     val tempC: Double?,
     val uvIndex: Double?,
-    @ColumnInfo(defaultValue = "'JOG'") val type: CardioType = CardioType.JOG,
+    @ColumnInfo(defaultValue = "'JOG'") val type: CardioStyle = CardioStyle.JOG,
+    @ColumnInfo(defaultValue = "'RUNNING'") val activity: CardioActivity = CardioActivity.RUNNING,
+    @ColumnInfo(defaultValue = "''") val customName: String = "",
+    val elevationM: Double? = null,
+    val count: Int? = null,
 )

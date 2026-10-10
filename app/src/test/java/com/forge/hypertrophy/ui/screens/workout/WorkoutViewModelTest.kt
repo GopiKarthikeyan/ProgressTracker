@@ -1193,6 +1193,7 @@ private class FakeBaselineRepository : BaselineRepository {
 private class FakeSkillRepository : SkillRepository {
     override fun observeActive(): Flow<List<SkillEntity>> = MutableStateFlow(emptyList())
     override suspend fun get(id: Long): SkillEntity? = null
+    override suspend fun all(): List<SkillEntity> = emptyList()
     override suspend fun insert(skill: SkillEntity): Long = 0L
     override suspend fun update(skill: SkillEntity) {}
     override suspend fun archive(id: Long) {}

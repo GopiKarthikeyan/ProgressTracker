@@ -88,7 +88,8 @@ class ProgramExporter(
                     },
                     cardio = cardio.filter { it.dayId == day.id }.map { plan ->
                         ProgramJsonCardio(
-                            type = plan.type.name,
+                            activity = plan.activity.name,
+                            style = plan.type.name,
                             label = plan.label,
                             targetDistanceM = plan.targetDistanceM,
                             isOptional = plan.isOptional,

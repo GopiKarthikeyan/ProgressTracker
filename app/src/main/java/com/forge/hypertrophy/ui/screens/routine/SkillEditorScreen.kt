@@ -3,6 +3,7 @@ package com.forge.hypertrophy.ui.screens.routine
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -12,6 +13,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
+import com.forge.hypertrophy.ui.theme.Muted
+import com.forge.hypertrophy.ui.theme.Rose
 
 @Composable
 fun SkillEditorScreen(
@@ -29,21 +32,35 @@ fun SkillEditorScreen(
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
             )
+            state.progress?.let { progress ->
+                Text(
+                    text = skillProgressLine(progress),
+                    color = Muted,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
             EditorButton(
                 label = stringResource(R.string.builder_save),
                 onClick = { viewModel.onEvent(SkillEditorEvent.SaveName) },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 
         EditorButton(
             label = stringResource(R.string.builder_add),
             onClick = { viewModel.onEvent(SkillEditorEvent.AddStep) },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
         state.steps.forEach { step ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (step.isCurrent) {
+                    Text(
+                        text = stringResource(R.string.builder_skill_current_step),
+                        color = Rose,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
                 OutlinedTextField(
                     value = step.name,
                     onValueChange = { viewModel.onEvent(SkillEditorEvent.StepName(step.id, it)) },
@@ -66,7 +83,7 @@ fun SkillEditorScreen(
                 EditorButton(
                     label = stringResource(R.string.builder_delete),
                     onClick = { viewModel.onEvent(SkillEditorEvent.DeleteStep(step.id)) },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }

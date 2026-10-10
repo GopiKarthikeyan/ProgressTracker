@@ -1,5 +1,6 @@
 package com.forge.hypertrophy.ui.screens.dashboard
 
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SessionKind
 import java.time.LocalDate
@@ -52,6 +53,20 @@ data class MuscleVolumeUi(
     val sets: Double,
 )
 
+data class CardioActivityUi(
+    val activity: CardioActivity,
+    val sessions: Int,
+    val durationSec: Int,
+    val distanceM: Double,
+)
+
+data class WeeklyCardioUi(
+    val sessions: Int = 0,
+    val durationSec: Int = 0,
+    val distanceM: Double = 0.0,
+    val byActivity: List<CardioActivityUi> = emptyList(),
+)
+
 data class DeloadStatus(
     val startedOn: LocalDate?,
     val rotationComplete: Boolean,
@@ -75,6 +90,7 @@ data class DashboardUiState(
     val weight: ChartSeries = ChartSeries(emptyList(), emptyList()),
     val bodyFat: ChartSeries = ChartSeries(emptyList(), emptyList()),
     val volume: List<MuscleVolumeUi> = emptyList(),
+    val cardioWeek: WeeklyCardioUi = WeeklyCardioUi(),
     val stalls: List<String> = emptyList(),
     val deload: DeloadStatus? = null,
     val weightDraft: String = "",

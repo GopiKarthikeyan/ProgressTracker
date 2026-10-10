@@ -11,8 +11,9 @@ import com.forge.hypertrophy.domain.engine.KmSplit
 import com.forge.hypertrophy.domain.engine.RawFix
 import com.forge.hypertrophy.domain.engine.TrackFilter
 import com.forge.hypertrophy.domain.engine.TrackPointSample
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
 import java.time.Clock
@@ -57,10 +58,17 @@ class CardioTracker @Inject constructor(
     private var buffer = BatchBuffer<TrackPointEntity>(BATCH_SIZE) { batch ->
         cardio.insertTrackPoints(batch)
     }
-    private var type = CardioType.JOG
+    private var style = CardioStyle.JOG
+    private var activity = CardioActivity.RUNNING
+    private var customName = ""
     private var gearId: Long? = null
 
-    suspend fun begin(type: CardioType, gearId: Long?): Long? {
+    suspend fun begin(
+        activity: CardioActivity,
+        style: CardioStyle,
+        gearId: Long?,
+        customName: String = "",
+    ): Long? {
         return gate.withLock {
         if (_live.value.active) return null
         val today = clock.instant().atZone(clock.zone).toLocalDate()
@@ -88,12 +96,16 @@ class CardioTracker @Inject constructor(
                 gearId = gearId,
                 tempC = null,
                 uvIndex = null,
-                type = type,
+                type = style,
+                activity = activity,
+                customName = customName,
             ),
         )
         filtered = FilterState()
         sequence = 0
-        this.type = type
+        this.style = style
+        this.activity = activity
+        this.customName = customName
         this.gearId = gearId
         buffer = BatchBuffer(BATCH_SIZE) { batch -> cardio.insertTrackPoints(batch) }
         _live.value = LiveTrack(active = true, logId = logId, sessionId = sessionId)
@@ -189,7 +201,9 @@ class CardioTracker @Inject constructor(
                 gearId = gearId,
                 tempC = reading?.tempC,
                 uvIndex = reading?.uvIndex,
-                type = type,
+                type = style,
+                activity = activity,
+                customName = customName,
             ),
         )
         _live.value = live.copy(active = false)
@@ -210,7 +224,9 @@ class CardioTracker @Inject constructor(
                 gearId = gearId,
                 tempC = null,
                 uvIndex = null,
-                type = type,
+                type = style,
+                activity = activity,
+                customName = customName,
             ),
         )
     }

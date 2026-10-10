@@ -18,7 +18,7 @@ import com.forge.hypertrophy.data.repository.SessionRepository
 import com.forge.hypertrophy.data.weather.WeatherReading
 import com.forge.hypertrophy.data.weather.WeatherRepository
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
 import com.forge.hypertrophy.ui.screens.routine.awaitUntil
@@ -71,14 +71,14 @@ class CardioViewModelTest {
         viewModel.onEvent(CardioEvent.Distance("5.2"))
         viewModel.onEvent(CardioEvent.Minutes("30"))
         viewModel.onEvent(CardioEvent.Seconds("15"))
-        viewModel.onEvent(CardioEvent.TypeChosen(CardioType.WALK))
+        viewModel.onEvent(CardioEvent.StyleChosen(CardioStyle.WALK))
         viewModel.onEvent(CardioEvent.GearChosen(shoe))
         viewModel.onEvent(CardioEvent.SaveManual)
 
         awaitUntil { viewModel.uiState.value.logs.size == 1 }
         val log = viewModel.uiState.value.logs.single()
         assertEquals(CardioSource.MANUAL, log.source)
-        assertEquals(CardioType.WALK, log.type)
+        assertEquals(CardioStyle.WALK, log.style)
         assertEquals(5_200.0, log.distanceM, 0.001)
         assertEquals(1_815, log.durationSec)
         assertEquals("daily", log.gearName)
@@ -112,7 +112,7 @@ class CardioViewModelTest {
                 gearId = shoe,
                 tempC = null,
                 uvIndex = null,
-                type = CardioType.JOG,
+                type = CardioStyle.JOG,
             ),
         )
         val viewModel = cardio()
@@ -146,7 +146,7 @@ class CardioViewModelTest {
                 gearId = null,
                 tempC = 18.0,
                 uvIndex = 2.0,
-                type = CardioType.JOG,
+                type = CardioStyle.JOG,
             ),
         )
         val viewModel = cardio()
@@ -155,13 +155,13 @@ class CardioViewModelTest {
         viewModel.onEvent(CardioEvent.Edit(logId))
         awaitUntil { viewModel.uiState.value.editingId == logId }
         viewModel.onEvent(CardioEvent.Distance("3.5"))
-        viewModel.onEvent(CardioEvent.TypeChosen(CardioType.INTERVALS))
+        viewModel.onEvent(CardioEvent.StyleChosen(CardioStyle.INTERVALS))
         viewModel.onEvent(CardioEvent.SaveEdit)
 
         awaitUntil { viewModel.uiState.value.logs.single().distanceM == 3_500.0 }
         val stored = viewModel.uiState.value.logs.single()
         assertEquals(CardioSource.GPS, stored.source)
-        assertEquals(CardioType.INTERVALS, stored.type)
+        assertEquals(CardioStyle.INTERVALS, stored.style)
         assertEquals(900, stored.durationSec)
         assertNull(viewModel.uiState.value.editingId)
 

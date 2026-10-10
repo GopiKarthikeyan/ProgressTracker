@@ -182,6 +182,65 @@ class AppDatabaseMigrationTest {
         migrated.close()
     }
 
+    @Test
+    fun migratesCardioActivityFieldsFromVersion6() {
+        val created = helper.createDatabase(DB, 6)
+        created.execSQL(
+            """
+            INSERT INTO workout_session (date, dayId, kind, status, isDeload, isShortOnTime)
+            VALUES ('2026-10-01', NULL, 'CARDIO', 'COMPLETED', 0, 0)
+            """.trimIndent(),
+        )
+        created.execSQL(
+            """
+            INSERT INTO cardio_log (sessionId, distanceM, durationSec, source, gearId, tempC, uvIndex, type)
+            VALUES (1, 5000.0, 1800, 'MANUAL', NULL, NULL, NULL, 'WALK')
+            """.trimIndent(),
+        )
+        created.execSQL(
+            """
+            INSERT INTO program (name, scheduleMode, rollingSequence, deloadActive, deloadStartedOn)
+            VALUES ('p', 'ROLLING', 0, 0, NULL)
+            """.trimIndent(),
+        )
+        created.execSQL(
+            """
+            INSERT INTO routine_day (programId, label, dayOfWeek, sequenceIndex, isRest)
+            VALUES (1, 'cardio', NULL, 0, 0)
+            """.trimIndent(),
+        )
+        created.execSQL(
+            """
+            INSERT INTO cardio_plan (dayId, type, targetDistanceM, isOptional, label)
+            VALUES (1, 'JOG', 3000, 0, 'Easy')
+            """.trimIndent(),
+        )
+        created.close()
+        val migrated = helper.runMigrationsAndValidate(DB, 7, true, MIGRATION_6_7)
+        migrated.query(
+            "SELECT type, activity, customName, elevationM, count FROM cardio_log",
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("WALK", cursor.getString(0))
+            assertEquals("RUNNING", cursor.getString(1))
+            assertEquals("", cursor.getString(2))
+            assertTrue(cursor.isNull(3))
+            assertTrue(cursor.isNull(4))
+        }
+        migrated.query(
+            "SELECT type, activity, customName, elevationM, count FROM cardio_plan",
+        ).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertEquals("JOG", cursor.getString(0))
+            assertEquals("RUNNING", cursor.getString(1))
+            assertEquals("", cursor.getString(2))
+            assertTrue(cursor.isNull(3))
+            assertTrue(cursor.isNull(4))
+        }
+        assertEquals(7, migrated.version)
+        migrated.close()
+    }
+
     /**
      * Smoke test for the harness. Creates version 1 from the exported schema and
      * validates that same database against the same schema, with no migration in

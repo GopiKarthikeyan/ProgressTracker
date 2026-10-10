@@ -34,6 +34,7 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.ui.PlayerView
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.media.SLOW_SPEED
+import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
@@ -104,10 +105,8 @@ fun VideoComparisonScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
-                Text(stringResource(R.string.builder_back))
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BackButton(onClick = onBack, size = TouchTargets.Workout)
             Text(stringResource(R.string.media_compare), color = Ink, style = MaterialTheme.typography.titleMedium)
         }
         Row(

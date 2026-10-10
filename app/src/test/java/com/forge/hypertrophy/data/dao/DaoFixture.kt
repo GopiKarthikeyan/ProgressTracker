@@ -20,7 +20,7 @@ import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.data.entity.TrackPointEntity
 import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.model.Equipment
@@ -163,7 +163,7 @@ internal class DaoFixture(
     suspend fun cardioPlan(dayId: Long): Long = db.routineDao().upsertCardioPlan(
         CardioPlanEntity(
             dayId = dayId,
-            type = CardioType.JOG,
+            type = CardioStyle.JOG,
             targetDistanceM = 3000,
             isOptional = false,
         ),

@@ -10,7 +10,10 @@ import com.forge.hypertrophy.data.entity.SlotBaselineEntity
 import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.cardio.cardioFieldSpec
+import com.forge.hypertrophy.domain.cardio.defaultStyleFor
+import com.forge.hypertrophy.domain.model.CardioActivity
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
@@ -53,12 +56,20 @@ data class DayEditorUiState(
     val prepItems: List<ChecklistRow> = emptyList(),
     val cooldownItems: List<ChecklistRow> = emptyList(),
     val slots: List<SlotRow> = emptyList(),
-    val cardioType: CardioType? = null,
+    val cardioActivity: CardioActivity? = null,
+    val cardioStyle: CardioStyle = CardioStyle.JOG,
     val cardioLabel: String = "",
     val cardioDistanceM: Int? = null,
     val cardioOptional: Boolean = false,
     val needsExercise: Boolean = false,
-)
+) {
+    val showsCardioStyle: Boolean
+        get() = cardioActivity != null && cardioFieldSpec(cardioActivity).showsStyle
+    val showsCardioDistance: Boolean
+        get() = cardioActivity != null && cardioFieldSpec(cardioActivity).showsDistance
+    val showsCardioLabel: Boolean
+        get() = cardioActivity == CardioActivity.CUSTOM || cardioActivity != null
+}
 
 sealed interface DayEditorEvent {
     data class Label(val value: String) : DayEditorEvent
@@ -70,7 +81,8 @@ sealed interface DayEditorEvent {
     data class ChecklistReps(val id: Long, val value: Int?) : DayEditorEvent
     data class ChecklistSeconds(val id: Long, val value: Int?) : DayEditorEvent
     data class DeleteChecklist(val id: Long) : DayEditorEvent
-    data class CardioTypeChanged(val type: CardioType?) : DayEditorEvent
+    data class CardioActivityChanged(val activity: CardioActivity?) : DayEditorEvent
+    data class CardioStyleChanged(val style: CardioStyle) : DayEditorEvent
     data class CardioLabel(val value: String) : DayEditorEvent
     data class CardioDistance(val value: Int?) : DayEditorEvent
     data class CardioOptional(val value: Boolean) : DayEditorEvent
@@ -106,8 +118,14 @@ class DayEditorViewModel @Inject constructor(
                     weekday = day.dayOfWeek,
                     prepMinutes = day.prepDurationMin,
                     cooldownMinutes = day.cooldownDurationMin,
-                    cardioType = cardio?.type,
-                    cardioLabel = cardio?.label.orEmpty(),
+                    cardioActivity = cardio?.activity,
+                    cardioStyle = cardio?.type ?: CardioStyle.JOG,
+                    cardioLabel = when {
+                        cardio == null -> ""
+                        cardio.activity == CardioActivity.CUSTOM && cardio.customName.isNotBlank() ->
+                            cardio.customName
+                        else -> cardio.label
+                    },
                     cardioDistanceM = cardio?.targetDistanceM,
                     cardioOptional = cardio?.isOptional == true,
                 )
@@ -142,7 +160,18 @@ class DayEditorViewModel @Inject constructor(
             is DayEditorEvent.ChecklistReps -> updateChecklist(event.id) { it.copy(reps = event.value) }
             is DayEditorEvent.ChecklistSeconds -> updateChecklist(event.id) { it.copy(seconds = event.value) }
             is DayEditorEvent.DeleteChecklist -> viewModelScope.launch { routines.deleteChecklist(event.id) }
-            is DayEditorEvent.CardioTypeChanged -> _uiState.update { it.copy(cardioType = event.type) }
+            is DayEditorEvent.CardioActivityChanged -> _uiState.update {
+                it.copy(
+                    cardioActivity = event.activity,
+                    cardioStyle = event.activity?.let(::defaultStyleFor) ?: CardioStyle.JOG,
+                    cardioDistanceM = if (event.activity != null && cardioFieldSpec(event.activity).showsDistance) {
+                        it.cardioDistanceM
+                    } else {
+                        null
+                    },
+                )
+            }
+            is DayEditorEvent.CardioStyleChanged -> _uiState.update { it.copy(cardioStyle = event.style) }
             is DayEditorEvent.CardioLabel -> _uiState.update { it.copy(cardioLabel = event.value) }
             is DayEditorEvent.CardioDistance -> _uiState.update { it.copy(cardioDistanceM = event.value) }
             is DayEditorEvent.CardioOptional -> _uiState.update { it.copy(cardioOptional = event.value) }
@@ -279,20 +308,21 @@ class DayEditorViewModel @Inject constructor(
                     cooldownDurationMin = state.cooldownMinutes,
                 ),
             )
-            val type = state.cardioType
-            if (type != null) {
-                val existing = routines.observeCardioPlan(dayId).first()
-                routines.upsertCardioPlan(
-                    CardioPlanEntity(
-                        id = existing?.id ?: 0,
-                        dayId = dayId,
-                        type = type,
-                        targetDistanceM = state.cardioDistanceM,
-                        isOptional = state.cardioOptional,
-                        label = state.cardioLabel,
-                    ),
-                )
-            }
+            val activity = state.cardioActivity ?: return@launch
+            val existing = routines.observeCardioPlan(dayId).first()
+            val customName = if (activity == CardioActivity.CUSTOM) state.cardioLabel.trim() else ""
+            routines.upsertCardioPlan(
+                CardioPlanEntity(
+                    id = existing?.id ?: 0,
+                    dayId = dayId,
+                    type = if (activity == CardioActivity.RUNNING) state.cardioStyle else CardioStyle.NONE,
+                    targetDistanceM = if (cardioFieldSpec(activity).showsDistance) state.cardioDistanceM else null,
+                    isOptional = state.cardioOptional,
+                    label = state.cardioLabel,
+                    activity = activity,
+                    customName = customName,
+                ),
+            )
         }
     }
 }

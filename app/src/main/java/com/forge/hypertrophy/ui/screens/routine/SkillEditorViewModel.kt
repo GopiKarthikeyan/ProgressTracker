@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.entity.SkillEntity
 import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.repository.SkillRepository
+import com.forge.hypertrophy.domain.skill.SkillProgressRef
+import com.forge.hypertrophy.domain.skill.SkillProgressSummary
+import com.forge.hypertrophy.domain.skill.SkillStepTargets
+import com.forge.hypertrophy.domain.skill.skillProgressSummary
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,12 +25,14 @@ data class SkillStepRow(
     val stage2TotalLowSec: Int,
     val stage2TotalHighSec: Int,
     val stage3UnbrokenSec: Int,
+    val isCurrent: Boolean = false,
 )
 
 data class SkillEditorUiState(
     val ready: Boolean = false,
     val name: String = "",
     val steps: List<SkillStepRow> = emptyList(),
+    val progress: SkillProgressSummary? = null,
     val saved: Boolean = false,
 )
 
@@ -78,7 +84,22 @@ class SkillEditorViewModel @Inject constructor(
 
     private suspend fun load() {
         val skill = skills.get(skillId) ?: return
-        val steps = skills.getSteps(skillId).map {
+        val entities = skills.getSteps(skillId)
+        val progressEntity = skills.getProgress(skillId)
+        val summary = skillProgressSummary(
+            entities.map {
+                SkillStepTargets(
+                    id = it.id,
+                    name = it.name,
+                    stage1TotalSec = it.stage1TotalSec,
+                    stage2TotalHighSec = it.stage2TotalHighSec,
+                    stage3UnbrokenSec = it.stage3UnbrokenSec,
+                )
+            },
+            progressEntity?.let { SkillProgressRef(it.currentStepId, it.stage) },
+        )
+        val currentStepId = summary?.let { entities.getOrNull(it.stepIndex)?.id }
+        val steps = entities.map {
             SkillStepRow(
                 id = it.id,
                 name = it.name,
@@ -86,9 +107,12 @@ class SkillEditorViewModel @Inject constructor(
                 stage2TotalLowSec = it.stage2TotalLowSec,
                 stage2TotalHighSec = it.stage2TotalHighSec,
                 stage3UnbrokenSec = it.stage3UnbrokenSec,
+                isCurrent = it.id == currentStepId,
             )
         }
-        _uiState.update { it.copy(ready = true, name = skill.name, steps = steps) }
+        _uiState.update {
+            it.copy(ready = true, name = skill.name, steps = steps, progress = summary)
+        }
     }
 
     private fun saveName() {

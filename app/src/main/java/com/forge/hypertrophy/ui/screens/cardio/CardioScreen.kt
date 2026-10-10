@@ -22,21 +22,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
+import com.forge.hypertrophy.domain.cardio.CardioDistanceUnit
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
+import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
-import com.forge.hypertrophy.ui.theme.NeonAccent
 import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.NeonAccent
 import java.util.Locale
+
+private val RUNNING_STYLES = listOf(
+    CardioStyle.JOG,
+    CardioStyle.WALK,
+    CardioStyle.INTERVALS,
+    CardioStyle.SPRINT,
+    CardioStyle.LONG_RUN,
+)
 
 @Composable
 fun CardioScreen(
@@ -57,15 +68,12 @@ fun CardioScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row {
-            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
-                Text(stringResource(R.string.builder_back))
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BackButton(onClick = onBack, size = TouchTargets.Workout)
             Text(
                 stringResource(R.string.cardio_title),
                 color = Ink,
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 16.dp),
             )
         }
         Notice(state.notice, viewModel::onEvent)
@@ -76,16 +84,26 @@ fun CardioScreen(
         if (state.tracking) {
             TrackingSection(state, viewModel::onEvent)
         } else {
-            LogForm(state, viewModel::onEvent, gps = true, onStartGps = {
-                val granted = ContextCompat.checkSelfPermission(
-                    context,
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                ) == PackageManager.PERMISSION_GRANTED
-                if (granted) viewModel.onEvent(CardioEvent.StartGps) else permission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-            })
+            LogForm(
+                state = state,
+                onEvent = viewModel::onEvent,
+                onStartGps = {
+                    val granted = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                    ) == PackageManager.PERMISSION_GRANTED
+                    if (granted) {
+                        viewModel.onEvent(CardioEvent.StartGps)
+                    } else {
+                        permission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }
+                },
+            )
         }
         LogsSection(state, viewModel::onEvent)
-        GearSection(state, viewModel::onEvent)
+        if (state.fieldSpec.showsGear) {
+            GearSection(state, viewModel::onEvent)
+        }
     }
 }
 
@@ -113,27 +131,71 @@ private fun TrackingSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit
 private fun LogForm(
     state: CardioUiState,
     onEvent: (CardioEvent) -> Unit,
-    gps: Boolean,
     onStartGps: () -> Unit,
 ) {
+    val spec = state.fieldSpec
     Section(if (state.editingId == null) stringResource(R.string.cardio_manual) else stringResource(R.string.cardio_edit)) {
-        Field(stringResource(R.string.cardio_distance_km), state.distanceKm) { onEvent(CardioEvent.Distance(it)) }
+        Text(stringResource(R.string.cardio_activity), color = Ink)
+        CardioActivity.entries.forEach { activity ->
+            WideButton(activityLabel(activity), enabled = state.activity != activity) {
+                onEvent(CardioEvent.ActivityChosen(activity))
+            }
+        }
+        if (spec.showsStyle) {
+            Text(stringResource(R.string.cardio_style), color = Ink)
+            RUNNING_STYLES.forEach { style ->
+                WideButton(styleLabel(style), enabled = state.style != style) {
+                    onEvent(CardioEvent.StyleChosen(style))
+                }
+            }
+        }
+        if (spec.showsCustomName) {
+            Field(stringResource(R.string.cardio_custom_name), state.customName) {
+                onEvent(CardioEvent.CustomName(it))
+            }
+        }
+        if (spec.showsDistance) {
+            val label = when (spec.distanceUnit) {
+                CardioDistanceUnit.KM -> stringResource(R.string.cardio_distance_km)
+                CardioDistanceUnit.M -> stringResource(R.string.cardio_distance_m)
+            }
+            Field(label, state.distanceText) { onEvent(CardioEvent.Distance(it)) }
+        }
         Field(stringResource(R.string.cardio_minutes), state.minutes) { onEvent(CardioEvent.Minutes(it)) }
         Field(stringResource(R.string.cardio_seconds), state.seconds) { onEvent(CardioEvent.Seconds(it)) }
-        Text(stringResource(R.string.cardio_type), color = Ink)
-        CardioType.entries.forEach { type ->
-            WideButton(typeLabel(type), enabled = state.type != type) { onEvent(CardioEvent.TypeChosen(type)) }
+        if (spec.showsElevation) {
+            Field(stringResource(R.string.cardio_elevation_m), state.elevationText) {
+                onEvent(CardioEvent.Elevation(it))
+            }
         }
-        Text(stringResource(R.string.cardio_shoe), color = Ink)
-        WideButton(stringResource(R.string.cardio_shoe_none), enabled = state.gearId != null) {
-            onEvent(CardioEvent.GearChosen(null))
+        if (spec.showsCount) {
+            val countLabel = when {
+                spec.countIsLaps -> stringResource(R.string.cardio_laps)
+                spec.countIsJumps -> stringResource(R.string.cardio_jumps)
+                spec.countIsFloors -> stringResource(R.string.cardio_floors)
+                else -> stringResource(R.string.cardio_count)
+            }
+            Field(countLabel, state.countText) { onEvent(CardioEvent.Count(it)) }
         }
-        state.gear.forEach { shoe ->
-            WideButton(shoe.name, enabled = state.gearId != shoe.id) { onEvent(CardioEvent.GearChosen(shoe.id)) }
+        if (spec.showsGear) {
+            Text(
+                if (spec.gearIsShoe) stringResource(R.string.cardio_shoe) else stringResource(R.string.cardio_gear_item),
+                color = Ink,
+            )
+            WideButton(stringResource(R.string.cardio_shoe_none), enabled = state.gearId != null) {
+                onEvent(CardioEvent.GearChosen(null))
+            }
+            state.gear.forEach { item ->
+                WideButton(item.name, enabled = state.gearId != item.id) {
+                    onEvent(CardioEvent.GearChosen(item.id))
+                }
+            }
         }
         if (state.editingId == null) {
             WideButton(stringResource(R.string.cardio_save_manual)) { onEvent(CardioEvent.SaveManual) }
-            if (gps) WideButton(stringResource(R.string.cardio_start_gps), onClick = onStartGps)
+            if (spec.allowsGps) {
+                WideButton(stringResource(R.string.cardio_start_gps), onClick = onStartGps)
+            }
         } else {
             WideButton(stringResource(R.string.cardio_save_edit)) { onEvent(CardioEvent.SaveEdit) }
         }
@@ -148,15 +210,23 @@ private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
             return@Section
         }
         state.logs.forEach { log ->
-            Text(typeLabel(log.type), color = Ink)
+            Text(logTitle(log), color = Ink)
             Row {
                 Text(
-                    if (log.source == CardioSource.GPS) stringResource(R.string.cardio_source_gps) else stringResource(R.string.cardio_source_manual),
+                    if (log.source == CardioSource.GPS) {
+                        stringResource(R.string.cardio_source_gps)
+                    } else {
+                        stringResource(R.string.cardio_source_manual)
+                    },
                     color = Ink,
                     modifier = Modifier.weight(1f),
                 )
+                NumericText(formatClock(log.durationSec), color = NeonAccent)
+            }
+            if (log.distanceM > 0.0) {
                 NumericText(formatKm(log.distanceM), color = NeonAccent)
             }
+            log.count?.let { NumericText(it.toString(), color = NeonAccent) }
             log.gearName?.let { Text(it, color = Ink) }
             WideButton(stringResource(R.string.cardio_edit)) { onEvent(CardioEvent.Edit(log.id)) }
         }
@@ -165,25 +235,36 @@ private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
 
 @Composable
 private fun GearSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
-    Section(stringResource(R.string.cardio_gear)) {
+    val shoe = state.fieldSpec.gearIsShoe
+    Section(
+        if (shoe) stringResource(R.string.cardio_gear) else stringResource(R.string.cardio_gear_generic),
+    ) {
         if (state.gear.isEmpty()) {
-            Text(stringResource(R.string.cardio_gear_empty), color = Ink)
+            Text(
+                if (shoe) stringResource(R.string.cardio_gear_empty) else stringResource(R.string.cardio_gear_generic_empty),
+                color = Ink,
+            )
         }
-        state.gear.forEach { shoe ->
-            Text(shoe.name, color = Ink)
+        state.gear.forEach { item ->
+            Text(item.name, color = Ink)
             Row {
                 Text(stringResource(R.string.cardio_used), color = Ink, modifier = Modifier.weight(1f))
-                NumericText(formatKm(shoe.usedM), color = NeonAccent)
+                NumericText(formatKm(item.usedM), color = NeonAccent)
             }
             Row {
                 Text(stringResource(R.string.cardio_limit), color = Ink, modifier = Modifier.weight(1f))
-                NumericText(formatKm(shoe.limitM.toDouble()), color = NeonAccent)
+                NumericText(formatKm(item.limitM.toDouble()), color = NeonAccent)
             }
-            if (shoe.retired) Text(stringResource(R.string.cardio_retire), color = NeonAccent)
+            if (item.retired) Text(stringResource(R.string.cardio_retire), color = NeonAccent)
         }
-        Field(stringResource(R.string.cardio_shoe_name), state.shoeName) { onEvent(CardioEvent.ShoeName(it)) }
+        Field(
+            if (shoe) stringResource(R.string.cardio_shoe_name) else stringResource(R.string.cardio_gear_name),
+            state.shoeName,
+        ) { onEvent(CardioEvent.ShoeName(it)) }
         Field(stringResource(R.string.cardio_limit_km), state.shoeLimitKm) { onEvent(CardioEvent.ShoeLimit(it)) }
-        WideButton(stringResource(R.string.cardio_add_shoe)) { onEvent(CardioEvent.AddShoe) }
+        WideButton(
+            if (shoe) stringResource(R.string.cardio_add_shoe) else stringResource(R.string.cardio_add_gear),
+        ) { onEvent(CardioEvent.AddShoe) }
     }
 }
 
@@ -194,6 +275,7 @@ private fun Notice(notice: CardioNotice?, onEvent: (CardioEvent) -> Unit) {
         CardioNotice.SAVED -> R.string.cardio_saved
         CardioNotice.INVALID -> R.string.cardio_invalid
         CardioNotice.TRACKING -> R.string.cardio_already_tracking
+        CardioNotice.GPS_UNSUPPORTED -> R.string.cardio_gps_unsupported
     }
     Text(stringResource(text), color = NeonAccent)
     WideButton(stringResource(R.string.dashboard_dismiss)) { onEvent(CardioEvent.DismissNotice) }
@@ -236,10 +318,38 @@ private fun WideButton(label: String, enabled: Boolean = true, onClick: () -> Un
 }
 
 @Composable
-private fun typeLabel(type: CardioType): String = when (type) {
-    CardioType.JOG -> stringResource(R.string.cardio_type_jog)
-    CardioType.WALK -> stringResource(R.string.cardio_type_walk)
-    CardioType.INTERVALS -> stringResource(R.string.cardio_type_intervals)
+private fun logTitle(log: CardioLogRow): String {
+    val activity = activityLabel(log.activity)
+    return when {
+        log.activity == CardioActivity.CUSTOM && log.customName.isNotBlank() -> log.customName
+        log.activity == CardioActivity.RUNNING && log.style != CardioStyle.NONE ->
+            "$activity · ${styleLabel(log.style)}"
+        else -> activity
+    }
+}
+
+@Composable
+internal fun activityLabel(activity: CardioActivity): String = when (activity) {
+    CardioActivity.RUNNING -> stringResource(R.string.cardio_activity_running)
+    CardioActivity.CYCLING -> stringResource(R.string.cardio_activity_cycling)
+    CardioActivity.SWIMMING -> stringResource(R.string.cardio_activity_swimming)
+    CardioActivity.ROWING -> stringResource(R.string.cardio_activity_rowing)
+    CardioActivity.ELLIPTICAL -> stringResource(R.string.cardio_activity_elliptical)
+    CardioActivity.JUMP_ROPE -> stringResource(R.string.cardio_activity_jump_rope)
+    CardioActivity.HIKING -> stringResource(R.string.cardio_activity_hiking)
+    CardioActivity.STAIR_CLIMBER -> stringResource(R.string.cardio_activity_stair_climber)
+    CardioActivity.SKI_ERG -> stringResource(R.string.cardio_activity_ski_erg)
+    CardioActivity.CUSTOM -> stringResource(R.string.cardio_activity_custom)
+}
+
+@Composable
+internal fun styleLabel(style: CardioStyle): String = when (style) {
+    CardioStyle.JOG -> stringResource(R.string.cardio_type_jog)
+    CardioStyle.WALK -> stringResource(R.string.cardio_type_walk)
+    CardioStyle.INTERVALS -> stringResource(R.string.cardio_type_intervals)
+    CardioStyle.SPRINT -> stringResource(R.string.cardio_type_sprint)
+    CardioStyle.LONG_RUN -> stringResource(R.string.cardio_type_long_run)
+    CardioStyle.NONE -> stringResource(R.string.builder_none)
 }
 
 private fun formatKm(meters: Double): String = String.format(Locale.US, "%.2f", meters / 1_000.0)

@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.media.POSE_ORDER
 import com.forge.hypertrophy.domain.model.Pose
+import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Cream
@@ -78,10 +78,8 @@ fun PhysiqueCaptureScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
-                Text(stringResource(R.string.builder_back))
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BackButton(onClick = onBack, size = TouchTargets.Workout)
             Text(
                 state.pose?.let { poseLabel(it) } ?: stringResource(R.string.media_physique_complete),
                 color = Ink,

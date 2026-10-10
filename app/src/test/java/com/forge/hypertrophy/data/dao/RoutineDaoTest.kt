@@ -1,7 +1,7 @@
 package com.forge.hypertrophy.data.dao
 
 import com.forge.hypertrophy.data.entity.CardioPlanEntity
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -48,14 +48,14 @@ class RoutineDaoTest : DaoTest() {
         db.routineDao().upsertCardioPlan(
             CardioPlanEntity(
                 dayId = dayId,
-                type = CardioType.WALK,
+                type = CardioStyle.WALK,
                 targetDistanceM = 1500,
                 isOptional = true,
             ),
         )
 
         val plan = first(db.routineDao().observeCardioPlan(dayId))
-        assertEquals(CardioType.WALK, plan!!.type)
+        assertEquals(CardioStyle.WALK, plan!!.type)
         assertEquals(1500, plan.targetDistanceM)
         assertEquals(true, plan.isOptional)
         assertNull(first(db.routineDao().observeCardioPlan(dayId + 1)))

@@ -78,7 +78,7 @@ class AppFlowTest {
         ) { "Sample import was unreadable" }
         clickText(context.getString(R.string.import_confirm), scroll = true)
         clickText(context.getString(R.string.baseline_save), scroll = true)
-        clickText(context.getString(R.string.builder_back))
+        clickBack()
 
         openTab(context.getString(R.string.nav_today))
         val todayLabel = expectedDayLabel(LocalDate.now().dayOfWeek)
@@ -136,7 +136,7 @@ class AppFlowTest {
         }
         openFirstProgram()
         assertText(context.getString(R.string.builder_days))
-        clickText(context.getString(R.string.builder_back))
+        clickBack()
 
         openTab(context.getString(R.string.nav_dashboard))
         assertText(context.getString(R.string.nav_dashboard))

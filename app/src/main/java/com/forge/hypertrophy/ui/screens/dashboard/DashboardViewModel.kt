@@ -11,6 +11,7 @@ import com.forge.hypertrophy.data.entity.SessionSlotEntity
 import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.BiometricsRepository
+import com.forge.hypertrophy.data.repository.CardioRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
@@ -21,6 +22,8 @@ import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.data.schedule.ScheduleLoader
 import com.forge.hypertrophy.data.schedule.ScheduleReconciler
 import com.forge.hypertrophy.data.schedule.toPrescription
+import com.forge.hypertrophy.domain.cardio.CardioLogSample
+import com.forge.hypertrophy.domain.cardio.weeklyCardioStats
 import com.forge.hypertrophy.domain.engine.DatedValue
 import com.forge.hypertrophy.domain.engine.DeloadEngine
 import com.forge.hypertrophy.domain.engine.DoubleProgressionEngine
@@ -77,6 +80,7 @@ class DashboardViewModel @Inject constructor(
     private val exercises: ExerciseRepository,
     private val skills: SkillRepository,
     private val biometrics: BiometricsRepository,
+    private val cardio: CardioRepository,
     private val preferences: TrainingPreferencesRepository,
     private val cursor: ScheduleCursorRepository,
     private val clock: Clock,
@@ -107,6 +111,9 @@ class DashboardViewModel @Inject constructor(
         }
         viewModelScope.launch {
             biometrics.observeAll().collect { reload() }
+        }
+        viewModelScope.launch {
+            cardio.observeAll().collect { reload() }
         }
     }
 
@@ -302,6 +309,7 @@ class DashboardViewModel @Inject constructor(
             weight = chart(rows, BiometricsEntity::bodyWeightKg),
             bodyFat = chart(rows, BiometricsEntity::bodyFatPercent),
             volume = weeklyVolume(sets, exerciseById, today),
+            cardioWeek = weeklyCardio(today),
             stalls = if (snapshot == null) {
                 emptyList()
             } else {
@@ -309,6 +317,35 @@ class DashboardViewModel @Inject constructor(
                 stalls(slots, sets, exerciseById, starting)
             },
             deload = if (program == null || snapshot == null) null else deloadStatus(program, completed, snapshot),
+        )
+    }
+
+    private suspend fun weeklyCardio(today: LocalDate): WeeklyCardioUi {
+        val start = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
+        val end = start.plusDays(6)
+        val dates = sessions.history().associate { it.id to it.date }
+        val samples = cardio.observeAll().first().mapNotNull { log ->
+            val date = dates[log.sessionId] ?: return@mapNotNull null
+            CardioLogSample(
+                date = date,
+                activity = log.activity,
+                distanceM = log.distanceM,
+                durationSec = log.durationSec,
+            )
+        }
+        val stats = weeklyCardioStats(samples, start, end)
+        return WeeklyCardioUi(
+            sessions = stats.sessions,
+            durationSec = stats.durationSec,
+            distanceM = stats.distanceM,
+            byActivity = stats.byActivity.map { row ->
+                CardioActivityUi(
+                    activity = row.activity,
+                    sessions = row.sessions,
+                    durationSec = row.durationSec,
+                    distanceM = row.distanceM,
+                )
+            },
         )
     }
 

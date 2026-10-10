@@ -1552,7 +1552,8 @@
         ],
         "cardio": [
           {
-            "type": "INTERVALS",
+            "activity": "RUNNING",
+            "style": "INTERVALS",
             "label": "Outdoor Intervals (Sprints)",
             "targetDistanceM": null,
             "isOptional": true
@@ -1845,7 +1846,8 @@
         ],
         "cardio": [
           {
-            "type": "JOG",
+            "activity": "RUNNING",
+            "style": "JOG",
             "label": "Outdoor 2km Jog (Conversational Pace)",
             "targetDistanceM": 2000,
             "isOptional": false
@@ -2751,7 +2753,8 @@
         ],
         "cardio": [
           {
-            "type": "WALK",
+            "activity": "RUNNING",
+            "style": "WALK",
             "label": "Light Active Recovery Walk",
             "targetDistanceM": null,
             "isOptional": false

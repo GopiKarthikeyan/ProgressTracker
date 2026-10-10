@@ -1,0 +1,2735 @@
+{
+  "schemaVersion": 1,
+  "program": {
+    "name": "Built-in Library",
+    "sourceVersion": "v1"
+  },
+  "defaults": {
+    "transitionRestSec": 120,
+    "barWeightKg": 20.0,
+    "plateInventoryKg": [
+      20.0,
+      10.0,
+      5.0,
+      2.5,
+      1.25
+    ]
+  },
+  "skills": [
+    {
+      "key": "front_lever",
+      "name": "Front Lever",
+      "initialStepKey": "front_lever_tuck",
+      "steps": [
+        {
+          "key": "front_lever_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "front_lever_adv_tuck",
+          "name": "Advanced Tuck",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "front_lever_one_leg",
+          "name": "One-Leg",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "front_lever_straddle",
+          "name": "Straddle",
+          "order": 3,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "front_lever_full",
+          "name": "Full",
+          "order": 4,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "planche",
+      "name": "Planche",
+      "initialStepKey": "planche_tuck",
+      "steps": [
+        {
+          "key": "planche_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "planche_adv_tuck",
+          "name": "Advanced Tuck",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "planche_straddle",
+          "name": "Straddle",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "planche_full",
+          "name": "Full",
+          "order": 3,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "l_sit",
+      "name": "L-Sit",
+      "initialStepKey": "l_sit_tuck",
+      "steps": [
+        {
+          "key": "l_sit_tuck",
+          "name": "Tuck L-Sit",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "l_sit_one_leg",
+          "name": "One-Leg L-Sit",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "l_sit_full",
+          "name": "Full L-Sit",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "l_sit_advanced",
+          "name": "Advanced L-Sit",
+          "order": 3,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "back_lever",
+      "name": "Back Lever",
+      "initialStepKey": "back_lever_tuck",
+      "steps": [
+        {
+          "key": "back_lever_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "back_lever_adv_tuck",
+          "name": "Advanced Tuck",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "back_lever_straddle",
+          "name": "Straddle",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "back_lever_full",
+          "name": "Full",
+          "order": 3,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "handstand",
+      "name": "Handstand",
+      "initialStepKey": "handstand_wall",
+      "steps": [
+        {
+          "key": "handstand_wall",
+          "name": "Wall",
+          "order": 0,
+          "stage1TotalSec": 20,
+          "stage2TotalMinSec": 30,
+          "stage2TotalMaxSec": 45,
+          "masteryUnbrokenSec": 20
+        },
+        {
+          "key": "handstand_chest",
+          "name": "Chest-to-Wall",
+          "order": 1,
+          "stage1TotalSec": 20,
+          "stage2TotalMinSec": 30,
+          "stage2TotalMaxSec": 45,
+          "masteryUnbrokenSec": 20
+        },
+        {
+          "key": "handstand_free",
+          "name": "Freestanding",
+          "order": 2,
+          "stage1TotalSec": 15,
+          "stage2TotalMinSec": 20,
+          "stage2TotalMaxSec": 30,
+          "masteryUnbrokenSec": 15
+        }
+      ]
+    },
+    {
+      "key": "human_flag",
+      "name": "Human Flag",
+      "initialStepKey": "human_flag_tuck",
+      "steps": [
+        {
+          "key": "human_flag_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "human_flag_straddle",
+          "name": "Straddle",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "human_flag_full",
+          "name": "Full",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "elbow_lever",
+      "name": "Elbow Lever",
+      "initialStepKey": "elbow_lever_tuck",
+      "steps": [
+        {
+          "key": "elbow_lever_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "elbow_lever_straddle",
+          "name": "Straddle",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "elbow_lever_full",
+          "name": "Full",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "dragon_flag",
+      "name": "Dragon Flag",
+      "initialStepKey": "dragon_flag_tuck",
+      "steps": [
+        {
+          "key": "dragon_flag_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "dragon_flag_one_leg",
+          "name": "One-Leg",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "dragon_flag_full",
+          "name": "Full",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    },
+    {
+      "key": "hollow_body",
+      "name": "Hollow Body Hold",
+      "initialStepKey": "hollow_tuck",
+      "steps": [
+        {
+          "key": "hollow_tuck",
+          "name": "Tuck",
+          "order": 0,
+          "stage1TotalSec": 20,
+          "stage2TotalMinSec": 30,
+          "stage2TotalMaxSec": 40,
+          "masteryUnbrokenSec": 20
+        },
+        {
+          "key": "hollow_full",
+          "name": "Full",
+          "order": 1,
+          "stage1TotalSec": 20,
+          "stage2TotalMinSec": 30,
+          "stage2TotalMaxSec": 45,
+          "masteryUnbrokenSec": 30
+        }
+      ]
+    },
+    {
+      "key": "manna",
+      "name": "Manna",
+      "initialStepKey": "manna_l_sit",
+      "steps": [
+        {
+          "key": "manna_l_sit",
+          "name": "L-Sit",
+          "order": 0,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "manna_compression",
+          "name": "Compression",
+          "order": 1,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        },
+        {
+          "key": "manna_full",
+          "name": "Full",
+          "order": 2,
+          "stage1TotalSec": 12,
+          "stage2TotalMinSec": 15,
+          "stage2TotalMaxSec": 18,
+          "masteryUnbrokenSec": 10
+        }
+      ]
+    }
+  ],
+  "exercises": [
+    {
+      "key": "handstand_practice",
+      "name": "Handstand Practice",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "CORE"
+      ],
+      "setupNotes": "Stop before fatigue."
+    },
+    {
+      "key": "bb_deadlift",
+      "name": "Barbell Deadlift",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS",
+        "GLUTES",
+        "LOWER_BACK"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER",
+        "FOREARMS",
+        "QUADS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "pistol_squat",
+      "name": "Pistol Squat",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_front_squat",
+      "name": "Barbell Front Squat",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS"
+      ],
+      "secondaryMuscles": [
+        "GLUTES",
+        "CORE",
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "hamstring_curl",
+      "name": "Hamstring Curl",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_lateral_raise",
+      "name": "DB Lateral Raise",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_SIDE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "seated_calf_raise",
+      "name": "Seated Calf Raise",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CALVES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "ab_rollout",
+      "name": "Ab Rollout",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "pallof_press",
+      "name": "Pallof Press",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": "Hold per side."
+    },
+    {
+      "key": "muscle_up",
+      "name": "Muscle-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "CHEST",
+        "BICEPS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "front_lever",
+      "name": "Front Lever",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "front_lever",
+      "primaryMuscles": [
+        "BACK_LATS",
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_REAR",
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "weighted_pull_up",
+      "name": "Weighted Pull-up",
+      "equipment": "WEIGHTED_BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "BACK_UPPER",
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_row",
+      "name": "Barbell Row",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER",
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "SHOULDERS_REAR",
+        "LOWER_BACK"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "vgrip_lat_pulldown",
+      "name": "V-Grip Lat Pulldown",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_high_pull",
+      "name": "DB High Pull (Rear Delts)",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR",
+        "BACK_UPPER"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_cross_hammer_curl",
+      "name": "DB Cross Hammer Curl",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS",
+        "FOREARMS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "face_pull",
+      "name": "Face Pull",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR",
+        "BACK_UPPER"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "toes_to_bar",
+      "name": "Hanging Toes-to-Bar",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "dragon_flag_negative",
+      "name": "Dragon Flag Negative",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "planche",
+      "name": "Planche",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "planche",
+      "primaryMuscles": [
+        "SHOULDERS_FRONT",
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "pseudo_planche_push_up",
+      "name": "Pseudo Planche Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "incline_db_press",
+      "name": "Incline DB Press",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "flat_db_press",
+      "name": "Flat DB Press",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bodyweight_dip",
+      "name": "Bodyweight Dip",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_floor_fly",
+      "name": "DB Floor Fly",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "tricep_pushdown",
+      "name": "Tricep Pushdown",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "lying_db_extension",
+      "name": "Lying DB Extension",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "hollow_body_hold",
+      "name": "Hollow Body Hold",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "hollow_body",
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "l_sit",
+      "name": "L-Sit",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "l_sit",
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "oap_practice",
+      "name": "One-Arm Pull-up Practice",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "BICEPS"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "seated_cable_row",
+      "name": "Seated Cable Row",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER",
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "chest_supported_db_row",
+      "name": "Chest-Supported DB Row",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER",
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "SHOULDERS_REAR"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "straight_arm_pushdown",
+      "name": "Straight-Arm Pushdown",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_spider_curl",
+      "name": "DB Spider Curl",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "reverse_ez_curl",
+      "name": "Reverse EZ-Bar Curl",
+      "equipment": "EZ_BAR",
+      "barWeightKg": 10.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "FOREARMS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": "Set bar weight to your gym's EZ bar."
+    },
+    {
+      "key": "windshield_wiper",
+      "name": "Windshield Wiper",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "hanging_leg_raise",
+      "name": "Hanging Leg Raise",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_back_squat",
+      "name": "Barbell Back Squat",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "ADDUCTORS",
+        "LOWER_BACK",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "romanian_deadlift",
+      "name": "Romanian Deadlift",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "LOWER_BACK",
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_overhead_press",
+      "name": "Barbell Overhead Press",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "SHOULDERS_SIDE",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "adductor_machine",
+      "name": "Adductor Machine",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "ADDUCTORS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "weighted_standing_calf_raise",
+      "name": "Weighted Standing Calf Raise",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CALVES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "weighted_russian_twist",
+      "name": "Weighted Russian Twist",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": "20 reps total, not per side."
+    },
+    {
+      "key": "weighted_dip",
+      "name": "Weighted Dip",
+      "equipment": "WEIGHTED_BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_bench_press",
+      "name": "Barbell Bench Press",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "seated_db_ohp",
+      "name": "Seated DB Overhead Press",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "SHOULDERS_SIDE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "high_to_low_crossover",
+      "name": "High-to-Low Cable Crossover",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "pjr_pullover",
+      "name": "PJR Pullover",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "BACK_LATS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_tricep_pushaway",
+      "name": "Cable Tricep Pushaway",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 5.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "hollow_body_rock",
+      "name": "Hollow Body Rock",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "back_lever",
+      "name": "Back Lever",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "back_lever",
+      "primaryMuscles": [
+        "BACK_LATS",
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT",
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "handstand",
+      "name": "Handstand",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "handstand",
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "CORE"
+      ],
+      "setupNotes": "Stop before fatigue."
+    },
+    {
+      "key": "human_flag",
+      "name": "Human Flag",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "human_flag",
+      "primaryMuscles": [
+        "CORE",
+        "SHOULDERS_SIDE"
+      ],
+      "secondaryMuscles": [
+        "BACK_LATS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "elbow_lever",
+      "name": "Elbow Lever",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "elbow_lever",
+      "primaryMuscles": [
+        "CORE",
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "dragon_flag",
+      "name": "Dragon Flag",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "dragon_flag",
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "LOWER_BACK"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "manna",
+      "name": "Manna",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": "manna",
+      "primaryMuscles": [
+        "CORE",
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "muscle_up_negative",
+      "name": "Muscle-up Negative",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "assisted_pistol",
+      "name": "Assisted Pistol Squat",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "pike_push_up",
+      "name": "Pike Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "wall_hspu",
+      "name": "Wall Handstand Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "hspu",
+      "name": "Handstand Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "archer_pull_up",
+      "name": "Archer Pull-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "one_arm_pull_up",
+      "name": "One-Arm Pull-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "FOREARMS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_hip_thrust",
+      "name": "Barbell Hip Thrust",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "HAMSTRINGS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_good_morning",
+      "name": "Barbell Good Morning",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS",
+        "LOWER_BACK"
+      ],
+      "secondaryMuscles": [
+        "GLUTES"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_shrug",
+      "name": "Barbell Shrug",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_curl",
+      "name": "Barbell Curl",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_close_grip_bench",
+      "name": "Close-Grip Bench Press",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS",
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_incline_bench",
+      "name": "Incline Barbell Bench Press",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_sumo_deadlift",
+      "name": "Sumo Deadlift",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES",
+        "QUADS"
+      ],
+      "secondaryMuscles": [
+        "HAMSTRINGS",
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_lunge",
+      "name": "Barbell Lunge",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "bb_calf_raise",
+      "name": "Barbell Standing Calf Raise",
+      "equipment": "BARBELL",
+      "barWeightKg": 20.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CALVES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "ez_skull_crusher",
+      "name": "EZ-Bar Skull Crusher",
+      "equipment": "EZ_BAR",
+      "barWeightKg": 10.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "ez_preacher",
+      "name": "EZ-Bar Preacher Curl",
+      "equipment": "EZ_BAR",
+      "barWeightKg": 10.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "ez_upright_row",
+      "name": "EZ-Bar Upright Row",
+      "equipment": "EZ_BAR",
+      "barWeightKg": 10.0,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_SIDE"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_rdl",
+      "name": "DB Romanian Deadlift",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "LOWER_BACK"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_split_squat",
+      "name": "DB Bulgarian Split Squat",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_goblet_squat",
+      "name": "Goblet Squat",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_row",
+      "name": "One-Arm DB Row",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_shrug",
+      "name": "DB Shrug",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_rear_delt_fly",
+      "name": "DB Rear Delt Fly",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_front_raise",
+      "name": "DB Front Raise",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_curl",
+      "name": "DB Curl",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_hammer_curl",
+      "name": "DB Hammer Curl",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS",
+        "FOREARMS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_tricep_kickback",
+      "name": "DB Tricep Kickback",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_overhead_ext",
+      "name": "DB Overhead Tricep Extension",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_lunges",
+      "name": "DB Walking Lunge",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_step_up",
+      "name": "DB Step-up",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_calf_raise",
+      "name": "DB Standing Calf Raise",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CALVES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_pullover",
+      "name": "DB Pullover",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "db_incline_curl",
+      "name": "Incline DB Curl",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "db_concentration_curl",
+      "name": "Concentration Curl",
+      "equipment": "DUMBBELL",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_lat_pulldown",
+      "name": "Lat Pulldown",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_face_pull_alt",
+      "name": "Cable Face Pull High",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_curl",
+      "name": "Cable Curl",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_kickback",
+      "name": "Cable Tricep Kickback",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_lateral_raise",
+      "name": "Cable Lateral Raise",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_SIDE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_woodchop",
+      "name": "Cable Woodchop",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_pull_through",
+      "name": "Cable Pull-Through",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES",
+        "HAMSTRINGS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_crunch",
+      "name": "Cable Crunch",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "cable_reverse_fly",
+      "name": "Cable Reverse Fly",
+      "equipment": "CABLE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_chest_press",
+      "name": "Machine Chest Press",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS",
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_shoulder_press",
+      "name": "Machine Shoulder Press",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_leg_press",
+      "name": "Leg Press",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "HAMSTRINGS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_leg_ext",
+      "name": "Leg Extension",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_leg_curl",
+      "name": "Lying Leg Curl",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_pec_deck",
+      "name": "Pec Deck",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_rear_delt",
+      "name": "Rear Delt Machine",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_lat_pulldown",
+      "name": "Machine Lat Pulldown",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_row",
+      "name": "Machine Row",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "BACK_UPPER"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_hip_abduct",
+      "name": "Hip Abductor Machine",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "machine_hack_squat",
+      "name": "Hack Squat",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "pull_up",
+      "name": "Pull-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS",
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "chin_up",
+      "name": "Chin-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "BICEPS"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "push_up",
+      "name": "Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "diamond_push_up",
+      "name": "Diamond Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS",
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "ring_push_up",
+      "name": "Ring Push-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "ring_row",
+      "name": "Ring Row",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "BACK_UPPER"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "ring_dip",
+      "name": "Ring Dip",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "inverted_row",
+      "name": "Inverted Row",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER",
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "nordic_curl",
+      "name": "Nordic Hamstring Curl",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS"
+      ],
+      "secondaryMuscles": [
+        "GLUTES"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "glute_bridge",
+      "name": "Glute Bridge",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "HAMSTRINGS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "single_leg_glute_bridge",
+      "name": "Single-Leg Glute Bridge",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "HAMSTRINGS",
+        "CORE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "plank",
+      "name": "Plank",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "side_plank",
+      "name": "Side Plank",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CORE"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_SIDE"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "burpee",
+      "name": "Burpee",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "CORE",
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "box_jump",
+      "name": "Box Jump",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CALVES"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "jump_squat",
+      "name": "Jump Squat",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "CALVES"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "australian_pull_up",
+      "name": "Australian Pull-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "scapular_pull_up",
+      "name": "Scapular Pull-up",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_UPPER",
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "dead_hang",
+      "name": "Dead Hang",
+      "equipment": "BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "FOREARMS"
+      ],
+      "secondaryMuscles": [
+        "BACK_LATS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "weighted_chin_up",
+      "name": "Weighted Chin-up",
+      "equipment": "WEIGHTED_BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS",
+        "BICEPS"
+      ],
+      "secondaryMuscles": [
+        "FOREARMS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "weighted_push_up",
+      "name": "Weighted Push-up",
+      "equipment": "WEIGHTED_BODYWEIGHT",
+      "barWeightKg": null,
+      "loadIncrementKg": 2.5,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST",
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [
+        "SHOULDERS_FRONT"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "dip_belt_squat",
+      "name": "Belt Squat",
+      "equipment": "MACHINE",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "band_pull_apart",
+      "name": "Band Pull-Apart",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "band_face_pull",
+      "name": "Band Face Pull",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "band_good_morning",
+      "name": "Band Good Morning",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS",
+        "LOWER_BACK"
+      ],
+      "secondaryMuscles": [
+        "GLUTES"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "band_lateral_walk",
+      "name": "Band Lateral Walk",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "GLUTES",
+        "ADDUCTORS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "band_pushdown",
+      "name": "Band Tricep Pushdown",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "TRICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "band_curl",
+      "name": "Band Curl",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BICEPS"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "band_row",
+      "name": "Band Row",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "BACK_LATS"
+      ],
+      "secondaryMuscles": [
+        "BICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "band_chest_press",
+      "name": "Band Chest Press",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "CHEST"
+      ],
+      "secondaryMuscles": [
+        "TRICEPS"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "band_squat",
+      "name": "Band Squat",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "QUADS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "band_deadlift",
+      "name": "Band Deadlift",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "HAMSTRINGS",
+        "GLUTES"
+      ],
+      "secondaryMuscles": [
+        "BACK_UPPER"
+      ],
+      "setupNotes": null
+    },
+    {
+      "key": "band_dislocate",
+      "name": "Band Shoulder Dislocate",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": false,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_FRONT",
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    },
+    {
+      "key": "band_external_rotation",
+      "name": "Band External Rotation",
+      "equipment": "BAND",
+      "barWeightKg": null,
+      "loadIncrementKg": 0.0,
+      "isUnilateral": true,
+      "skillKey": null,
+      "primaryMuscles": [
+        "SHOULDERS_REAR"
+      ],
+      "secondaryMuscles": [],
+      "setupNotes": null
+    }
+  ],
+  "days": []
+}

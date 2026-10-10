@@ -366,6 +366,7 @@ class SlotEditorViewModelTest {
 
         override fun observeActive(): Flow<List<SkillEntity>> = flow.map { it.filter { s -> s.archivedAt == null } }
         override suspend fun get(id: Long): SkillEntity? = skills[id]
+        override suspend fun all(): List<SkillEntity> = skills.values.toList()
         override suspend fun insert(skill: SkillEntity): Long {
             val id = (skills.keys.maxOrNull() ?: 0L) + 1
             skills[id] = skill.copy(id = id)

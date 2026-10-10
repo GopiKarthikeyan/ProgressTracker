@@ -19,14 +19,24 @@ fun SkillLibraryScreen(
     LibraryColumn(
         title = stringResource(R.string.builder_skills),
         onBack = onBack,
-        rows = state.rows,
+        rows = state.rows.map { row ->
+            LibraryListRow(
+                id = row.id,
+                name = row.name,
+                canHardDelete = row.canHardDelete,
+                progress = row.progress,
+            )
+        },
         error = state.error,
         restrictedMessage = stringResource(R.string.builder_restricted_skill),
+        builtinMessage = state.builtinMessage,
         onOpen = onOpenSkill,
         onAdd = onAddSkill,
+        onAddBuiltIn = { viewModel.onEvent(SkillLibraryEvent.AddBuiltIn) },
         onArchive = { viewModel.onEvent(SkillLibraryEvent.Archive(it)) },
         onHardDelete = { viewModel.onEvent(SkillLibraryEvent.HardDelete(it)) },
         onDismissError = { viewModel.onEvent(SkillLibraryEvent.DismissError) },
+        onDismissBuiltin = { viewModel.onEvent(SkillLibraryEvent.DismissBuiltinMessage) },
         modifier = modifier,
     )
 }

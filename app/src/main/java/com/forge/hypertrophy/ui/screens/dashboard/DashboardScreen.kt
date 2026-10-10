@@ -37,6 +37,7 @@ import com.forge.hypertrophy.ui.components.PrimaryButton
 import com.forge.hypertrophy.ui.components.ProgressRing
 import com.forge.hypertrophy.ui.components.SecondaryButton
 import com.forge.hypertrophy.ui.components.SurfaceCard
+import com.forge.hypertrophy.ui.screens.cardio.activityLabel
 import com.forge.hypertrophy.ui.screens.routine.formatKg
 import com.forge.hypertrophy.ui.theme.CardioBlue
 import com.forge.hypertrophy.ui.theme.Cream
@@ -109,6 +110,7 @@ fun DashboardContent(
         HeatmapSection(state.heatmap)
         BodySection(state, onEvent)
         VolumeSection(state.volume)
+        CardioWeekSection(state.cardioWeek)
         StallSection(state.stalls)
         DeloadSection(state.deload)
     }
@@ -454,6 +456,52 @@ private fun VolumeSection(volume: List<MuscleVolumeUi>) {
         }
     }
 }
+
+@Composable
+private fun CardioWeekSection(cardio: WeeklyCardioUi) {
+    SurfaceCard {
+        Text(stringResource(R.string.dashboard_cardio_week), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(8.dp))
+        if (cardio.sessions == 0) {
+            Text(stringResource(R.string.dashboard_cardio_empty), color = Muted)
+            return@SurfaceCard
+        }
+        Row(modifier = Modifier.padding(vertical = 4.dp)) {
+            Text(stringResource(R.string.dashboard_cardio_sessions), color = Ink, modifier = Modifier.weight(1f))
+            NumericText(cardio.sessions.toString(), color = CardioBlue)
+        }
+        Row(modifier = Modifier.padding(vertical = 4.dp)) {
+            Text(stringResource(R.string.dashboard_cardio_duration), color = Ink, modifier = Modifier.weight(1f))
+            NumericText(formatDuration(cardio.durationSec), color = CardioBlue)
+        }
+        Row(modifier = Modifier.padding(vertical = 4.dp)) {
+            Text(stringResource(R.string.dashboard_cardio_distance), color = Ink, modifier = Modifier.weight(1f))
+            NumericText(formatKm(cardio.distanceM), color = CardioBlue)
+        }
+        cardio.byActivity.forEach { row ->
+            Row(modifier = Modifier.padding(vertical = 4.dp)) {
+                Text(activityLabel(row.activity), color = Ink, modifier = Modifier.weight(1f))
+                NumericText(
+                    breakdownLine(row.durationSec, row.distanceM),
+                    color = CardioBlue,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun breakdownLine(durationSec: Int, distanceM: Double): String {
+    val duration = formatDuration(durationSec)
+    return if (distanceM > 0.0) {
+        "$duration · ${formatKm(distanceM)} km"
+    } else {
+        duration
+    }
+}
+
+private fun formatKm(meters: Double): String =
+    String.format(Locale.US, "%.2f", meters / 1_000.0)
 
 @Composable
 private fun StallSection(stalls: List<String>) {

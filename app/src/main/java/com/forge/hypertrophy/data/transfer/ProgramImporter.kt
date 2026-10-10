@@ -13,7 +13,7 @@ import com.forge.hypertrophy.data.entity.SkillEntity
 import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
@@ -327,13 +327,17 @@ class ProgramImporter(
                 }
             }
             val cardio = day.cardio.firstOrNull() ?: return@forEach
+            val resolved = resolveProgramCardio(cardio) ?: return@forEach
+            val customName = if (resolved.activity == CardioActivity.CUSTOM) cardio.label else ""
             database.routineDao().upsertCardioPlan(
                 CardioPlanEntity(
                     dayId = dayId,
-                    type = CardioType.valueOf(cardio.type),
+                    type = resolved.style,
                     targetDistanceM = cardio.targetDistanceM,
                     isOptional = cardio.isOptional,
                     label = cardio.label,
+                    activity = resolved.activity,
+                    customName = customName,
                 ),
             )
         }

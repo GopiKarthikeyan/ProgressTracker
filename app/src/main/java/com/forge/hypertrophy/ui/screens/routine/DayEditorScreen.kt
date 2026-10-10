@@ -23,15 +23,26 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioActivity
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.ReorderableColumn
 import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.components.TouchTargets
+import com.forge.hypertrophy.ui.screens.cardio.activityLabel
+import com.forge.hypertrophy.ui.screens.cardio.styleLabel
 import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.NeonAccent
 import com.forge.hypertrophy.ui.theme.Rose
+
+private val RUNNING_STYLES = listOf(
+    CardioStyle.JOG,
+    CardioStyle.WALK,
+    CardioStyle.INTERVALS,
+    CardioStyle.SPRINT,
+    CardioStyle.LONG_RUN,
+)
 
 @Composable
 fun DayEditorScreen(
@@ -97,37 +108,68 @@ fun DayEditorScreen(
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.builder_cardio))
             FlowRow {
-                CardioType.entries.forEach { type ->
+                EditorButton(
+                    label = stringResource(R.string.builder_none),
+                    onClick = { viewModel.onEvent(DayEditorEvent.CardioActivityChanged(null)) },
+                    enabled = state.cardioActivity != null,
+                )
+                CardioActivity.entries.forEach { activity ->
                     EditorButton(
-                        label = type.name,
-                        onClick = { viewModel.onEvent(DayEditorEvent.CardioTypeChanged(type)) },
-                        enabled = state.cardioType != type,
+                        label = activityLabel(activity),
+                        onClick = { viewModel.onEvent(DayEditorEvent.CardioActivityChanged(activity)) },
+                        enabled = state.cardioActivity != activity,
                     )
                 }
             }
-            OutlinedTextField(
-                value = state.cardioLabel,
-                onValueChange = { viewModel.onEvent(DayEditorEvent.CardioLabel(it)) },
-                label = { Text(stringResource(R.string.builder_cardio_label)) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-            )
-            NumericEntry(
-                label = stringResource(R.string.builder_distance_m),
-                value = state.cardioDistanceM,
-                onValue = { viewModel.onEvent(DayEditorEvent.CardioDistance(it)) },
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                EditorButton(
-                    label = stringResource(R.string.builder_optional),
-                    onClick = { viewModel.onEvent(DayEditorEvent.CardioOptional(!state.cardioOptional)) },
+            if (state.showsCardioStyle) {
+                Text(stringResource(R.string.cardio_style))
+                FlowRow {
+                    RUNNING_STYLES.forEach { style ->
+                        EditorButton(
+                            label = styleLabel(style),
+                            onClick = { viewModel.onEvent(DayEditorEvent.CardioStyleChanged(style)) },
+                            enabled = state.cardioStyle != style,
+                        )
+                    }
+                }
+            }
+            if (state.showsCardioLabel) {
+                OutlinedTextField(
+                    value = state.cardioLabel,
+                    onValueChange = { viewModel.onEvent(DayEditorEvent.CardioLabel(it)) },
+                    label = {
+                        Text(
+                            if (state.cardioActivity == CardioActivity.CUSTOM) {
+                                stringResource(R.string.cardio_custom_name)
+                            } else {
+                                stringResource(R.string.builder_cardio_label)
+                            },
+                        )
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
                 )
-                if (state.cardioOptional) {
-                    Text(
-                        stringResource(R.string.builder_optional),
-                        color = NeonAccent,
-                        modifier = Modifier.padding(start = 8.dp)
+            }
+            if (state.showsCardioDistance) {
+                NumericEntry(
+                    label = stringResource(R.string.builder_distance_m),
+                    value = state.cardioDistanceM,
+                    onValue = { viewModel.onEvent(DayEditorEvent.CardioDistance(it)) },
+                )
+            }
+            if (state.cardioActivity != null) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    EditorButton(
+                        label = stringResource(R.string.builder_optional),
+                        onClick = { viewModel.onEvent(DayEditorEvent.CardioOptional(!state.cardioOptional)) },
                     )
+                    if (state.cardioOptional) {
+                        Text(
+                            stringResource(R.string.builder_optional),
+                            color = NeonAccent,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
                 }
             }
         }

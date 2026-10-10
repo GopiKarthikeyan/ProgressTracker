@@ -12,9 +12,16 @@ import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 import com.forge.hypertrophy.data.repository.CardioRepository
 import com.forge.hypertrophy.data.repository.GearRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
+import com.forge.hypertrophy.domain.cardio.CardioDistanceUnit
+import com.forge.hypertrophy.domain.cardio.CardioEntryInput
+import com.forge.hypertrophy.domain.cardio.CardioFieldSpec
+import com.forge.hypertrophy.domain.cardio.cardioFieldSpec
+import com.forge.hypertrophy.domain.cardio.defaultStyleFor
+import com.forge.hypertrophy.domain.cardio.validateCardioEntry
 import com.forge.hypertrophy.domain.engine.GearMileage as GearLimit
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.SessionKind
 import com.forge.hypertrophy.domain.model.SessionStatus
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -38,9 +45,13 @@ data class GearRow(
 data class CardioLogRow(
     val id: Long,
     val source: CardioSource,
-    val type: CardioType,
+    val activity: CardioActivity,
+    val style: CardioStyle,
+    val customName: String,
     val distanceM: Double,
     val durationSec: Int,
+    val elevationM: Double?,
+    val count: Int?,
     val gearId: Long?,
     val gearName: String?,
 )
@@ -49,13 +60,18 @@ enum class CardioNotice {
     SAVED,
     INVALID,
     TRACKING,
+    GPS_UNSUPPORTED,
 }
 
 data class CardioUiState(
-    val distanceKm: String = "",
+    val activity: CardioActivity = CardioActivity.RUNNING,
+    val style: CardioStyle = CardioStyle.JOG,
+    val customName: String = "",
+    val distanceText: String = "",
     val minutes: String = "",
     val seconds: String = "",
-    val type: CardioType = CardioType.JOG,
+    val elevationText: String = "",
+    val countText: String = "",
     val gearId: Long? = null,
     val gear: List<GearRow> = emptyList(),
     val logs: List<CardioLogRow> = emptyList(),
@@ -69,13 +85,19 @@ data class CardioUiState(
     val shoeLimitKm: String = "700",
     val openSessionId: Long? = null,
     val notice: CardioNotice? = null,
-)
+) {
+    val fieldSpec: CardioFieldSpec get() = cardioFieldSpec(activity)
+}
 
 sealed interface CardioEvent {
+    data class ActivityChosen(val activity: CardioActivity) : CardioEvent
+    data class StyleChosen(val style: CardioStyle) : CardioEvent
+    data class CustomName(val text: String) : CardioEvent
     data class Distance(val text: String) : CardioEvent
     data class Minutes(val text: String) : CardioEvent
     data class Seconds(val text: String) : CardioEvent
-    data class TypeChosen(val type: CardioType) : CardioEvent
+    data class Elevation(val text: String) : CardioEvent
+    data class Count(val text: String) : CardioEvent
     data class GearChosen(val gearId: Long?) : CardioEvent
     data object SaveManual : CardioEvent
     data object StartGps : CardioEvent
@@ -114,7 +136,9 @@ class CardioViewModel @Inject constructor(
             }.collect { snapshot ->
                 val names = snapshot.gear.associate { it.id to it.name }
                 val used = snapshot.mileage.associate { it.gearId to it.distanceM }
-                val open = snapshot.inProgress.firstOrNull { it.kind == SessionKind.CARDIO && it.id != snapshot.live.sessionId }
+                val open = snapshot.inProgress.firstOrNull {
+                    it.kind == SessionKind.CARDIO && it.id != snapshot.live.sessionId
+                }
                 _uiState.value = _uiState.value.copy(
                     gear = snapshot.gear.map { shoe ->
                         val distance = used[shoe.id] ?: 0.0
@@ -130,9 +154,13 @@ class CardioViewModel @Inject constructor(
                         CardioLogRow(
                             id = log.id,
                             source = log.source,
-                            type = log.type,
+                            activity = log.activity,
+                            style = log.type,
+                            customName = log.customName,
                             distanceM = log.distanceM,
                             durationSec = log.durationSec,
+                            elevationM = log.elevationM,
+                            count = log.count,
                             gearId = log.gearId,
                             gearName = log.gearId?.let { names[it] },
                         )
@@ -151,10 +179,20 @@ class CardioViewModel @Inject constructor(
     fun onEvent(event: CardioEvent) {
         viewModelScope.launch {
             when (event) {
-                is CardioEvent.Distance -> _uiState.value = _uiState.value.copy(distanceKm = event.text)
+                is CardioEvent.ActivityChosen -> {
+                    _uiState.value = _uiState.value.copy(
+                        activity = event.activity,
+                        style = defaultStyleFor(event.activity),
+                        gearId = if (cardioFieldSpec(event.activity).showsGear) _uiState.value.gearId else null,
+                    )
+                }
+                is CardioEvent.StyleChosen -> _uiState.value = _uiState.value.copy(style = event.style)
+                is CardioEvent.CustomName -> _uiState.value = _uiState.value.copy(customName = event.text)
+                is CardioEvent.Distance -> _uiState.value = _uiState.value.copy(distanceText = event.text)
                 is CardioEvent.Minutes -> _uiState.value = _uiState.value.copy(minutes = event.text)
                 is CardioEvent.Seconds -> _uiState.value = _uiState.value.copy(seconds = event.text)
-                is CardioEvent.TypeChosen -> _uiState.value = _uiState.value.copy(type = event.type)
+                is CardioEvent.Elevation -> _uiState.value = _uiState.value.copy(elevationText = event.text)
+                is CardioEvent.Count -> _uiState.value = _uiState.value.copy(countText = event.text)
                 is CardioEvent.GearChosen -> _uiState.value = _uiState.value.copy(gearId = event.gearId)
                 CardioEvent.SaveManual -> saveManual()
                 CardioEvent.StartGps -> startGps()
@@ -172,11 +210,11 @@ class CardioViewModel @Inject constructor(
 
     private suspend fun saveManual() {
         val state = _uiState.value
-        val distance = kilometresToMeters(state.distanceKm) ?: run {
+        val built = buildEntry(state) ?: run {
             _uiState.value = state.copy(notice = CardioNotice.INVALID)
             return
         }
-        val duration = durationSeconds(state.minutes, state.seconds) ?: run {
+        if (validateCardioEntry(built) != null) {
             _uiState.value = state.copy(notice = CardioNotice.INVALID)
             return
         }
@@ -184,29 +222,46 @@ class CardioViewModel @Inject constructor(
         cardio.insert(
             CardioLogEntity(
                 sessionId = sessionId,
-                distanceM = distance,
-                durationSec = duration,
+                distanceM = built.distanceM ?: 0.0,
+                durationSec = built.durationSec,
                 source = CardioSource.MANUAL,
-                gearId = state.gearId,
+                gearId = if (state.fieldSpec.showsGear) state.gearId else null,
                 tempC = null,
                 uvIndex = null,
-                type = state.type,
+                type = built.style,
+                activity = built.activity,
+                customName = built.customName.trim(),
+                elevationM = built.elevationM,
+                count = built.count,
             ),
         )
         _uiState.value = _uiState.value.copy(
-            distanceKm = "",
+            distanceText = "",
             minutes = "",
             seconds = "",
+            elevationText = "",
+            countText = "",
+            customName = if (state.activity == CardioActivity.CUSTOM) "" else state.customName,
             notice = CardioNotice.SAVED,
         )
     }
 
     private suspend fun startGps() {
-        if (_uiState.value.tracking) {
-            _uiState.value = _uiState.value.copy(notice = CardioNotice.TRACKING)
+        val state = _uiState.value
+        if (!state.fieldSpec.allowsGps) {
+            _uiState.value = state.copy(notice = CardioNotice.GPS_UNSUPPORTED)
             return
         }
-        val started = tracker.begin(_uiState.value.type, _uiState.value.gearId)
+        if (state.tracking) {
+            _uiState.value = state.copy(notice = CardioNotice.TRACKING)
+            return
+        }
+        val started = tracker.begin(
+            activity = state.activity,
+            style = state.style,
+            gearId = if (state.fieldSpec.showsGear) state.gearId else null,
+            customName = state.customName.trim(),
+        )
         if (started == null) {
             _uiState.value = _uiState.value.copy(notice = CardioNotice.TRACKING)
             return
@@ -214,14 +269,23 @@ class CardioViewModel @Inject constructor(
         service.start()
     }
 
-    private suspend fun openEdit(logId: Long) {
+    private fun openEdit(logId: Long) {
         val log = _uiState.value.logs.firstOrNull { it.id == logId } ?: return
+        val spec = cardioFieldSpec(log.activity)
         _uiState.value = _uiState.value.copy(
             editingId = log.id,
-            distanceKm = formatKmInput(log.distanceM),
+            activity = log.activity,
+            style = log.style,
+            customName = log.customName,
+            distanceText = when {
+                !spec.showsDistance || log.distanceM <= 0.0 -> ""
+                spec.distanceUnit == CardioDistanceUnit.M -> formatMetersInput(log.distanceM)
+                else -> formatKmInput(log.distanceM)
+            },
             minutes = (log.durationSec / 60).toString(),
             seconds = (log.durationSec % 60).toString(),
-            type = log.type,
+            elevationText = log.elevationM?.let(::formatMetersInput).orEmpty(),
+            countText = log.count?.toString().orEmpty(),
             gearId = log.gearId,
         )
     }
@@ -229,21 +293,25 @@ class CardioViewModel @Inject constructor(
     private suspend fun saveEdit() {
         val state = _uiState.value
         val logId = state.editingId ?: return
-        val distance = kilometresToMeters(state.distanceKm) ?: run {
+        val built = buildEntry(state) ?: run {
             _uiState.value = state.copy(notice = CardioNotice.INVALID)
             return
         }
-        val duration = durationSeconds(state.minutes, state.seconds) ?: run {
+        if (validateCardioEntry(built) != null) {
             _uiState.value = state.copy(notice = CardioNotice.INVALID)
             return
         }
         val existing = cardio.observeAll().first().firstOrNull { it.id == logId } ?: return
         cardio.update(
             existing.copy(
-                distanceM = distance,
-                durationSec = duration,
-                type = state.type,
-                gearId = state.gearId,
+                distanceM = built.distanceM ?: 0.0,
+                durationSec = built.durationSec,
+                type = built.style,
+                activity = built.activity,
+                customName = built.customName.trim(),
+                elevationM = built.elevationM,
+                count = built.count,
+                gearId = if (state.fieldSpec.showsGear) state.gearId else null,
             ),
         )
         _uiState.value = _uiState.value.copy(editingId = null, notice = CardioNotice.SAVED)
@@ -269,6 +337,36 @@ class CardioViewModel @Inject constructor(
             ),
         )
         _uiState.value = _uiState.value.copy(shoeName = "", shoeLimitKm = "700", notice = CardioNotice.SAVED)
+    }
+
+    private fun buildEntry(state: CardioUiState): CardioEntryInput? {
+        val duration = durationSeconds(state.minutes, state.seconds) ?: return null
+        val spec = state.fieldSpec
+        val distanceM = when {
+            !spec.showsDistance -> null
+            state.distanceText.isBlank() -> if (spec.distanceRequired) return null else null
+            spec.distanceUnit == CardioDistanceUnit.M -> metersInput(state.distanceText) ?: return null
+            else -> kilometresToMeters(state.distanceText) ?: return null
+        }
+        val elevation = if (!spec.showsElevation || state.elevationText.isBlank()) {
+            null
+        } else {
+            metersInput(state.elevationText) ?: return null
+        }
+        val count = if (!spec.showsCount || state.countText.isBlank()) {
+            null
+        } else {
+            state.countText.trim().toIntOrNull()?.takeIf { it >= 0 } ?: return null
+        }
+        return CardioEntryInput(
+            activity = state.activity,
+            style = state.style,
+            customName = state.customName,
+            distanceM = distanceM,
+            durationSec = duration,
+            elevationM = elevation,
+            count = count,
+        )
     }
 
     private suspend fun insertSession(status: SessionStatus): Long {
@@ -304,6 +402,12 @@ internal fun kilometresToMeters(text: String): Double? {
     return kilometres * 1_000.0
 }
 
+internal fun metersInput(text: String): Double? {
+    val meters = text.trim().toDoubleOrNull() ?: return null
+    if (meters <= 0.0) return null
+    return meters
+}
+
 internal fun durationSeconds(minutes: String, seconds: String): Int? {
     val minuteValue = minutes.trim().toIntOrNull() ?: return null
     val secondValue = seconds.trim().ifEmpty { "0" }.toIntOrNull() ?: return null
@@ -317,3 +421,6 @@ internal fun formatKmInput(meters: Double): String {
     val kilometres = meters / 1_000.0
     return if (kilometres % 1.0 == 0.0) kilometres.toLong().toString() else kilometres.toString()
 }
+
+internal fun formatMetersInput(meters: Double): String =
+    if (meters % 1.0 == 0.0) meters.toLong().toString() else meters.toString()

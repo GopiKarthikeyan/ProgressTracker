@@ -6,7 +6,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.forge.hypertrophy.data.dao.DaoFixture
 import com.forge.hypertrophy.data.dao.DaoTest
 import com.forge.hypertrophy.data.db.AppDatabase
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioActivity
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
@@ -166,7 +167,13 @@ class ProgramRoundTripTest : DaoTest() {
                         )
                     },
                     cardio = cardio.filter { it.dayId == day.id }.sortedBy { it.label }.map { plan ->
-                        CardioSnap(plan.type, plan.label, plan.targetDistanceM, plan.isOptional)
+                        CardioSnap(
+                            plan.activity,
+                            plan.type,
+                            plan.label,
+                            plan.targetDistanceM,
+                            plan.isOptional,
+                        )
                     },
                 )
             },
@@ -212,7 +219,14 @@ class ProgramRoundTripTest : DaoTest() {
                         alternatives = listOf("dip"),
                     ),
                 ),
-                cardio = listOf(ProgramJsonCardio(type = "JOG", label = "Easy jog", targetDistanceM = 2000)),
+                cardio = listOf(
+                    ProgramJsonCardio(
+                        activity = "RUNNING",
+                        style = "JOG",
+                        label = "Easy jog",
+                        targetDistanceM = 2000,
+                    ),
+                ),
                 prep = ProgramJsonChecklist(5, listOf(ProgramJsonChecklistItem("Wrist Rocks", 10, null))),
                 cooldown = ProgramJsonChecklist(3, listOf(ProgramJsonChecklistItem("Breathe", null, 60))),
             ),
@@ -297,7 +311,8 @@ class ProgramRoundTripTest : DaoTest() {
     )
 
     private data class CardioSnap(
-        val type: CardioType,
+        val activity: CardioActivity,
+        val type: CardioStyle,
         val label: String,
         val distanceM: Int?,
         val optional: Boolean,

@@ -5,7 +5,8 @@ import com.forge.hypertrophy.data.repository.RoomCardioRepository
 import com.forge.hypertrophy.data.repository.RoomSessionRepository
 import com.forge.hypertrophy.data.weather.WeatherRepository
 import com.forge.hypertrophy.data.weather.WeatherReading
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioActivity
+import com.forge.hypertrophy.domain.model.CardioStyle
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -25,7 +26,11 @@ class CardioTrackerTest : DaoTest() {
             weather = QuietWeather(),
             clock = clock,
         )
-        val logId = tracker.begin(CardioType.JOG, null)!!
+        val logId = tracker.begin(
+            activity = CardioActivity.RUNNING,
+            style = CardioStyle.JOG,
+            gearId = null,
+        )!!
         repeat(20) { index -> tracker.accept(fix(index)) }
         assertEquals(20, first(db.cardioDao().observeTrackPoints(logId)).size)
         repeat(5) { index -> tracker.accept(fix(20 + index)) }

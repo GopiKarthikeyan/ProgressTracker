@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 const val DATABASE_NAME = "hypertrophy.db"
-const val SCHEMA_VERSION = 6
+const val SCHEMA_VERSION = 7
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -66,6 +66,19 @@ val MIGRATION_5_6 = object : Migration(5, 6) {
     }
 }
 
+val MIGRATION_6_7 = object : Migration(6, 7) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE cardio_log ADD COLUMN activity TEXT NOT NULL DEFAULT 'RUNNING'")
+        db.execSQL("ALTER TABLE cardio_log ADD COLUMN customName TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE cardio_log ADD COLUMN elevationM REAL")
+        db.execSQL("ALTER TABLE cardio_log ADD COLUMN count INTEGER")
+        db.execSQL("ALTER TABLE cardio_plan ADD COLUMN activity TEXT NOT NULL DEFAULT 'RUNNING'")
+        db.execSQL("ALTER TABLE cardio_plan ADD COLUMN customName TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE cardio_plan ADD COLUMN elevationM REAL")
+        db.execSQL("ALTER TABLE cardio_plan ADD COLUMN count INTEGER")
+    }
+}
+
 /** Real migrations only. An empty list never falls back to a destructive rebuild. */
 object DatabaseMigrations {
     val ALL: Array<Migration> = arrayOf(
@@ -74,5 +87,6 @@ object DatabaseMigrations {
         MIGRATION_3_4,
         MIGRATION_4_5,
         MIGRATION_5_6,
+        MIGRATION_6_7,
     )
 }

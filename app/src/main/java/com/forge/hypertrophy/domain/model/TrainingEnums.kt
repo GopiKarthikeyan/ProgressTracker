@@ -77,10 +77,27 @@ enum class EntryMethod {
     HARDWARE_KEY,
 }
 
-enum class CardioType {
-    INTERVALS,
+enum class CardioActivity {
+    RUNNING,
+    CYCLING,
+    SWIMMING,
+    ROWING,
+    ELLIPTICAL,
+    JUMP_ROPE,
+    HIKING,
+    STAIR_CLIMBER,
+    SKI_ERG,
+    CUSTOM,
+}
+
+/** Running style stored in the `type` column. [NONE] for non-running activities. */
+enum class CardioStyle {
     JOG,
     WALK,
+    INTERVALS,
+    SPRINT,
+    LONG_RUN,
+    NONE,
 }
 
 enum class CardioSource {

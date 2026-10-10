@@ -3,7 +3,9 @@ package com.forge.hypertrophy.ui.screens.dashboard
 import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.dao.CompletedSessionDay
 import com.forge.hypertrophy.data.dao.CompletedSetRow
+import com.forge.hypertrophy.data.dao.GearMileage
 import com.forge.hypertrophy.data.entity.BiometricsEntity
+import com.forge.hypertrophy.data.entity.CardioLogEntity
 import com.forge.hypertrophy.data.entity.CardioPlanEntity
 import com.forge.hypertrophy.data.entity.ChecklistItemEntity
 import com.forge.hypertrophy.data.entity.ExerciseEntity
@@ -18,9 +20,11 @@ import com.forge.hypertrophy.data.entity.SkillStageEventEntity
 import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.data.entity.SlotBaselineEntity
+import com.forge.hypertrophy.data.entity.TrackPointEntity
 import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.BiometricsRepository
+import com.forge.hypertrophy.data.repository.CardioRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
@@ -66,6 +70,7 @@ class DashboardViewModelTest {
     private val exerciseRepo = FakeExerciseRepository()
     private val skillRepo = FakeSkillRepository()
     private val biometricsRepo = FakeBiometricsRepository()
+    private val cardioRepo = FakeCardioRepository()
     private val preferences = FakePreferences()
     private val cursor = MemoryCursor()
     private val baselines = FakeBaselineRepository()
@@ -245,6 +250,7 @@ class DashboardViewModelTest {
             exercises = exerciseRepo,
             skills = skillRepo,
             biometrics = biometricsRepo,
+            cardio = cardioRepo,
             preferences = preferences,
             cursor = cursor,
             clock = clock,
@@ -399,6 +405,19 @@ class DashboardViewModelTest {
         override suspend fun upsertCardioPlan(plan: CardioPlanEntity): Long = 0L
     }
 
+    private class FakeCardioRepository : CardioRepository {
+        private val flow = MutableStateFlow(emptyList<CardioLogEntity>())
+
+        override fun observeLog(sessionId: Long): Flow<CardioLogEntity?> = flow.map { it.find { log -> log.sessionId == sessionId } }
+        override suspend fun insert(log: CardioLogEntity): Long = 0L
+        override suspend fun update(log: CardioLogEntity) {}
+        override suspend fun delete(id: Long) {}
+        override fun observeTrackPoints(cardioLogId: Long): Flow<List<TrackPointEntity>> = MutableStateFlow(emptyList())
+        override suspend fun insertTrackPoints(points: List<TrackPointEntity>): List<Long> = emptyList()
+        override fun observeAll(): Flow<List<CardioLogEntity>> = flow
+        override fun observeMileage(): Flow<List<GearMileage>> = MutableStateFlow(emptyList())
+    }
+
     private class FakeSessionRepository : SessionRepository {
         val sessions = mutableMapOf<Long, WorkoutSessionEntity>()
         val slots = mutableMapOf<Long, SessionSlotEntity>()
@@ -459,6 +478,7 @@ class DashboardViewModelTest {
     private class FakeSkillRepository : SkillRepository {
         override fun observeActive(): Flow<List<SkillEntity>> = MutableStateFlow(emptyList())
         override suspend fun get(id: Long): SkillEntity? = null
+        override suspend fun all(): List<SkillEntity> = emptyList()
         override suspend fun insert(skill: SkillEntity): Long = 0L
         override suspend fun update(skill: SkillEntity) {}
         override suspend fun archive(id: Long) {}

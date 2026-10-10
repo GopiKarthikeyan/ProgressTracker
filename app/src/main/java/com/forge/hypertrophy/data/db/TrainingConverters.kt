@@ -1,8 +1,9 @@
 package com.forge.hypertrophy.data.db
 
 import androidx.room.TypeConverter
+import com.forge.hypertrophy.domain.model.CardioActivity
 import com.forge.hypertrophy.domain.model.CardioSource
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.model.Equipment
@@ -84,8 +85,11 @@ class TrainingConverters {
     @TypeConverter fun fromEntryMethod(value: EntryMethod): String = value.name
     @TypeConverter fun toEntryMethod(value: String): EntryMethod = EntryMethod.valueOf(value)
 
-    @TypeConverter fun fromCardioType(value: CardioType): String = value.name
-    @TypeConverter fun toCardioType(value: String): CardioType = CardioType.valueOf(value)
+    @TypeConverter fun fromCardioStyle(value: CardioStyle): String = value.name
+    @TypeConverter fun toCardioStyle(value: String): CardioStyle = CardioStyle.valueOf(value)
+
+    @TypeConverter fun fromCardioActivity(value: CardioActivity): String = value.name
+    @TypeConverter fun toCardioActivity(value: String): CardioActivity = CardioActivity.valueOf(value)
 
     @TypeConverter fun fromCardioSource(value: CardioSource): String = value.name
     @TypeConverter fun toCardioSource(value: String): CardioSource = CardioSource.valueOf(value)

@@ -1,5 +1,8 @@
 package com.forge.hypertrophy.data.transfer
 
+import com.forge.hypertrophy.domain.cardio.defaultStyleFor
+import com.forge.hypertrophy.domain.model.CardioActivity
+import com.forge.hypertrophy.domain.model.CardioStyle
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -123,11 +126,41 @@ data class ProgramJsonSlot(
 
 @Serializable
 data class ProgramJsonCardio(
-    val type: String,
+    val activity: String? = null,
+    val style: String? = null,
+    /** Legacy style field; treated as Running style when [activity] is absent. */
+    val type: String? = null,
     val label: String = "",
     val targetDistanceM: Int? = null,
     val isOptional: Boolean = false,
 )
+
+data class ResolvedProgramCardio(
+    val activity: CardioActivity,
+    val style: CardioStyle,
+)
+
+/** Maps new activity/style fields, or legacy `type` alone, onto domain enums. */
+fun resolveProgramCardio(cardio: ProgramJsonCardio): ResolvedProgramCardio? {
+    val activityName = cardio.activity?.trim()?.takeIf { it.isNotEmpty() }
+    val styleName = cardio.style?.trim()?.takeIf { it.isNotEmpty() }
+        ?: cardio.type?.trim()?.takeIf { it.isNotEmpty() }
+    return try {
+        val activity = if (activityName != null) {
+            CardioActivity.valueOf(activityName)
+        } else {
+            CardioActivity.RUNNING
+        }
+        val style = if (styleName != null) {
+            CardioStyle.valueOf(styleName)
+        } else {
+            defaultStyleFor(activity)
+        }
+        ResolvedProgramCardio(activity, style)
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+}
 
 internal fun libraryKey(name: String): String = name.trim().lowercase()
 

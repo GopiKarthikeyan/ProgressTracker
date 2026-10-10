@@ -121,8 +121,8 @@ class ProgramJsonValidatorTest {
                 days = listOf(
                     programDay(
                         cardio = listOf(
-                            ProgramJsonCardio(type = "JOG", label = "Jog"),
-                            ProgramJsonCardio(type = "WALK", label = "Walk"),
+                            ProgramJsonCardio(activity = "RUNNING", style = "JOG", label = "Jog"),
+                            ProgramJsonCardio(activity = "RUNNING", style = "WALK", label = "Walk"),
                         ),
                     ),
                 ),

@@ -1,6 +1,7 @@
 package com.forge.hypertrophy.data.transfer
 
-import com.forge.hypertrophy.domain.model.CardioType
+import com.forge.hypertrophy.domain.model.CardioActivity
+import com.forge.hypertrophy.domain.model.CardioStyle
 import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
@@ -143,7 +144,26 @@ object ProgramJsonValidator {
                 )
             }
             day.cardio.forEachIndexed { cardioIndex, cardio ->
-                requireEnum<CardioType>(issues, cardio.type, "days[$dayIndex].cardio[$cardioIndex].type")
+                val path = "days[$dayIndex].cardio[$cardioIndex]"
+                val hasActivity = !cardio.activity.isNullOrBlank()
+                val hasStyle = !cardio.style.isNullOrBlank()
+                val hasLegacyType = !cardio.type.isNullOrBlank()
+                if (!hasActivity && !hasLegacyType) {
+                    issues += issue(
+                        ProgramJsonIssueKind.UNKNOWN_ENUM,
+                        "$path.activity",
+                        "cardio needs activity or legacy type",
+                    )
+                }
+                cardio.activity?.takeIf { hasActivity }?.let {
+                    requireEnum<CardioActivity>(issues, it, "$path.activity")
+                }
+                cardio.style?.takeIf { hasStyle }?.let {
+                    requireEnum<CardioStyle>(issues, it, "$path.style")
+                }
+                cardio.type?.takeIf { hasLegacyType }?.let {
+                    requireEnum<CardioStyle>(issues, it, "$path.type")
+                }
             }
             val groupCounts = mutableMapOf<String, Int>()
             day.slots.forEachIndexed { slotIndex, slot ->

@@ -3,6 +3,8 @@ package com.forge.hypertrophy.ui.screens.routine
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.repository.ExerciseRepository
+import com.forge.hypertrophy.data.transfer.LibraryCatalogImporter
+import com.forge.hypertrophy.data.transfer.LibraryCatalogProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,20 +23,30 @@ data class LibraryRow(
     val canHardDelete: Boolean,
 )
 
+data class BuiltinCatalogMessage(
+    val addedExercises: Int,
+    val addedSkills: Int,
+)
+
 data class ExerciseLibraryUiState(
     val rows: List<LibraryRow> = emptyList(),
     val error: LibraryError? = null,
+    val builtinMessage: BuiltinCatalogMessage? = null,
 )
 
 sealed interface ExerciseLibraryEvent {
     data class Archive(val id: Long) : ExerciseLibraryEvent
     data class HardDelete(val id: Long) : ExerciseLibraryEvent
+    data object AddBuiltIn : ExerciseLibraryEvent
     data object DismissError : ExerciseLibraryEvent
+    data object DismissBuiltinMessage : ExerciseLibraryEvent
 }
 
 @HiltViewModel
 class ExerciseLibraryViewModel @Inject constructor(
     private val exercises: ExerciseRepository,
+    private val catalog: LibraryCatalogProvider,
+    private val catalogImporter: LibraryCatalogImporter,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ExerciseLibraryUiState())
     val uiState: StateFlow<ExerciseLibraryUiState> = _uiState.asStateFlow()
@@ -56,7 +68,20 @@ class ExerciseLibraryViewModel @Inject constructor(
         when (event) {
             is ExerciseLibraryEvent.Archive -> viewModelScope.launch { exercises.archive(event.id) }
             is ExerciseLibraryEvent.HardDelete -> hardDelete(event.id)
+            ExerciseLibraryEvent.AddBuiltIn -> addBuiltIn()
             ExerciseLibraryEvent.DismissError -> _uiState.update { it.copy(error = null) }
+            ExerciseLibraryEvent.DismissBuiltinMessage -> _uiState.update { it.copy(builtinMessage = null) }
+        }
+    }
+
+    private fun addBuiltIn() {
+        viewModelScope.launch {
+            val result = catalogImporter.import(catalog.catalog())
+            _uiState.update {
+                it.copy(
+                    builtinMessage = BuiltinCatalogMessage(result.addedExercises, result.addedSkills),
+                )
+            }
         }
     }
 

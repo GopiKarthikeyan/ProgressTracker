@@ -19,6 +19,8 @@ interface SkillRepository {
 
     suspend fun get(id: Long): SkillEntity?
 
+    suspend fun all(): List<SkillEntity>
+
     suspend fun insert(skill: SkillEntity): Long
 
     suspend fun update(skill: SkillEntity)
@@ -65,6 +67,8 @@ class RoomSkillRepository @Inject constructor(
     override fun observeActive(): Flow<List<SkillEntity>> = skillDao.observeActive()
 
     override suspend fun get(id: Long): SkillEntity? = skillDao.get(id)
+
+    override suspend fun all(): List<SkillEntity> = skillDao.all()
 
     override suspend fun insert(skill: SkillEntity): Long = skillDao.insert(skill)
 

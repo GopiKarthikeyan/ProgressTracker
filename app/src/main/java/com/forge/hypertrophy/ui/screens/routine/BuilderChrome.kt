@@ -33,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.forge.hypertrophy.R
+import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Cream
@@ -59,16 +60,16 @@ fun BuilderColumn(
                 .padding(16.dp),
             verticalArrangement = verticalArrangement,
             content = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (onBack != null) {
-                        TextButton(
-                            onClick = onBack,
-                            modifier = Modifier.heightIn(min = TouchTargets.Editor),
-                        ) {
-                            Text(stringResource(R.string.builder_back))
-                        }
+                        BackButton(onClick = onBack, size = TouchTargets.Editor)
                     }
-                    Text(text = title, style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.headlineSmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
                 content()
             },

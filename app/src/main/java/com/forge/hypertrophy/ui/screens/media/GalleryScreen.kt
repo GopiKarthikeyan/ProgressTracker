@@ -29,6 +29,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.media.POSE_ORDER
+import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Cream
 import com.forge.hypertrophy.ui.theme.Ink
@@ -63,10 +64,8 @@ fun GalleryScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack, modifier = Modifier.heightIn(min = TouchTargets.Workout)) {
-                Text(stringResource(R.string.builder_back))
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BackButton(onClick = onBack, size = TouchTargets.Workout)
             Text(stringResource(R.string.media_gallery), color = Ink, style = MaterialTheme.typography.headlineSmall)
         }
         if (state.importing) {
