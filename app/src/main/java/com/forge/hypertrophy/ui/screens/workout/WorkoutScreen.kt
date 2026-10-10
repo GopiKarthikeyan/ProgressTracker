@@ -57,6 +57,7 @@ import kotlinx.coroutines.isActive
 @Composable
 fun WorkoutScreen(
     onBack: () -> Unit,
+    onRecordClip: (exerciseId: Long, setEntryId: Long?) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WorkoutViewModel = hiltViewModel(),
 ) {
@@ -83,6 +84,7 @@ fun WorkoutScreen(
         state = state,
         onEvent = viewModel::onEvent,
         onBack = onBack,
+        onRecordClip = onRecordClip,
         modifier = modifier
             .focusRequester(focus)
             .focusable()
@@ -105,6 +107,7 @@ fun WorkoutContent(
     state: WorkoutUiState,
     onEvent: (WorkoutEvent) -> Unit,
     onBack: () -> Unit,
+    onRecordClip: (exerciseId: Long, setEntryId: Long?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     val view = LocalView.current
@@ -167,6 +170,7 @@ fun WorkoutContent(
                 state = state,
                 onEvent = onEvent,
                 onBack = onBack,
+                onRecordClip = onRecordClip,
                 onUndo = {
                     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                     onEvent(WorkoutEvent.Undo)
@@ -193,6 +197,7 @@ private fun PrimaryAction(
     state: WorkoutUiState,
     onEvent: (WorkoutEvent) -> Unit,
     onBack: () -> Unit,
+    onRecordClip: (exerciseId: Long, setEntryId: Long?) -> Unit,
     onUndo: () -> Unit,
 ) {
     val undo = state.undoUntilElapsedRealtime != null
@@ -242,6 +247,14 @@ private fun PrimaryAction(
                     label = stringResource(R.string.workout_skip_rest),
                     onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
                 )
+                val setId = state.lastLoggedSetId
+                val exerciseId = state.lastLoggedExerciseId
+                if (setId != null && exerciseId != null) {
+                    SecondaryButton(
+                        label = stringResource(R.string.workout_record_clip),
+                        onClick = { onRecordClip(exerciseId, setId) },
+                    )
+                }
                 SecondaryButton(
                     label = stringResource(R.string.workout_add_set),
                     onClick = { onEvent(WorkoutEvent.AddSet) },
@@ -254,6 +267,10 @@ private fun PrimaryAction(
                 }
             }
             pos is WorkoutPosition.WorkingSet -> {
+                SecondaryButton(
+                    label = stringResource(R.string.workout_record_clip),
+                    onClick = { onRecordClip(pos.slot.activeExerciseId, null) },
+                )
                 SecondaryButton(
                     label = stringResource(R.string.workout_add_set),
                     onClick = { onEvent(WorkoutEvent.AddSet) },

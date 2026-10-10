@@ -217,9 +217,6 @@ fun MainScaffold(
             composable<GalleryRoute> {
                 GalleryScreen(
                     onBack = { navController.popBackStack() },
-                    onRecord = { exerciseId, setEntryId ->
-                        navController.navigate(VideoCaptureRoute(exerciseId, setEntryId))
-                    },
                     onCompare = { leftId, rightId -> navController.navigate(VideoComparisonRoute(leftId, rightId)) },
                     onPhysique = { navController.navigate(PhysiqueCaptureRoute) },
                 )
@@ -277,7 +274,10 @@ fun MainScaffold(
             }
             composable<WorkoutRoute> {
                 com.forge.hypertrophy.ui.screens.workout.WorkoutScreen(
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onRecordClip = { exerciseId, setEntryId ->
+                        navController.navigate(VideoCaptureRoute(exerciseId, setEntryId))
+                    },
                 )
             }
             composable<ImportPreviewRoute> {

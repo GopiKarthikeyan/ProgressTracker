@@ -275,11 +275,40 @@
     </plurals>
     <string name="media_gallery">Gallery</string>
     <string name="media_clips">Clips</string>
-    <string name="media_no_exercises">Add an exercise to record clips.</string>
+    <string name="media_no_exercises">No clips yet. Record during a workout.</string>
     <string name="media_pick_exercise">Pick an exercise to see its clips.</string>
     <string name="media_record">Record clip</string>
     <string name="media_attach_to_set">Record for a logged set</string>
     <string name="media_no_clips">No clips for this exercise yet.</string>
+    <string name="media_clip_today">Today</string>
+    <string name="media_clip_yesterday">Yesterday</string>
+    <plurals name="media_clip_days_ago">
+        <item quantity="one">%d day ago</item>
+        <item quantity="other">%d days ago</item>
+    </plurals>
+    <plurals name="media_clip_weeks_ago">
+        <item quantity="one">%d week ago</item>
+        <item quantity="other">%d weeks ago</item>
+    </plurals>
+    <plurals name="media_clip_months_ago">
+        <item quantity="one">%d month ago</item>
+        <item quantity="other">%d months ago</item>
+    </plurals>
+    <string name="media_clip_date_line">%1$s · %2$s</string>
+    <string name="media_clip_same_day">Same day</string>
+    <plurals name="media_clip_days_apart">
+        <item quantity="one">%d day apart</item>
+        <item quantity="other">%d days apart</item>
+    </plurals>
+    <plurals name="media_clip_weeks_apart">
+        <item quantity="one">%d week apart</item>
+        <item quantity="other">%d weeks apart</item>
+    </plurals>
+    <plurals name="media_clip_months_apart">
+        <item quantity="one">%d month apart</item>
+        <item quantity="other">%d months apart</item>
+    </plurals>
+    <string name="media_retake">Retake</string>
     <string name="media_select">Select</string>
     <string name="media_deselect">Deselect</string>
     <string name="media_play">Play</string>
@@ -296,6 +325,9 @@
     <string name="media_pose_front">Front</string>
     <string name="media_pose_side">Side</string>
     <string name="media_pose_back">Back</string>
+    <string name="media_pose_quadriceps">Quadriceps</string>
+    <string name="media_pose_hamstrings">Hamstrings</string>
+    <string name="media_pose_calves">Calves</string>
     <string name="media_physique_complete">All poses done</string>
     <plurals name="media_physique_progress">
         <item quantity="one">%1$d of %2$d pose</item>
@@ -488,6 +520,7 @@
     <string name="workout_warmup_step">%1$s kg × %2$d</string>
     <string name="workout_log_set">Log Set</string>
     <string name="workout_add_set">Add set</string>
+    <string name="workout_record_clip">Record clip</string>
     <string name="workout_remove_set">Remove set</string>
     <string name="workout_skip_exercise">Skip Exercise</string>
     <string name="workout_skip_reason_default">Not feeling it</string>

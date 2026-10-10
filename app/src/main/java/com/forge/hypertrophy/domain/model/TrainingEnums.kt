@@ -97,4 +97,7 @@ enum class Pose {
     FRONT,
     SIDE,
     BACK,
+    QUADRICEPS,
+    HAMSTRINGS,
+    CALVES,
 }

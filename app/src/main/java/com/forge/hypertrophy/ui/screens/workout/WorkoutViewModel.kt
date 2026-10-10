@@ -117,6 +117,9 @@ data class WorkoutUiState(
     val summary: WorkoutSummary? = null,
     val nextUp: NextUp? = null,
     val canRemoveSet: Boolean = false,
+    /** Last logged set, for attaching a clip during rest. */
+    val lastLoggedSetId: Long? = null,
+    val lastLoggedExerciseId: Long? = null,
 )
 
 sealed interface WorkoutEvent {
@@ -170,6 +173,8 @@ class WorkoutViewModel @Inject constructor(
     private var cuesEnabled = false
     private val handsFree = HandsFreeGate()
     private var handsFreePulse = 0
+    private var lastLoggedSetId: Long? = null
+    private var lastLoggedExerciseId: Long? = null
 
     /**
      * Events run one at a time. [machine] is mutated across suspension points
@@ -340,6 +345,8 @@ class WorkoutViewModel @Inject constructor(
             method = method
         )
         machine = logCurrentSet(machine, recorded)
+        lastLoggedSetId = recorded.id
+        lastLoggedExerciseId = position.slot.activeExerciseId
         if (method == EntryMethod.HARDWARE_KEY) handsFree.armUndo(recorded.id, now)
         armed = null
         publish()
@@ -354,6 +361,8 @@ class WorkoutViewModel @Inject constructor(
         }
         val recorded = interactors.logSet.logPracticeBlock(position.slot.sessionSlotId, elapsedSeconds)
         machine = logBlock(machine, recorded)
+        lastLoggedSetId = recorded.id
+        lastLoggedExerciseId = position.slot.activeExerciseId
         armed = null
         timer.stop()
         publish()
@@ -487,6 +496,10 @@ class WorkoutViewModel @Inject constructor(
         }
         workouts.deleteSet(id)
         machine = removeSet(machine, id)
+        if (id == lastLoggedSetId) {
+            lastLoggedSetId = null
+            lastLoggedExerciseId = null
+        }
         armed = null
         publish()
     }
@@ -569,6 +582,13 @@ class WorkoutViewModel @Inject constructor(
                 ?: pos.slot.prescription.setsMin
             else -> null
         }
+        if (
+            _uiState.value.position is WorkoutPosition.Resting &&
+            shown !is WorkoutPosition.Resting
+        ) {
+            lastLoggedSetId = null
+            lastLoggedExerciseId = null
+        }
         _uiState.value = WorkoutUiState(
             sessionId = sessionId,
             position = shown,
@@ -583,6 +603,8 @@ class WorkoutViewModel @Inject constructor(
             summary = _uiState.value.summary,
             nextUp = nextUp(shown),
             canRemoveSet = removeFloor != null && canRemoveExtraSet(machine, removeFloor),
+            lastLoggedSetId = lastLoggedSetId,
+            lastLoggedExerciseId = lastLoggedExerciseId,
         )
     }
 

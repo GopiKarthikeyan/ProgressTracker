@@ -6,14 +6,18 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
@@ -21,6 +25,7 @@ import com.forge.hypertrophy.domain.model.CardioType
 import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.ui.components.ReorderableColumn
 import com.forge.hypertrophy.ui.components.SurfaceCard
+import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -155,8 +160,7 @@ fun DayEditorScreen(
                         onClick = { onOpenSlot(slot.id) },
                         modifier = Modifier.weight(1f)
                     )
-                    EditorButton(
-                        label = stringResource(R.string.builder_delete),
+                    DeleteIconButton(
                         onClick = { viewModel.onEvent(DayEditorEvent.DeleteSlot(slot.id)) },
                     )
                 }
@@ -190,8 +194,7 @@ private fun ChecklistSection(
                             modifier = Modifier.weight(1f),
                             singleLine = true,
                         )
-                        EditorButton(
-                            label = stringResource(R.string.builder_delete),
+                        DeleteIconButton(
                             onClick = { onEvent(DayEditorEvent.DeleteChecklist(item.id)) },
                         )
                     }
@@ -208,5 +211,18 @@ private fun ChecklistSection(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DeleteIconButton(onClick: () -> Unit) {
+    val description = stringResource(R.string.builder_delete)
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier
+            .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
+            .semantics { contentDescription = description },
+    ) {
+        Text("−")
     }
 }

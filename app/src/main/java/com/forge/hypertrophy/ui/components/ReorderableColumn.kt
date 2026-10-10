@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.theme.NeonAccent
@@ -33,6 +35,8 @@ fun <T> ReorderableColumn(
     itemKey: (T) -> Any,
     itemContent: @Composable (T) -> Unit,
 ) {
+    val upDescription = stringResource(R.string.builder_up)
+    val downDescription = stringResource(R.string.builder_down)
     Column(modifier = modifier) {
         items.forEachIndexed { index, item ->
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -48,16 +52,20 @@ fun <T> ReorderableColumn(
                 TextButton(
                     onClick = { onMove(index, index - 1) },
                     enabled = index > 0,
-                    modifier = Modifier.sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor),
+                    modifier = Modifier
+                        .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
+                        .semantics { contentDescription = upDescription },
                 ) {
-                    Text(stringResource(R.string.builder_up))
+                    Text("▲")
                 }
                 TextButton(
                     onClick = { onMove(index, index + 1) },
                     enabled = index < items.lastIndex,
-                    modifier = Modifier.sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor),
+                    modifier = Modifier
+                        .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
+                        .semantics { contentDescription = downDescription },
                 ) {
-                    Text(stringResource(R.string.builder_down))
+                    Text("▼")
                 }
             }
         }
@@ -71,13 +79,15 @@ private fun DragHandle(
     lastIndex: Int,
     onMove: (fromIndex: Int, toIndex: Int) -> Unit,
 ) {
+    val description = stringResource(R.string.builder_drag_handle)
     var accumulated by remember(itemKey) { mutableFloatStateOf(0f) }
     Text(
-        text = stringResource(R.string.builder_drag_handle),
+        text = "☰",
         color = NeonAccent,
         modifier = Modifier
             .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
             .heightIn(min = TouchTargets.Editor)
+            .semantics { contentDescription = description }
             .padding(horizontal = 4.dp)
             .pointerInput(itemKey, index, lastIndex) {
                 detectDragGestures(

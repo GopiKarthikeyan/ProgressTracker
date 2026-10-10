@@ -6,6 +6,7 @@ import com.forge.hypertrophy.data.entity.MediaItemEntity
 import com.forge.hypertrophy.data.media.MediaFiles
 import com.forge.hypertrophy.data.repository.MediaRepository
 import com.forge.hypertrophy.domain.media.Countdown
+import com.forge.hypertrophy.domain.media.POSE_ORDER
 import com.forge.hypertrophy.domain.media.SELF_TIMER_SECONDS
 import com.forge.hypertrophy.domain.media.nextPose
 import com.forge.hypertrophy.domain.model.MediaType
@@ -49,6 +50,7 @@ sealed interface PhysiqueCaptureEvent {
     data class Captured(val path: String) : PhysiqueCaptureEvent
     data object CaptureFailed : PhysiqueCaptureEvent
     data object SkipPose : PhysiqueCaptureEvent
+    data object Retake : PhysiqueCaptureEvent
     data object DismissFailure : PhysiqueCaptureEvent
 }
 
@@ -77,6 +79,7 @@ class PhysiqueCaptureViewModel @Inject constructor(
                 _uiState.update { it.copy(phase = PhotoPhase.IDLE, targetPath = null, failed = true) }
             }
             PhysiqueCaptureEvent.SkipPose -> viewModelScope.launch { advance() }
+            PhysiqueCaptureEvent.Retake -> viewModelScope.launch { retake() }
             PhysiqueCaptureEvent.DismissFailure -> _uiState.update { it.copy(failed = false) }
         }
     }
@@ -115,6 +118,7 @@ class PhysiqueCaptureViewModel @Inject constructor(
 
     private suspend fun store(file: File) {
         val pose = _uiState.value.pose ?: return
+        replaceLatestPhoto(pose)
         media.insert(
             MediaItemEntity(
                 type = MediaType.PHOTO,
@@ -129,6 +133,36 @@ class PhysiqueCaptureViewModel @Inject constructor(
             ),
         )
         advance()
+    }
+
+    private suspend fun retake() {
+        when (_uiState.value.phase) {
+            PhotoPhase.COMPLETE -> {
+                val pose = POSE_ORDER.lastOrNull { it in _uiState.value.done } ?: POSE_ORDER.first()
+                _uiState.update {
+                    it.copy(
+                        pose = pose,
+                        done = it.done - pose,
+                        phase = PhotoPhase.IDLE,
+                        targetPath = null,
+                        countdownLeft = 0,
+                        failed = false,
+                    )
+                }
+                loadGhost(pose)
+                startTimer()
+            }
+            PhotoPhase.IDLE -> {
+                if (_uiState.value.pose == null) return
+                startTimer()
+            }
+            else -> Unit
+        }
+    }
+
+    private suspend fun replaceLatestPhoto(pose: Pose) {
+        val previous = media.observePhotos().first().lastOrNull { it.pose == pose } ?: return
+        media.delete(previous.id)
     }
 
     private suspend fun advance() {

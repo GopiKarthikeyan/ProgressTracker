@@ -21,11 +21,15 @@ import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
 import com.forge.hypertrophy.data.media.MediaFiles
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.MediaRepository
+import com.forge.hypertrophy.data.repository.ProgramRepository
+import com.forge.hypertrophy.data.repository.RoutineRepository
+import com.forge.hypertrophy.data.repository.ScheduleCursorRepository
 import com.forge.hypertrophy.data.repository.SessionRepository
+import com.forge.hypertrophy.data.schedule.ScheduleLoader
 import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MediaType
 import com.forge.hypertrophy.domain.model.Pose
-import com.forge.hypertrophy.domain.model.SessionStatus
+import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.ui.screens.routine.awaitUntil
 import java.io.File
 import java.time.Clock
@@ -47,6 +51,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -61,6 +66,15 @@ class GalleryViewModelTest {
     private val mediaRepo = FakeMediaRepository()
     private val exerciseRepo = FakeExerciseRepository(clock)
     private val sessionRepo = FakeSessionRepository()
+    private val programRepo = FakeProgramRepository()
+    private val preferences = FakePreferences()
+    private val scheduleLoader = ScheduleLoader(
+        programRepo,
+        FakeRoutineRepository(),
+        sessionRepo,
+        preferences,
+        FakeScheduleCursorRepository(),
+    )
     private val activeViewModels = mutableListOf<GalleryViewModel>()
 
     @Before
@@ -83,6 +97,9 @@ class GalleryViewModelTest {
             media = mediaRepo,
             exercises = exerciseRepo,
             sessions = sessionRepo,
+            programs = programRepo,
+            preferences = preferences,
+            scheduleLoader = scheduleLoader,
             clock = clock,
         )
         activeViewModels.add(vm)
@@ -144,6 +161,10 @@ class GalleryViewModelTest {
         assertEquals("deadlift 140kg × 5", clips.last().label)
         assertEquals(LocalDate.of(2026, 9, 1), clips.last().capturedOn)
         assertEquals(File(files.directory, "clip-1.mp4").path, clips.last().path)
+        // Fixed clock is 2026-10-01 → 30 days after 1 Sep.
+        assertTrue(clips.last().dateLine!!.contains("1 month ago"))
+        assertFalse(clips.last().dateLine!!.startsWith("2026-09-01"))
+        assertTrue(clips.first().dateLine!!.contains("2 weeks ago"))
 
         viewModel.onEvent(GalleryEvent.ToggleCompare(first))
         viewModel.onEvent(GalleryEvent.ToggleCompare(second))
@@ -297,5 +318,70 @@ class GalleryViewModelTest {
         override suspend fun recentSetsForExercise(exerciseId: Long, limit: Int): List<SetEntryEntity> = emptyList()
         override suspend fun earliestCompletedDate(): LocalDate? = null
         override suspend fun history(): List<WorkoutSessionEntity> = emptyList()
+    }
+
+    private class FakeProgramRepository : ProgramRepository {
+        override fun observe(): Flow<ProgramEntity?> = MutableStateFlow(null)
+        override fun observeAll(): Flow<List<ProgramEntity>> = MutableStateFlow(emptyList())
+        override fun observeActive(): Flow<ProgramEntity?> = MutableStateFlow(null)
+        override suspend fun get(): ProgramEntity? = null
+        override suspend fun getById(id: Long): ProgramEntity? = null
+        override suspend fun insert(program: ProgramEntity): Long = 0L
+        override suspend fun update(program: ProgramEntity) {}
+        override suspend fun setActive(id: Long) {}
+        override suspend fun delete(id: Long) {}
+    }
+
+    private class FakePreferences : TrainingPreferencesRepository {
+        private val rest = MutableStateFlow(120)
+        override val lastReconciledDate = MutableStateFlow<LocalDate?>(null)
+        override val plateInventoryKg = MutableStateFlow(emptyList<Double>())
+        override val transitionRestSeconds = rest
+        override val activeTimerEndElapsedRealtime = MutableStateFlow<Long?>(null)
+        override val defaultRestSeconds = MutableStateFlow(90)
+        override suspend fun setLastReconciledDate(date: LocalDate?) {}
+        override suspend fun setPlateInventoryKg(platesKg: List<Double>) {}
+        override suspend fun setTransitionRestSeconds(seconds: Int) {
+            rest.value = seconds
+        }
+        override suspend fun setActiveTimerEndElapsedRealtime(elapsedRealtime: Long?) {}
+        override suspend fun setDefaultRestSeconds(seconds: Int) {}
+    }
+
+    private class FakeScheduleCursorRepository : ScheduleCursorRepository {
+        override val fixedSwaps = MutableStateFlow(emptyMap<LocalDate, Long>())
+        override val rollingDayByDate = MutableStateFlow(emptyMap<LocalDate, Long>())
+        override val autoCompletedRests = MutableStateFlow(emptySet<LocalDate>())
+        override suspend fun save(
+            fixedSwaps: Map<LocalDate, Long>,
+            rollingDayByDate: Map<LocalDate, Long>,
+            autoCompletedRests: Set<LocalDate>,
+        ) {}
+    }
+
+    private class FakeRoutineRepository : RoutineRepository {
+        override fun observeDays(programId: Long) = MutableStateFlow(emptyList<RoutineDayEntity>())
+        override suspend fun getDay(id: Long): RoutineDayEntity? = null
+        override suspend fun insertDay(day: RoutineDayEntity): Long = 0L
+        override suspend fun updateDay(day: RoutineDayEntity) {}
+        override suspend fun deleteDay(id: Long) {}
+        override suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>) {}
+        override suspend fun days(programId: Long): List<RoutineDayEntity> = emptyList()
+        override suspend fun slotsForDays(dayIds: List<Long>): List<RoutineSlotEntity> = emptyList()
+        override fun observeChecklist(dayId: Long) = MutableStateFlow(emptyList<ChecklistItemEntity>())
+        override suspend fun insertChecklist(item: ChecklistItemEntity): Long = 0L
+        override suspend fun updateChecklist(item: ChecklistItemEntity) {}
+        override suspend fun deleteChecklist(id: Long) {}
+        override fun observeSlots(dayId: Long) = MutableStateFlow(emptyList<RoutineSlotEntity>())
+        override suspend fun getSlot(id: Long): RoutineSlotEntity? = null
+        override suspend fun insertSlot(slot: RoutineSlotEntity): Long = 0L
+        override suspend fun updateSlot(slot: RoutineSlotEntity) {}
+        override suspend fun deleteSlot(id: Long) {}
+        override suspend fun reorderSlots(dayId: Long, orderedSlotIds: List<Long>) {}
+        override fun observeAlternatives(slotId: Long) = MutableStateFlow(emptyList<SlotAlternativeEntity>())
+        override suspend fun insertAlternative(alternative: SlotAlternativeEntity): Long = 0L
+        override suspend fun deleteAlternative(id: Long) {}
+        override fun observeCardioPlan(dayId: Long) = MutableStateFlow<CardioPlanEntity?>(null)
+        override suspend fun upsertCardioPlan(plan: CardioPlanEntity): Long = 0L
     }
 }

@@ -9,6 +9,7 @@ import com.forge.hypertrophy.domain.media.SyncedPlayback
 import com.forge.hypertrophy.media.ClipDurations
 import com.forge.hypertrophy.ui.navigation.VideoComparisonRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -21,6 +22,9 @@ data class VideoComparisonUiState(
     val rightPath: String? = null,
     val leftLabel: String = "",
     val rightLabel: String = "",
+    val leftDateLine: String? = null,
+    val rightDateLine: String? = null,
+    val apartLine: String? = null,
     val playback: SyncedPlayback = SyncedPlayback(0, 0),
     /** Increments on every explicit seek so the screen re-positions both players once. */
     val seekSerial: Int = 0,
@@ -44,10 +48,13 @@ class VideoComparisonViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val media: MediaRepository,
     private val durations: ClipDurations,
+    clock: Clock,
 ) : ViewModel() {
     private val route = savedStateHandle.toRoute<VideoComparisonRoute>()
     private val _uiState = MutableStateFlow(VideoComparisonUiState())
     val uiState: StateFlow<VideoComparisonUiState> = _uiState.asStateFlow()
+    private val today = clock.instant().atZone(clock.zone).toLocalDate()
+    private val zone = clock.zone
 
     init {
         viewModelScope.launch {
@@ -57,12 +64,18 @@ class VideoComparisonViewModel @Inject constructor(
             val rightFile = media.file(right)
             val leftMs = runCatching { durations.durationMs(leftFile) }.getOrDefault(0L)
             val rightMs = runCatching { durations.durationMs(rightFile) }.getOrDefault(0L)
+            val leftOn = left.capturedAt?.atZone(zone)?.toLocalDate()
+            val rightOn = right.capturedAt?.atZone(zone)?.toLocalDate()
+            val dates = ClipDateLines.comparisonDates(leftOn, rightOn, today)
             _uiState.update {
                 it.copy(
                     leftPath = leftFile.path,
                     rightPath = rightFile.path,
                     leftLabel = left.label ?: "",
                     rightLabel = right.label ?: "",
+                    leftDateLine = dates.leftDateLine,
+                    rightDateLine = dates.rightDateLine,
+                    apartLine = dates.apartLine,
                     playback = SyncedPlayback(leftMs, rightMs),
                     loaded = true,
                 )

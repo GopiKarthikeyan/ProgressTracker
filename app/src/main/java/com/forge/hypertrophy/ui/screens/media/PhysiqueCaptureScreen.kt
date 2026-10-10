@@ -37,12 +37,13 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
+import com.forge.hypertrophy.domain.media.POSE_ORDER
 import com.forge.hypertrophy.domain.model.Pose
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
-import com.forge.hypertrophy.ui.theme.Black
-import com.forge.hypertrophy.ui.theme.NeonAccent
+import com.forge.hypertrophy.ui.theme.Cream
 import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Rose
 import java.io.File
 
 @Composable
@@ -65,7 +66,7 @@ fun PhysiqueCaptureScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Black)
+            .background(Cream)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -80,7 +81,7 @@ fun PhysiqueCaptureScreen(
             )
         }
         Text(
-            pluralStringResource(R.plurals.media_physique_progress, Pose.entries.size, state.done.size, Pose.entries.size),
+            pluralStringResource(R.plurals.media_physique_progress, POSE_ORDER.size, state.done.size, POSE_ORDER.size),
             color = Ink,
         )
         Box(
@@ -106,7 +107,7 @@ fun PhysiqueCaptureScreen(
             if (state.phase == PhotoPhase.COUNTDOWN) {
                 NumericText(
                     state.countdownLeft.toString(),
-                    color = NeonAccent,
+                    color = Rose,
                     style = MaterialTheme.typography.displayLarge,
                     modifier = Modifier.align(Alignment.Center),
                 )
@@ -114,11 +115,20 @@ fun PhysiqueCaptureScreen(
         }
         CountdownBeeps(state.countdownLeft, active = state.phase == PhotoPhase.COUNTDOWN)
         if (state.failed) {
-            Text(stringResource(R.string.media_failed), color = NeonAccent)
+            Text(stringResource(R.string.media_failed), color = Rose)
             MediaButton(stringResource(R.string.dashboard_dismiss)) { viewModel.onEvent(PhysiqueCaptureEvent.DismissFailure) }
         }
         when (state.phase) {
-            PhotoPhase.COMPLETE -> MediaButton(stringResource(R.string.media_done), onClick = onBack)
+            PhotoPhase.COMPLETE -> {
+                MediaButton(stringResource(R.string.media_retake)) {
+                    if (cameraGranted) {
+                        viewModel.onEvent(PhysiqueCaptureEvent.Retake)
+                    } else {
+                        permission.launch(Manifest.permission.CAMERA)
+                    }
+                }
+                MediaButton(stringResource(R.string.media_done), onClick = onBack)
+            }
             PhotoPhase.COUNTDOWN -> MediaButton(stringResource(R.string.media_cancel_timer)) {
                 viewModel.onEvent(PhysiqueCaptureEvent.Cancel)
             }
@@ -129,6 +139,15 @@ fun PhysiqueCaptureScreen(
                         viewModel.onEvent(PhysiqueCaptureEvent.Trigger)
                     } else {
                         permission.launch(Manifest.permission.CAMERA)
+                    }
+                }
+                if (state.ghostPath != null) {
+                    MediaButton(stringResource(R.string.media_retake)) {
+                        if (cameraGranted) {
+                            viewModel.onEvent(PhysiqueCaptureEvent.Retake)
+                        } else {
+                            permission.launch(Manifest.permission.CAMERA)
+                        }
                     }
                 }
                 MediaButton(stringResource(R.string.media_skip_pose)) { viewModel.onEvent(PhysiqueCaptureEvent.SkipPose) }
@@ -167,6 +186,9 @@ internal fun poseLabel(pose: Pose): String = when (pose) {
     Pose.FRONT -> stringResource(R.string.media_pose_front)
     Pose.SIDE -> stringResource(R.string.media_pose_side)
     Pose.BACK -> stringResource(R.string.media_pose_back)
+    Pose.QUADRICEPS -> stringResource(R.string.media_pose_quadriceps)
+    Pose.HAMSTRINGS -> stringResource(R.string.media_pose_hamstrings)
+    Pose.CALVES -> stringResource(R.string.media_pose_calves)
 }
 
 private const val GHOST_ALPHA = 0.35f

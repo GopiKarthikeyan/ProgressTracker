@@ -116,8 +116,16 @@ fun VideoComparisonScreen(
                 .weight(1f),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            ClipPane(left, state.leftLabel, Modifier.weight(1f))
-            ClipPane(right, state.rightLabel, Modifier.weight(1f))
+            ClipPane(left, state.leftLabel, state.leftDateLine, Modifier.weight(1f))
+            ClipPane(right, state.rightLabel, state.rightDateLine, Modifier.weight(1f))
+        }
+        state.apartLine?.let { apart ->
+            Text(
+                apart,
+                color = Ink,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
         Row(modifier = Modifier.fillMaxWidth()) {
             NumericText(formatMs(playback.positionMs), color = NeonAccent, modifier = Modifier.weight(1f))
@@ -161,9 +169,12 @@ fun VideoComparisonScreen(
 
 @androidx.annotation.OptIn(UnstableApi::class)
 @Composable
-private fun ClipPane(player: ExoPlayer, label: String, modifier: Modifier) {
+private fun ClipPane(player: ExoPlayer, label: String, dateLine: String?, modifier: Modifier) {
     Column(modifier = modifier) {
         Text(label, color = Ink)
+        dateLine?.let {
+            Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium)
+        }
         AndroidView(
             modifier = Modifier
                 .fillMaxWidth()

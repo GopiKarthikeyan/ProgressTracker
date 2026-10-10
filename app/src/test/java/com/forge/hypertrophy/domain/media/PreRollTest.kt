@@ -39,11 +39,15 @@ class PreRollTest {
     }
 
     @Test
-    fun physiqueSequenceRunsFrontSideBack() {
-        assertEquals(listOf("FRONT", "SIDE", "BACK"), POSE_ORDER.map { it.name })
+    fun physiqueSequenceRunsUpperBodyThenLegs() {
+        assertEquals(
+            listOf("FRONT", "SIDE", "BACK", "QUADRICEPS", "HAMSTRINGS", "CALVES"),
+            POSE_ORDER.map { it.name },
+        )
         assertEquals(POSE_ORDER[0], nextPose(emptySet()))
         assertEquals(POSE_ORDER[1], nextPose(setOf(POSE_ORDER[0])))
         assertEquals(POSE_ORDER[2], nextPose(setOf(POSE_ORDER[0], POSE_ORDER[1])))
+        assertEquals(POSE_ORDER[3], nextPose(POSE_ORDER.take(3).toSet()))
         assertEquals(null, nextPose(POSE_ORDER.toSet()))
     }
 }

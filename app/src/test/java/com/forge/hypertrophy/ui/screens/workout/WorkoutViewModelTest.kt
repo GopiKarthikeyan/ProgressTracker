@@ -86,6 +86,7 @@ import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.yield
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -110,6 +111,7 @@ class WorkoutViewModelTest {
             logSet()
             assertSetLogged(reps = 5)
             assertState<WorkoutPosition.Resting>()
+            assertLastLoggedForClip()
             completeWorkout()
             tick()
             assertState<WorkoutPosition.Summary>()
@@ -621,6 +623,14 @@ class WorkoutViewModelTest {
             val sets = setsForCurrentSlot()
             if (count != null) assertEquals(count, sets.size)
             if (reps != null) assertEquals(reps, sets.single().reps)
+        }
+
+        fun assertLastLoggedForClip() {
+            val sets = setsForCurrentSlot()
+            val logged = sets.last()
+            val state = viewModel.uiState.value
+            assertEquals(logged.id, state.lastLoggedSetId)
+            assertNotNull(state.lastLoggedExerciseId)
         }
 
         suspend fun assertSnapshotPreserved(otherId: Long, name: String) {
