@@ -382,13 +382,18 @@ fun suggestionFor(
             skillHoldSeconds(hint.stage, hint.targets, slot.sets.sumOf { it.holdSec ?: 0 })
         }
     }
+    fun fromLogged(previous: RecordedSet, fromPreviousSession: Boolean): SetSuggestion = SetSuggestion(
+        weightKg = previous.weightKg,
+        reps = if (hold) null else previous.reps,
+        holdSec = holdSeconds(previous.holdSec),
+        fromPreviousSession = fromPreviousSession && (!hold || previous.holdSec != null),
+    )
+    val lastThisSession = slot.sets.maxByOrNull { it.id }
+    if (lastThisSession != null) {
+        return fromLogged(lastThisSession, fromPreviousSession = false)
+    }
     if (ownPrevious != null) {
-        return SetSuggestion(
-            weightKg = ownPrevious.weightKg,
-            reps = if (hold) null else ownPrevious.reps,
-            holdSec = holdSeconds(ownPrevious.holdSec),
-            fromPreviousSession = !hold || ownPrevious.holdSec != null,
-        )
+        return fromLogged(ownPrevious, fromPreviousSession = true)
     }
     if (baseline?.awaitingCalibration == true) {
         return SetSuggestion(

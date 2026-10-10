@@ -1,9 +1,11 @@
 package com.forge.hypertrophy.ui.screens.media
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.entity.MediaItemEntity
 import com.forge.hypertrophy.data.media.MediaFiles
+import com.forge.hypertrophy.data.media.MediaImporter
 import com.forge.hypertrophy.data.repository.MediaRepository
 import com.forge.hypertrophy.domain.media.Countdown
 import com.forge.hypertrophy.domain.media.POSE_ORDER
@@ -42,6 +44,8 @@ data class PhysiqueCaptureUiState(
     /** Where the camera writes the next photo. */
     val targetPath: String? = null,
     val failed: Boolean = false,
+    val importing: Boolean = false,
+    val importedCount: Int? = null,
 )
 
 sealed interface PhysiqueCaptureEvent {
@@ -52,12 +56,15 @@ sealed interface PhysiqueCaptureEvent {
     data object SkipPose : PhysiqueCaptureEvent
     data object Retake : PhysiqueCaptureEvent
     data object DismissFailure : PhysiqueCaptureEvent
+    data object DismissImportResult : PhysiqueCaptureEvent
+    data class ImportPhotos(val uris: List<Uri>) : PhysiqueCaptureEvent
 }
 
 @HiltViewModel
 class PhysiqueCaptureViewModel @Inject constructor(
     private val files: MediaFiles,
     private val media: MediaRepository,
+    private val importer: MediaImporter,
     private val elapsed: ElapsedRealtimeClock,
     private val clock: Clock,
 ) : ViewModel() {
@@ -81,6 +88,32 @@ class PhysiqueCaptureViewModel @Inject constructor(
             PhysiqueCaptureEvent.SkipPose -> viewModelScope.launch { advance() }
             PhysiqueCaptureEvent.Retake -> viewModelScope.launch { retake() }
             PhysiqueCaptureEvent.DismissFailure -> _uiState.update { it.copy(failed = false) }
+            PhysiqueCaptureEvent.DismissImportResult -> _uiState.update { it.copy(importedCount = null) }
+            is PhysiqueCaptureEvent.ImportPhotos -> importPhotos(event.uris)
+        }
+    }
+
+    private fun importPhotos(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        val pose = _uiState.value.pose ?: return
+        if (_uiState.value.phase != PhotoPhase.IDLE) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(importing = true, failed = false, importedCount = null) }
+            val result = importer.importPhotos(uris, pose)
+            if (result.ok > 0) {
+                _uiState.update {
+                    it.copy(
+                        importing = false,
+                        importedCount = result.ok,
+                        failed = false,
+                    )
+                }
+                advance()
+            } else {
+                _uiState.update {
+                    it.copy(importing = false, failed = true, importedCount = null)
+                }
+            }
         }
     }
 

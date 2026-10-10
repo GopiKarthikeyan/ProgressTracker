@@ -10,9 +10,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -21,6 +25,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
@@ -83,6 +89,22 @@ fun EditorButton(
         modifier = modifier.heightIn(min = TouchTargets.Editor),
     ) {
         Text(label)
+    }
+}
+
+@Composable
+fun DeleteIconButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val description = stringResource(R.string.builder_delete)
+    TextButton(
+        onClick = onClick,
+        modifier = modifier
+            .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
+            .semantics { contentDescription = description },
+    ) {
+        Icon(Icons.Filled.Close, contentDescription = null, tint = NeonAccent)
     }
 }
 

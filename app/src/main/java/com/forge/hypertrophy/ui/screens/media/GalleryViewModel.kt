@@ -1,9 +1,11 @@
 package com.forge.hypertrophy.ui.screens.media
 
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.entity.MediaItemEntity
 import com.forge.hypertrophy.data.entity.ProgramEntity
+import com.forge.hypertrophy.data.media.MediaImporter
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.MediaRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
@@ -51,17 +53,29 @@ data class GalleryPhoto(
     val path: String,
 )
 
+data class GalleryMilestone(
+    val dueOn: LocalDate,
+    val photoOn: LocalDate?,
+    /** Friendly due / photo lines for Check-ins (matches media_milestone_* copy). */
+    val dueLine: String,
+    val photoLine: String?,
+)
+
 data class GalleryUiState(
     val exercises: List<GalleryExercise> = emptyList(),
     val selectedExerciseId: Long? = null,
     val clips: List<GalleryClip> = emptyList(),
     val compareIds: List<Long> = emptyList(),
     val photos: List<GalleryPhoto> = emptyList(),
-    val milestones: List<PhysiqueMilestone> = emptyList(),
+    val milestones: List<GalleryMilestone> = emptyList(),
     val sliderPose: Pose = Pose.FRONT,
     val before: GalleryPhoto? = null,
     val after: GalleryPhoto? = null,
     val beforeDate: LocalDate? = null,
+    val importing: Boolean = false,
+    val importFailed: Boolean = false,
+    /** Non-null when a multi/single import completed with at least one success. */
+    val importedCount: Int? = null,
 )
 
 sealed interface GalleryEvent {
@@ -70,6 +84,10 @@ sealed interface GalleryEvent {
     data class Delete(val mediaId: Long) : GalleryEvent
     data class SelectPose(val pose: Pose) : GalleryEvent
     data class SelectBefore(val date: LocalDate?) : GalleryEvent
+    data class ImportClips(val uris: List<Uri>) : GalleryEvent
+    data class ImportPhotos(val uris: List<Uri>) : GalleryEvent
+    data object DismissImportFailure : GalleryEvent
+    data object DismissImportResult : GalleryEvent
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -81,6 +99,7 @@ class GalleryViewModel @Inject constructor(
     private val programs: ProgramRepository,
     private val preferences: TrainingPreferencesRepository,
     private val scheduleLoader: ScheduleLoader,
+    private val importer: MediaImporter,
     clock: Clock,
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(GalleryUiState())
@@ -132,7 +151,11 @@ class GalleryViewModel @Inject constructor(
                 val photos = rows.mapNotNull(::photoRow)
                 val start = sessions.earliestCompletedDate() ?: photos.mapNotNull { it.capturedOn }.minOrNull()
                 val dates = photos.mapNotNull { it.capturedOn }.distinct()
-                val milestones = if (start == null) emptyList() else milestonesUseCase.milestones(start, dates)
+                val milestones = if (start == null) {
+                    emptyList()
+                } else {
+                    milestonesUseCase.milestones(start, dates).map(::milestoneRow)
+                }
                 _uiState.update { state ->
                     state.copy(photos = photos, milestones = milestones).withSlider()
                 }
@@ -155,6 +178,42 @@ class GalleryViewModel @Inject constructor(
             is GalleryEvent.Delete -> viewModelScope.launch { media.delete(event.mediaId) }
             is GalleryEvent.SelectPose -> _uiState.update { it.copy(sliderPose = event.pose).withSlider() }
             is GalleryEvent.SelectBefore -> _uiState.update { it.copy(beforeDate = event.date).withSlider() }
+            is GalleryEvent.ImportClips -> importClips(event.uris)
+            is GalleryEvent.ImportPhotos -> importPhotos(event.uris)
+            GalleryEvent.DismissImportFailure -> _uiState.update { it.copy(importFailed = false) }
+            GalleryEvent.DismissImportResult -> _uiState.update { it.copy(importedCount = null) }
+        }
+    }
+
+    private fun importClips(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        val exerciseId = _uiState.value.selectedExerciseId ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(importing = true, importFailed = false, importedCount = null) }
+            val result = importer.importVideos(uris, exerciseId, setEntryId = null)
+            _uiState.update {
+                it.copy(
+                    importing = false,
+                    importFailed = result.ok == 0,
+                    importedCount = result.ok.takeIf { count -> count > 0 },
+                )
+            }
+        }
+    }
+
+    private fun importPhotos(uris: List<Uri>) {
+        if (uris.isEmpty()) return
+        val pose = _uiState.value.sliderPose
+        viewModelScope.launch {
+            _uiState.update { it.copy(importing = true, importFailed = false, importedCount = null) }
+            val result = importer.importPhotos(uris, pose)
+            _uiState.update {
+                it.copy(
+                    importing = false,
+                    importFailed = result.ok == 0,
+                    importedCount = result.ok.takeIf { count -> count > 0 },
+                )
+            }
         }
     }
 
@@ -214,6 +273,13 @@ class GalleryViewModel @Inject constructor(
             path = media.file(item).path,
         )
     }
+
+    private fun milestoneRow(milestone: PhysiqueMilestone): GalleryMilestone = GalleryMilestone(
+        dueOn = milestone.dueOn,
+        photoOn = milestone.photoOn,
+        dueLine = ClipDateLines.dateLine(milestone.dueOn, today),
+        photoLine = milestone.photoOn?.let { ClipDateLines.dateLine(it, today) },
+    )
 
     private fun GalleryUiState.withSlider(): GalleryUiState {
         val forPose = photos.filter { it.pose == sliderPose }

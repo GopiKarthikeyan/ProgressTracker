@@ -18,6 +18,9 @@ class ClipDateLabelsTest {
         assertEquals(RelativeClipAge.WeeksAgo(3), relativeClipAge(today.minusDays(27), today))
         assertEquals(RelativeClipAge.MonthsAgo(1), relativeClipAge(today.minusDays(30), today))
         assertEquals(RelativeClipAge.MonthsAgo(2), relativeClipAge(today.minusDays(60), today))
+        assertEquals(RelativeClipAge.MonthsAgo(12), relativeClipAge(today.minusDays(364), today))
+        assertEquals(RelativeClipAge.YearsAgo(1), relativeClipAge(today.minusDays(365), today))
+        assertEquals(RelativeClipAge.YearsAgo(2), relativeClipAge(today.minusDays(730), today))
     }
 
     @Test
@@ -36,5 +39,8 @@ class ClipDateLabelsTest {
         assertEquals(RelativeClipSpan.Weeks(2), relativeClipSpan(14))
         assertEquals(RelativeClipSpan.Months(1), relativeClipSpan(30))
         assertEquals(RelativeClipSpan.Months(2), relativeClipSpan(60))
+        assertEquals(RelativeClipSpan.Months(12), relativeClipSpan(364))
+        assertEquals(RelativeClipSpan.Years(1), relativeClipSpan(365))
+        assertEquals(RelativeClipSpan.Years(2), relativeClipSpan(730))
     }
 }

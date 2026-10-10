@@ -3,6 +3,9 @@ package com.forge.hypertrophy.ui.screens.workout
 import android.content.Context
 import android.media.AudioManager
 import android.view.HapticFeedbackConstants
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,6 +68,14 @@ fun WorkoutScreen(
     val view = LocalView.current
     val context = LocalContext.current
     val focus = remember { FocusRequester() }
+    var pendingImport by remember { mutableStateOf<Pair<Long, Long?>?>(null) }
+    val pickClip = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        val target = pendingImport
+        pendingImport = null
+        if (uri != null && target != null) {
+            viewModel.onEvent(WorkoutEvent.ImportClip(uri, target.first, target.second))
+        }
+    }
     DisposableEffect(view) {
         view.keepScreenOn = true
         onDispose { view.keepScreenOn = false }
@@ -85,6 +96,10 @@ fun WorkoutScreen(
         onEvent = viewModel::onEvent,
         onBack = onBack,
         onRecordClip = onRecordClip,
+        onImportClip = { exerciseId, setEntryId ->
+            pendingImport = exerciseId to setEntryId
+            pickClip.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+        },
         modifier = modifier
             .focusRequester(focus)
             .focusable()
@@ -108,6 +123,7 @@ fun WorkoutContent(
     onEvent: (WorkoutEvent) -> Unit,
     onBack: () -> Unit,
     onRecordClip: (exerciseId: Long, setEntryId: Long?) -> Unit = { _, _ -> },
+    onImportClip: (exerciseId: Long, setEntryId: Long?) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier,
 ) {
     val view = LocalView.current
@@ -166,11 +182,22 @@ fun WorkoutContent(
                 is WorkoutPosition.Cooldown -> CooldownCard(pos, onEvent)
                 is WorkoutPosition.Summary -> SummaryCard(state.summary)
             }
+            if (state.importingClip) {
+                Text(stringResource(R.string.media_importing), color = Ink)
+            }
+            if (state.importFailed) {
+                Text(stringResource(R.string.media_import_failed), color = Rose)
+                SecondaryButton(
+                    label = stringResource(R.string.dashboard_dismiss),
+                    onClick = { onEvent(WorkoutEvent.DismissImportFailure) },
+                )
+            }
             PrimaryAction(
                 state = state,
                 onEvent = onEvent,
                 onBack = onBack,
                 onRecordClip = onRecordClip,
+                onImportClip = onImportClip,
                 onUndo = {
                     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
                     onEvent(WorkoutEvent.Undo)
@@ -198,6 +225,7 @@ private fun PrimaryAction(
     onEvent: (WorkoutEvent) -> Unit,
     onBack: () -> Unit,
     onRecordClip: (exerciseId: Long, setEntryId: Long?) -> Unit,
+    onImportClip: (exerciseId: Long, setEntryId: Long?) -> Unit,
     onUndo: () -> Unit,
 ) {
     val undo = state.undoUntilElapsedRealtime != null
@@ -254,6 +282,11 @@ private fun PrimaryAction(
                         label = stringResource(R.string.workout_record_clip),
                         onClick = { onRecordClip(exerciseId, setId) },
                     )
+                    SecondaryButton(
+                        label = stringResource(R.string.workout_import_clip),
+                        onClick = { onImportClip(exerciseId, setId) },
+                        enabled = !state.importingClip,
+                    )
                 }
                 SecondaryButton(
                     label = stringResource(R.string.workout_add_set),
@@ -270,6 +303,11 @@ private fun PrimaryAction(
                 SecondaryButton(
                     label = stringResource(R.string.workout_record_clip),
                     onClick = { onRecordClip(pos.slot.activeExerciseId, null) },
+                )
+                SecondaryButton(
+                    label = stringResource(R.string.workout_import_clip),
+                    onClick = { onImportClip(pos.slot.activeExerciseId, null) },
+                    enabled = !state.importingClip,
                 )
                 SecondaryButton(
                     label = stringResource(R.string.workout_add_set),

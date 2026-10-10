@@ -3,6 +3,7 @@ package com.forge.hypertrophy.ui.screens.media
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
@@ -46,6 +47,8 @@ import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.Rose
 import java.io.File
 
+private const val IMPORT_PICK_MAX = 20
+
 @Composable
 fun PhysiqueCaptureScreen(
     onBack: () -> Unit,
@@ -62,6 +65,11 @@ fun PhysiqueCaptureScreen(
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         cameraGranted = granted
         if (granted) viewModel.onEvent(PhysiqueCaptureEvent.Trigger)
+    }
+    val pickPhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(IMPORT_PICK_MAX),
+    ) { uris ->
+        if (uris.isNotEmpty()) viewModel.onEvent(PhysiqueCaptureEvent.ImportPhotos(uris))
     }
     Column(
         modifier = modifier
@@ -114,6 +122,15 @@ fun PhysiqueCaptureScreen(
             }
         }
         CountdownBeeps(state.countdownLeft, active = state.phase == PhotoPhase.COUNTDOWN)
+        if (state.importing) {
+            Text(stringResource(R.string.media_importing), color = Ink)
+        }
+        state.importedCount?.let { count ->
+            Text(pluralStringResource(R.plurals.media_imported, count, count), color = Ink)
+            MediaButton(stringResource(R.string.dashboard_dismiss)) {
+                viewModel.onEvent(PhysiqueCaptureEvent.DismissImportResult)
+            }
+        }
         if (state.failed) {
             Text(stringResource(R.string.media_failed), color = Rose)
             MediaButton(stringResource(R.string.dashboard_dismiss)) { viewModel.onEvent(PhysiqueCaptureEvent.DismissFailure) }
@@ -140,6 +157,12 @@ fun PhysiqueCaptureScreen(
                     } else {
                         permission.launch(Manifest.permission.CAMERA)
                     }
+                }
+                MediaButton(
+                    label = stringResource(R.string.media_import_photo),
+                    enabled = !state.importing && state.pose != null,
+                ) {
+                    pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
                 if (state.ghostPath != null) {
                     MediaButton(stringResource(R.string.media_retake)) {

@@ -93,7 +93,29 @@ class WorkoutMachineTest {
         val logged = holdSlot(skillHold = hint).copy(
             sets = listOf(RecordedSet(1, 1, SetSide.BOTH, null, null, 5, null, emptyList(), EntryMethod.SCREEN)),
         )
-        assertEquals(7, suggestionFor(logged, emptyMap()).holdSec)
+        // Later sets in the same session default to the previous logged hold.
+        assertEquals(5, suggestionFor(logged, emptyMap()).holdSec)
+    }
+
+    @Test
+    fun laterSetsDefaultToThePreviousLoggedWeightAndReps() {
+        val first = suggestionFor(slot(1, 0, null, sets = 3), emptyMap())
+        assertEquals(null, first.weightKg)
+        assertEquals(5, first.reps)
+
+        val afterFirst = slot(1, 0, null, sets = 3).copy(
+            sets = listOf(
+                RecordedSet(1, 1, SetSide.BOTH, 60.0, 8, null, null, emptyList(), EntryMethod.SCREEN),
+            ),
+        )
+        val second = suggestionFor(
+            afterFirst,
+            emptyMap(),
+            baseline = BaselineHint(weightKg = 40.0, reps = 5, awaitingCalibration = false),
+        )
+        assertEquals(60.0, second.weightKg)
+        assertEquals(8, second.reps)
+        assertFalse(second.fromPreviousSession)
     }
 
     @Test

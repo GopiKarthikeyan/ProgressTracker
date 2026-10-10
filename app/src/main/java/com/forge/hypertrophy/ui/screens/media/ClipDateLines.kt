@@ -20,6 +20,7 @@ object ClipDateLines {
         is RelativeClipAge.DaysAgo -> if (age.days == 1) "1 day ago" else "${age.days} days ago"
         is RelativeClipAge.WeeksAgo -> if (age.weeks == 1) "1 week ago" else "${age.weeks} weeks ago"
         is RelativeClipAge.MonthsAgo -> if (age.months == 1) "1 month ago" else "${age.months} months ago"
+        is RelativeClipAge.YearsAgo -> if (age.years == 1) "1 year ago" else "${age.years} years ago"
     }
 
     private fun span(span: RelativeClipSpan): String = when (span) {
@@ -27,6 +28,7 @@ object ClipDateLines {
         is RelativeClipSpan.Days -> if (span.days == 1) "1 day apart" else "${span.days} days apart"
         is RelativeClipSpan.Weeks -> if (span.weeks == 1) "1 week apart" else "${span.weeks} weeks apart"
         is RelativeClipSpan.Months -> if (span.months == 1) "1 month apart" else "${span.months} months apart"
+        is RelativeClipSpan.Years -> if (span.years == 1) "1 year apart" else "${span.years} years apart"
     }
 
     fun dateLine(capturedOn: LocalDate, today: LocalDate, locale: Locale = Locale.getDefault()): String {

@@ -294,6 +294,10 @@
         <item quantity="one">%d month ago</item>
         <item quantity="other">%d months ago</item>
     </plurals>
+    <plurals name="media_clip_years_ago">
+        <item quantity="one">%d year ago</item>
+        <item quantity="other">%d years ago</item>
+    </plurals>
     <string name="media_clip_date_line">%1$s · %2$s</string>
     <string name="media_clip_same_day">Same day</string>
     <plurals name="media_clip_days_apart">
@@ -308,6 +312,10 @@
         <item quantity="one">%d month apart</item>
         <item quantity="other">%d months apart</item>
     </plurals>
+    <plurals name="media_clip_years_apart">
+        <item quantity="one">%d year apart</item>
+        <item quantity="other">%d years apart</item>
+    </plurals>
     <string name="media_retake">Retake</string>
     <string name="media_select">Select</string>
     <string name="media_deselect">Deselect</string>
@@ -317,6 +325,14 @@
     <string name="media_compare">Compare</string>
     <string name="media_physique">Physique</string>
     <string name="media_take_photos">Take physique photos</string>
+    <string name="media_import_clip">Import clip</string>
+    <string name="media_import_photo">Import photo</string>
+    <string name="media_import_failed">Could not import from gallery.</string>
+    <string name="media_importing">Importing…</string>
+    <plurals name="media_imported">
+        <item quantity="one">Imported %d</item>
+        <item quantity="other">Imported %d</item>
+    </plurals>
     <string name="media_no_photos">Two photos of the same pose unlock the slider.</string>
     <string name="media_milestones">Check-ins</string>
     <string name="media_no_milestones">The first check-in is 4 weeks after your first session.</string>
@@ -521,6 +537,7 @@
     <string name="workout_log_set">Log Set</string>
     <string name="workout_add_set">Add set</string>
     <string name="workout_record_clip">Record clip</string>
+    <string name="workout_import_clip">Import clip</string>
     <string name="workout_remove_set">Remove set</string>
     <string name="workout_skip_exercise">Skip Exercise</string>
     <string name="workout_skip_reason_default">Not feeling it</string>

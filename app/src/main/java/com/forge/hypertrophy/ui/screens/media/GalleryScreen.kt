@@ -1,9 +1,13 @@
 package com.forge.hypertrophy.ui.screens.media
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -29,6 +34,8 @@ import com.forge.hypertrophy.ui.theme.Cream
 import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.Rose
 
+private const val IMPORT_PICK_MAX = 20
+
 @Composable
 fun GalleryScreen(
     onBack: () -> Unit,
@@ -38,6 +45,16 @@ fun GalleryScreen(
     viewModel: GalleryViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val pickClip = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(IMPORT_PICK_MAX),
+    ) { uris ->
+        if (uris.isNotEmpty()) viewModel.onEvent(GalleryEvent.ImportClips(uris))
+    }
+    val pickPhoto = rememberLauncherForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(IMPORT_PICK_MAX),
+    ) { uris ->
+        if (uris.isNotEmpty()) viewModel.onEvent(GalleryEvent.ImportPhotos(uris))
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -52,8 +69,37 @@ fun GalleryScreen(
             }
             Text(stringResource(R.string.media_gallery), color = Ink, style = MaterialTheme.typography.headlineSmall)
         }
-        ClipsSection(state, viewModel::onEvent, onCompare)
-        PhysiqueSection(state, viewModel::onEvent, onPhysique)
+        if (state.importing) {
+            Text(stringResource(R.string.media_importing), color = Ink)
+        }
+        state.importedCount?.let { count ->
+            Text(pluralStringResource(R.plurals.media_imported, count, count), color = Ink)
+            MediaButton(stringResource(R.string.dashboard_dismiss)) {
+                viewModel.onEvent(GalleryEvent.DismissImportResult)
+            }
+        }
+        if (state.importFailed) {
+            Text(stringResource(R.string.media_import_failed), color = Rose)
+            MediaButton(stringResource(R.string.dashboard_dismiss)) {
+                viewModel.onEvent(GalleryEvent.DismissImportFailure)
+            }
+        }
+        ClipsSection(
+            state = state,
+            onEvent = viewModel::onEvent,
+            onCompare = onCompare,
+            onImportClip = {
+                pickClip.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
+            },
+        )
+        PhysiqueSection(
+            state = state,
+            onEvent = viewModel::onEvent,
+            onPhysique = onPhysique,
+            onImportPhoto = {
+                pickPhoto.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+        )
     }
 }
 
@@ -62,6 +108,7 @@ private fun ClipsSection(
     state: GalleryUiState,
     onEvent: (GalleryEvent) -> Unit,
     onCompare: (Long, Long) -> Unit,
+    onImportClip: () -> Unit,
 ) {
     Text(stringResource(R.string.media_clips), color = Rose, style = MaterialTheme.typography.titleMedium)
     if (state.exercises.isEmpty()) {
@@ -89,6 +136,11 @@ private fun ClipsSection(
         Text(stringResource(R.string.media_pick_exercise), color = Ink)
         return
     }
+    MediaButton(
+        label = stringResource(R.string.media_import_clip),
+        enabled = !state.importing,
+        onClick = onImportClip,
+    )
     if (state.clips.isEmpty()) {
         Text(stringResource(R.string.media_no_clips), color = Ink)
         return
@@ -136,13 +188,17 @@ private fun PhysiqueSection(
     state: GalleryUiState,
     onEvent: (GalleryEvent) -> Unit,
     onPhysique: () -> Unit,
+    onImportPhoto: () -> Unit,
 ) {
     Text(stringResource(R.string.media_physique), color = Rose, style = MaterialTheme.typography.titleMedium)
     MediaButton(stringResource(R.string.media_take_photos), onClick = onPhysique)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
+    MediaButton(
+        label = stringResource(R.string.media_import_photo),
+        enabled = !state.importing,
+        onClick = onImportPhoto,
+    )
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         POSE_ORDER.forEach { pose ->
@@ -191,10 +247,10 @@ private fun PhysiqueSection(
                 .heightIn(min = TouchTargets.Workout),
         ) {
             Text(
-                if (photoOn == null) {
-                    stringResource(R.string.media_milestone_missing, milestone.dueOn.toString())
+                if (milestone.photoLine == null) {
+                    stringResource(R.string.media_milestone_missing, milestone.dueLine)
                 } else {
-                    stringResource(R.string.media_milestone_photo, milestone.dueOn.toString(), photoOn.toString())
+                    stringResource(R.string.media_milestone_photo, milestone.dueLine, milestone.photoLine)
                 },
             )
         }

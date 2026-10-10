@@ -3,10 +3,13 @@ package com.forge.hypertrophy.ui.components
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Icon
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,7 +59,7 @@ fun <T> ReorderableColumn(
                         .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
                         .semantics { contentDescription = upDescription },
                 ) {
-                    Text("▲")
+                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, tint = NeonAccent)
                 }
                 TextButton(
                     onClick = { onMove(index, index + 1) },
@@ -65,7 +68,7 @@ fun <T> ReorderableColumn(
                         .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
                         .semantics { contentDescription = downDescription },
                 ) {
-                    Text("▼")
+                    Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = NeonAccent)
                 }
             }
         }
@@ -81,14 +84,13 @@ private fun DragHandle(
 ) {
     val description = stringResource(R.string.builder_drag_handle)
     var accumulated by remember(itemKey) { mutableFloatStateOf(0f) }
-    Text(
-        text = "☰",
-        color = NeonAccent,
+    Icon(
+        imageVector = Icons.Filled.Menu,
+        contentDescription = description,
+        tint = NeonAccent,
         modifier = Modifier
             .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
-            .heightIn(min = TouchTargets.Editor)
-            .semantics { contentDescription = description }
-            .padding(horizontal = 4.dp)
+            .padding(horizontal = 4.dp, vertical = 8.dp)
             .pointerInput(itemKey, index, lastIndex) {
                 detectDragGestures(
                     onDragStart = { accumulated = 0f },

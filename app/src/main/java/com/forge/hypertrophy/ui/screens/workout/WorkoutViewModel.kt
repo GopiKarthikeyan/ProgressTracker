@@ -1,9 +1,11 @@
 package com.forge.hypertrophy.ui.screens.workout
 
+import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.diagnostics.Breadcrumbs
+import com.forge.hypertrophy.data.media.MediaImporter
 import com.forge.hypertrophy.domain.repository.TrainingPreferencesRepository
 import com.forge.hypertrophy.domain.repository.WorkoutRepository
 import com.forge.hypertrophy.domain.engine.AutoRegulationAdvisor
@@ -120,6 +122,8 @@ data class WorkoutUiState(
     /** Last logged set, for attaching a clip during rest. */
     val lastLoggedSetId: Long? = null,
     val lastLoggedExerciseId: Long? = null,
+    val importingClip: Boolean = false,
+    val importFailed: Boolean = false,
 )
 
 sealed interface WorkoutEvent {
@@ -145,6 +149,8 @@ sealed interface WorkoutEvent {
     data object Tick : WorkoutEvent
     data class Cues(val enabled: Boolean) : WorkoutEvent
     data class EditSetupNotes(val notes: String) : WorkoutEvent
+    data class ImportClip(val uri: Uri, val exerciseId: Long, val setEntryId: Long?) : WorkoutEvent
+    data object DismissImportFailure : WorkoutEvent
 }
 
 @HiltViewModel
@@ -160,6 +166,7 @@ class WorkoutViewModel @Inject constructor(
     private val loadWorkout: LoadWorkoutUseCase,
     private val interactors: WorkoutInteractors,
     private val toggleShortOnTimeUseCase: ToggleShortOnTimeUseCase,
+    private val mediaImporter: MediaImporter,
 ) : ViewModel() {
     private val requestedSessionId: Long = savedStateHandle.get<Long>("sessionId") ?: 0L
     private val _uiState = MutableStateFlow(WorkoutUiState())
@@ -262,7 +269,15 @@ class WorkoutViewModel @Inject constructor(
                 publish()
             }
             is WorkoutEvent.EditSetupNotes -> editNotes(event.notes)
+            is WorkoutEvent.ImportClip -> importClip(event.uri, event.exerciseId, event.setEntryId)
+            WorkoutEvent.DismissImportFailure -> _uiState.update { it.copy(importFailed = false) }
         }
+    }
+
+    private suspend fun importClip(uri: Uri, exerciseId: Long, setEntryId: Long?) {
+        _uiState.update { it.copy(importingClip = true, importFailed = false) }
+        val ok = mediaImporter.importVideo(uri, exerciseId, setEntryId)
+        _uiState.update { it.copy(importingClip = false, importFailed = !ok) }
     }
 
     private suspend fun start(dayId: Long) {

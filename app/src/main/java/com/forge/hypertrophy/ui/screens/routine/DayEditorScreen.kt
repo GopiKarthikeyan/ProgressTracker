@@ -5,8 +5,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -16,17 +18,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.model.CardioType
 import com.forge.hypertrophy.domain.model.ChecklistPhase
+import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.ReorderableColumn
 import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.components.TouchTargets
+import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.NeonAccent
+import com.forge.hypertrophy.ui.theme.Rose
 
 @Composable
 fun DayEditorScreen(
@@ -152,14 +157,63 @@ fun DayEditorScreen(
             ) { slot ->
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.Top,
                 ) {
-                    EditorButton(
-                        label = slot.title,
-                        onClick = { onOpenSlot(slot.id) },
-                        modifier = Modifier.weight(1f)
-                    )
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        TextButton(
+                            onClick = { onOpenSlot(slot.id) },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = TouchTargets.Editor),
+                        ) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.Start,
+                            ) {
+                                Text(
+                                    text = slot.title.ifBlank { "—" },
+                                    color = Ink,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = slot.detail,
+                                    color = Rose,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            EditorButton(
+                                label = stringResource(R.string.baseline_minus),
+                                onClick = {
+                                    viewModel.onEvent(DayEditorEvent.StepBaselineWeight(slot.id, -1))
+                                },
+                            )
+                            NumericText(
+                                text = formatKg(slot.baselineWeightKg ?: 0.0),
+                                color = Ink,
+                                modifier = Modifier.widthIn(min = 40.dp),
+                                textAlign = TextAlign.Center,
+                            )
+                            EditorButton(
+                                label = stringResource(R.string.baseline_plus),
+                                onClick = {
+                                    viewModel.onEvent(DayEditorEvent.StepBaselineWeight(slot.id, 1))
+                                },
+                            )
+                        }
+                    }
                     DeleteIconButton(
                         onClick = { viewModel.onEvent(DayEditorEvent.DeleteSlot(slot.id)) },
                     )
@@ -211,18 +265,5 @@ private fun ChecklistSection(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun DeleteIconButton(onClick: () -> Unit) {
-    val description = stringResource(R.string.builder_delete)
-    TextButton(
-        onClick = onClick,
-        modifier = Modifier
-            .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
-            .semantics { contentDescription = description },
-    ) {
-        Text("−")
     }
 }

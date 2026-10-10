@@ -9,6 +9,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -182,7 +187,7 @@ private fun DayCard(
                     .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
                     .semantics { contentDescription = upDescription },
             ) {
-                Text("▲")
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, tint = Rose)
             }
             TextButton(
                 onClick = { onMove(index, index + 1) },
@@ -191,17 +196,14 @@ private fun DayCard(
                     .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
                     .semantics { contentDescription = downDescription },
             ) {
-                Text("▼")
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = Rose)
             }
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End,
         ) {
-            EditorButton(
-                label = stringResource(R.string.builder_delete),
-                onClick = onDelete,
-            )
+            DeleteIconButton(onClick = onDelete)
         }
     }
 }
@@ -215,13 +217,12 @@ private fun DayDragHandle(
 ) {
     val description = stringResource(R.string.builder_drag_handle)
     var accumulated by remember(itemKey) { mutableFloatStateOf(0f) }
-    Text(
-        text = "☰",
-        color = Rose,
-        style = MaterialTheme.typography.titleLarge,
+    Icon(
+        imageVector = Icons.Filled.Menu,
+        contentDescription = description,
+        tint = Rose,
         modifier = Modifier
             .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
-            .semantics { contentDescription = description }
             .padding(horizontal = 4.dp, vertical = 8.dp)
             .pointerInput(itemKey, index, lastIndex) {
                 detectDragGestures(

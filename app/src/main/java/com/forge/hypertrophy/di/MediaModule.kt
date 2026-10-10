@@ -1,7 +1,9 @@
 package com.forge.hypertrophy.di
 
 import android.content.Context
+import com.forge.hypertrophy.data.media.AppMediaImporter
 import com.forge.hypertrophy.data.media.MediaFiles
+import com.forge.hypertrophy.data.media.MediaImporter
 import com.forge.hypertrophy.data.repository.DataStoreMediaPreferencesRepository
 import com.forge.hypertrophy.data.repository.MediaPreferencesRepository
 import com.forge.hypertrophy.media.ClipDurations
@@ -30,6 +32,10 @@ abstract class MediaModule {
     @Binds
     @Singleton
     abstract fun bindClipDurations(impl: RetrieverClipDurations): ClipDurations
+
+    @Binds
+    @Singleton
+    abstract fun bindMediaImporter(impl: AppMediaImporter): MediaImporter
 
     companion object {
         @Provides

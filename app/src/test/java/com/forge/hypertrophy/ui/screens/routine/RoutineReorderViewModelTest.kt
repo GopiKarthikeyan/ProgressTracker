@@ -10,6 +10,8 @@ import com.forge.hypertrophy.data.entity.ProgramEntity
 import com.forge.hypertrophy.data.entity.RoutineDayEntity
 import com.forge.hypertrophy.data.entity.RoutineSlotEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
+import com.forge.hypertrophy.data.entity.SlotBaselineEntity
+import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
@@ -18,7 +20,9 @@ import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
 import com.forge.hypertrophy.domain.model.ScheduleMode
 import com.forge.hypertrophy.domain.model.SlotCategory
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -101,6 +105,8 @@ class RoutineReorderViewModelTest {
                 SavedStateHandle(mapOf("dayId" to dayId)),
                 routineRepo,
                 exerciseRepo,
+                FakeBaselineRepository(),
+                Clock.fixed(Instant.parse("2026-04-01T00:00:00Z"), ZoneOffset.UTC),
             ),
         )
 
@@ -226,6 +232,13 @@ class RoutineReorderViewModelTest {
         
         suspend fun slots(dayId: Long): List<RoutineSlotEntity> =
             slots.values.filter { it.dayId == dayId }.sortedBy { it.sortOrder }
+    }
+
+    private class FakeBaselineRepository : BaselineRepository {
+        override suspend fun forSlot(slotId: Long): SlotBaselineEntity? = null
+        override suspend fun forSlots(slotIds: List<Long>): List<SlotBaselineEntity> = emptyList()
+        override suspend fun all(): List<SlotBaselineEntity> = emptyList()
+        override suspend fun save(entity: SlotBaselineEntity) {}
     }
 
     private class FakeExerciseRepository : ExerciseRepository {

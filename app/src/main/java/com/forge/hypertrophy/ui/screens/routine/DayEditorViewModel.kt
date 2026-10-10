@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.forge.hypertrophy.data.entity.CardioPlanEntity
 import com.forge.hypertrophy.data.entity.ChecklistItemEntity
 import com.forge.hypertrophy.data.entity.RoutineSlotEntity
+import com.forge.hypertrophy.data.entity.SlotBaselineEntity
+import com.forge.hypertrophy.data.repository.BaselineRepository
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.domain.model.CardioType
@@ -13,7 +15,10 @@ import com.forge.hypertrophy.domain.model.ChecklistPhase
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
 import com.forge.hypertrophy.domain.model.SlotCategory
+import com.forge.hypertrophy.domain.routine.slotPrescriptionSummary
+import com.forge.hypertrophy.domain.routine.slotRowDetailLine
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.time.Clock
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +38,10 @@ data class ChecklistRow(
 data class SlotRow(
     val id: Long,
     val title: String,
+    /** Prescription and optional baseline, e.g. `3×8–12 · 60 kg`. */
+    val detail: String,
+    val baselineWeightKg: Double?,
+    val loadIncrementKg: Double,
 )
 
 data class DayEditorUiState(
@@ -68,6 +77,7 @@ sealed interface DayEditorEvent {
     data object AddSlot : DayEditorEvent
     data class DeleteSlot(val id: Long) : DayEditorEvent
     data class MoveSlot(val from: Int, val to: Int) : DayEditorEvent
+    data class StepBaselineWeight(val slotId: Long, val direction: Int) : DayEditorEvent
     data object Save : DayEditorEvent
     data object DismissNeedsExercise : DayEditorEvent
 }
@@ -77,6 +87,8 @@ class DayEditorViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val routines: RoutineRepository,
     private val exercises: ExerciseRepository,
+    private val baselines: BaselineRepository,
+    private val clock: Clock,
 ) : ViewModel() {
     private val dayId: Long = checkNotNull(savedStateHandle.get<Long>("dayId"))
     private val _uiState = MutableStateFlow(DayEditorUiState())
@@ -114,10 +126,7 @@ class DayEditorViewModel @Inject constructor(
         }
         viewModelScope.launch {
             routines.observeSlots(dayId).collect { slots ->
-                val rows = slots.map { slot ->
-                    SlotRow(slot.id, exercises.get(slot.exerciseId)?.name.orEmpty())
-                }
-                _uiState.update { it.copy(slots = rows) }
+                _uiState.update { it.copy(slots = buildSlotRows(slots)) }
             }
         }
     }
@@ -140,8 +149,55 @@ class DayEditorViewModel @Inject constructor(
             DayEditorEvent.AddSlot -> addSlot()
             is DayEditorEvent.DeleteSlot -> viewModelScope.launch { routines.deleteSlot(event.id) }
             is DayEditorEvent.MoveSlot -> moveSlot(event.from, event.to)
+            is DayEditorEvent.StepBaselineWeight -> stepBaselineWeight(event.slotId, event.direction)
             DayEditorEvent.Save -> save()
             DayEditorEvent.DismissNeedsExercise -> _uiState.update { it.copy(needsExercise = false) }
+        }
+    }
+
+    private suspend fun buildSlotRows(slots: List<RoutineSlotEntity>): List<SlotRow> {
+        val weights = baselines.forSlots(slots.map { it.id })
+            .associate { it.slotId to it.weightKg }
+        return slots.map { slot ->
+            val exercise = exercises.get(slot.exerciseId)
+            val increment = slot.incrementOverrideKg ?: exercise?.loadIncrementKg ?: 2.5
+            val prescription = slotPrescriptionSummary(
+                setsMin = slot.setsMin,
+                setsMax = slot.setsMax,
+                repsLow = slot.repsLow,
+                repsHigh = slot.repsHigh,
+                isAmrap = slot.isAmrap,
+                metricType = slot.metricType,
+                holdTargetSec = slot.holdTargetSec,
+            )
+            SlotRow(
+                id = slot.id,
+                title = exercise?.name.orEmpty(),
+                detail = slotRowDetailLine(prescription, weights[slot.id]),
+                baselineWeightKg = weights[slot.id],
+                loadIncrementKg = increment,
+            )
+        }
+    }
+
+    private fun stepBaselineWeight(slotId: Long, direction: Int) {
+        viewModelScope.launch {
+            val slot = routines.getSlot(slotId) ?: return@launch
+            val exercise = exercises.get(slot.exerciseId)
+            val increment = slot.incrementOverrideKg ?: exercise?.loadIncrementKg ?: 2.5
+            val existing = baselines.forSlot(slotId)
+            val current = existing?.weightKg ?: 0.0
+            val next = (current + direction * increment).coerceAtLeast(0.0)
+            baselines.save(
+                SlotBaselineEntity(
+                    slotId = slotId,
+                    weightKg = next,
+                    repsHint = existing?.repsHint ?: slot.repsLow ?: slot.repsHigh,
+                    setAt = clock.instant(),
+                ),
+            )
+            val slots = routines.observeSlots(dayId).first()
+            _uiState.update { it.copy(slots = buildSlotRows(slots)) }
         }
     }
 

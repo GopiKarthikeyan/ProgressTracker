@@ -782,7 +782,16 @@ class WorkoutViewModelTest {
         ),
         ToggleShortOnTimeUseCase(
             sessionRepo
-        )
+        ),
+        object : com.forge.hypertrophy.data.media.MediaImporter {
+            override suspend fun importPhoto(uri: android.net.Uri, pose: com.forge.hypertrophy.domain.model.Pose) = false
+            override suspend fun importVideo(
+                uri: android.net.Uri,
+                exerciseId: Long,
+                setEntryId: Long?,
+                onProgress: (Float) -> Unit,
+            ) = false
+        },
     )
 }
 

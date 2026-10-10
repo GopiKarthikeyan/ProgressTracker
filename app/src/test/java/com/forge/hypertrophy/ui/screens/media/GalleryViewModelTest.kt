@@ -18,7 +18,9 @@ import com.forge.hypertrophy.data.entity.SkillStageEventEntity
 import com.forge.hypertrophy.data.entity.SkillStepEntity
 import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.data.entity.WorkoutSessionEntity
+import android.net.Uri
 import com.forge.hypertrophy.data.media.MediaFiles
+import com.forge.hypertrophy.data.media.MediaImporter
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.MediaRepository
 import com.forge.hypertrophy.data.repository.ProgramRepository
@@ -100,6 +102,7 @@ class GalleryViewModelTest {
             programs = programRepo,
             preferences = preferences,
             scheduleLoader = scheduleLoader,
+            importer = FakeMediaImporter(),
             clock = clock,
         )
         activeViewModels.add(vm)
@@ -214,6 +217,10 @@ class GalleryViewModelTest {
         assertEquals(listOf(start.plusWeeks(4), start.plusWeeks(12)), state.milestones.map { it.dueOn })
         assertEquals(start.plusWeeks(4).plusDays(1), state.milestones[0].photoOn)
         assertNotNull(state.milestones[1].photoOn)
+        assertTrue(state.milestones[0].dueLine.contains("ago") || state.milestones[0].dueLine.contains("Today"))
+        assertFalse(state.milestones[0].dueLine.contains("2026-"))
+        assertNotNull(state.milestones[0].photoLine)
+        assertFalse(state.milestones[0].photoLine!!.contains("2026-"))
 
         viewModel.onEvent(GalleryEvent.SelectPose(Pose.SIDE))
         val side = viewModel.uiState.value
@@ -383,5 +390,15 @@ class GalleryViewModelTest {
         override suspend fun deleteAlternative(id: Long) {}
         override fun observeCardioPlan(dayId: Long) = MutableStateFlow<CardioPlanEntity?>(null)
         override suspend fun upsertCardioPlan(plan: CardioPlanEntity): Long = 0L
+    }
+
+    private class FakeMediaImporter : MediaImporter {
+        override suspend fun importPhoto(uri: Uri, pose: Pose): Boolean = false
+        override suspend fun importVideo(
+            uri: Uri,
+            exerciseId: Long,
+            setEntryId: Long?,
+            onProgress: (Float) -> Unit,
+        ): Boolean = false
     }
 }

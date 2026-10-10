@@ -18,6 +18,8 @@ class ClipDateLinesTest {
         assertEquals("26 Sept · 2 weeks ago", ClipDateLines.dateLine(today.minusDays(14), today, locale))
         assertEquals("10 Sept · 1 month ago", ClipDateLines.dateLine(today.minusDays(30), today, locale))
         assertEquals("11 Aug · 2 months ago", ClipDateLines.dateLine(today.minusDays(60), today, locale))
+        assertEquals("10 Oct · 1 year ago", ClipDateLines.dateLine(today.minusDays(365), today, locale))
+        assertEquals("10 Oct · 2 years ago", ClipDateLines.dateLine(today.minusDays(730), today, locale))
     }
 
     @Test
@@ -29,5 +31,7 @@ class ClipDateLinesTest {
         assertEquals("2 weeks apart", ClipDateLines.apartLine(today.minusDays(14), today))
         assertEquals("1 month apart", ClipDateLines.apartLine(today.minusDays(30), today))
         assertEquals("2 months apart", ClipDateLines.apartLine(today.minusDays(60), today))
+        assertEquals("1 year apart", ClipDateLines.apartLine(today.minusDays(365), today))
+        assertEquals("2 years apart", ClipDateLines.apartLine(today.minusDays(730), today))
     }
 }
