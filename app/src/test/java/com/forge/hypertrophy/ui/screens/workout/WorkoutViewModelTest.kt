@@ -802,6 +802,7 @@ private class CountingRefresher : TodayWidgetRefresher {
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 private class SchedulerElapsedClock(
     private val scope: TestScope,
 ) : ElapsedRealtimeClock {

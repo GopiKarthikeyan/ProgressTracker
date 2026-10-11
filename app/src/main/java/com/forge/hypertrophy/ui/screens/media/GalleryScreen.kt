@@ -232,6 +232,26 @@ private fun PhysiqueSection(
     } else {
         Text(stringResource(R.string.media_no_photos), color = Ink)
     }
+    val posePhotos = state.photos.filter { it.pose == state.sliderPose }
+    posePhotos.forEach { photo ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                photo.dateLine.orEmpty(),
+                color = Ink,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            TextButton(
+                onClick = { onEvent(GalleryEvent.Delete(photo.id)) },
+                modifier = Modifier.heightIn(min = TouchTargets.Workout),
+            ) {
+                Text(stringResource(R.string.media_delete))
+            }
+        }
+    }
     Text(stringResource(R.string.media_milestones), color = Ink)
     if (state.milestones.isEmpty()) {
         Text(stringResource(R.string.media_no_milestones), color = Ink)

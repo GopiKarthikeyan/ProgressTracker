@@ -59,7 +59,7 @@ sealed interface ImportResult {
  */
 class ProgramImporter(
     private val database: AppDatabase,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock = Clock.systemDefaultZone(),
     private val preferences: ProgramImportPreferences = ProgramImportPreferences.None,
     private val beforeCommit: suspend () -> Unit = {},
 ) {

@@ -199,6 +199,20 @@ class GalleryViewModelTest {
     }
 
     @Test
+    fun deleteRemovesThePhotoAndItsFile() = runBlocking {
+        val files = files()
+        val on = LocalDate.of(2026, 6, 1)
+        val id = photo(files, Pose.FRONT, on)
+        val viewModel = gallery(files)
+        awaitUntil { viewModel.uiState.value.photos.size == 1 }
+
+        viewModel.onEvent(GalleryEvent.Delete(id))
+
+        awaitUntil { viewModel.uiState.value.photos.isEmpty() }
+        assertFalse(File(files.directory, "photo-FRONT-${on.toEpochDay()}.jpg").exists())
+    }
+
+    @Test
     fun physiqueSliderAndMilestonesFollowThePose() = runBlocking {
         val files = files()
         val start = LocalDate.of(2026, 6, 1)

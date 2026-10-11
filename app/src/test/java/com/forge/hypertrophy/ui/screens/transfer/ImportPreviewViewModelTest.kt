@@ -259,11 +259,11 @@ class ImportPreviewViewModelTest {
     }
 
     private class StubDatabase(
-        val programs: ProgramRepository,
-        val routines: RoutineRepository,
-        val exercises: ExerciseRepository,
-        val skills: SkillRepository,
-        val sessions: SessionRepository
+        val programs: FakeProgramRepository,
+        val routines: FakeRoutineRepository,
+        val exercises: FakeExerciseRepository,
+        val skills: FakeSkillRepository,
+        val sessions: FakeSessionRepository,
     ) : com.forge.hypertrophy.data.db.AppDatabase() {
         override fun programDao() = object : com.forge.hypertrophy.data.dao.ProgramDao {
             override fun observe(): Flow<ProgramEntity?> = programs.observe()
@@ -275,10 +275,10 @@ class ImportPreviewViewModelTest {
             override suspend fun insert(program: ProgramEntity): Long = programs.insert(program)
             override suspend fun update(program: ProgramEntity) = programs.update(program)
             override suspend fun clearActive() {
-                (programs as FakeProgramRepository).programs.forEach { (k, v) -> (programs as FakeProgramRepository).programs[k] = v.copy(isActive = false) }
+                programs.programs.forEach { (k, v) -> programs.programs[k] = v.copy(isActive = false) }
             }
             override suspend fun markActive(id: Long) {
-                (programs as FakeProgramRepository).programs[id] = (programs as FakeProgramRepository).programs[id]!!.copy(isActive = true)
+                programs.programs[id] = programs.programs[id]!!.copy(isActive = true)
             }
             override suspend fun delete(id: Long) = programs.delete(id)
             override suspend fun setActive(id: Long) = programs.setActive(id)
@@ -295,7 +295,7 @@ class ImportPreviewViewModelTest {
             override suspend fun deleteDay(id: Long) = routines.deleteDay(id)
             override suspend fun reorderDays(programId: Long, orderedDayIds: List<Long>) = routines.reorderDays(programId, orderedDayIds)
             override suspend fun setDaySequence(id: Long, programId: Long, index: Int) {
-                (routines as FakeRoutineRepository).days[id] = (routines as FakeRoutineRepository).days[id]!!.copy(sequenceIndex = index)
+                routines.days[id] = routines.days[id]!!.copy(sequenceIndex = index)
             }
             override suspend fun days(programId: Long): List<RoutineDayEntity> = routines.days(programId)
             override suspend fun slotsForDays(dayIds: List<Long>): List<RoutineSlotEntity> = routines.slotsForDays(dayIds)
@@ -305,21 +305,21 @@ class ImportPreviewViewModelTest {
             override suspend fun updateChecklist(item: ChecklistItemEntity) = routines.updateChecklist(item)
             override suspend fun deleteChecklist(id: Long) = routines.deleteChecklist(id)
             override fun observeSlots(dayId: Long): Flow<List<RoutineSlotEntity>> = routines.observeSlots(dayId)
-            override suspend fun slots(dayId: Long): List<RoutineSlotEntity> = (routines as FakeRoutineRepository).slots.values.filter { it.dayId == dayId }
+            override suspend fun slots(dayId: Long): List<RoutineSlotEntity> = routines.slots.values.filter { it.dayId == dayId }
             override suspend fun getSlot(id: Long): RoutineSlotEntity? = routines.getSlot(id)
             override suspend fun insertSlot(slot: RoutineSlotEntity): Long = routines.insertSlot(slot)
             override suspend fun updateSlot(slot: RoutineSlotEntity) = routines.updateSlot(slot)
             override suspend fun deleteSlot(id: Long) = routines.deleteSlot(id)
             override suspend fun reorderSlots(dayId: Long, orderedSlotIds: List<Long>) = routines.reorderSlots(dayId, orderedSlotIds)
             override suspend fun setSlotOrder(id: Long, dayId: Long, index: Int) {
-                (routines as FakeRoutineRepository).slots[id] = (routines as FakeRoutineRepository).slots[id]!!.copy(sortOrder = index)
+                routines.slots[id] = routines.slots[id]!!.copy(sortOrder = index)
             }
             override fun observeAlternatives(slotId: Long): Flow<List<SlotAlternativeEntity>> = routines.observeAlternatives(slotId)
             override suspend fun insertAlternative(alternative: SlotAlternativeEntity): Long = routines.insertAlternative(alternative)
             override suspend fun deleteAlternative(id: Long) = routines.deleteAlternative(id)
             override fun observeCardioPlan(dayId: Long): Flow<CardioPlanEntity?> = routines.observeCardioPlan(dayId)
             override suspend fun upsertCardioPlan(plan: CardioPlanEntity): Long = routines.upsertCardioPlan(plan)
-            override suspend fun allSlots(): List<RoutineSlotEntity> = (routines as FakeRoutineRepository).slots.values.toList()
+            override suspend fun allSlots(): List<RoutineSlotEntity> = routines.slots.values.toList()
             override suspend fun allAlternatives(): List<SlotAlternativeEntity> = emptyList()
             override suspend fun targetedStepIds(): List<Long> = emptyList()
             override suspend fun cardioForDays(dayIds: List<Long>): List<CardioPlanEntity> = emptyList()
@@ -340,14 +340,14 @@ class ImportPreviewViewModelTest {
         override fun skillDao() = object : com.forge.hypertrophy.data.dao.SkillDao {
             override fun observeActive(): Flow<List<SkillEntity>> = skills.observeActive()
             override suspend fun get(id: Long): SkillEntity? = skills.get(id)
-            override suspend fun all(): List<SkillEntity> = (skills as FakeSkillRepository).skills.values.toList()
+            override suspend fun all(): List<SkillEntity> = skills.skills.values.toList()
             override suspend fun insert(skill: SkillEntity): Long = skills.insert(skill)
             override suspend fun update(skill: SkillEntity) = skills.update(skill)
             override suspend fun archive(id: Long, at: Instant) = skills.archive(id)
             override suspend fun delete(id: Long) = skills.delete(id)
             override fun observeSteps(skillId: Long): Flow<List<SkillStepEntity>> = skills.observeSteps(skillId)
             override suspend fun getSteps(skillId: Long): List<SkillStepEntity> = skills.getSteps(skillId)
-            override suspend fun stepsByIds(ids: List<Long>): List<SkillStepEntity> = (skills as FakeSkillRepository).steps.values.filter { it.id in ids }
+            override suspend fun stepsByIds(ids: List<Long>): List<SkillStepEntity> = skills.steps.values.filter { it.id in ids }
             override suspend fun insertStep(step: SkillStepEntity): Long = skills.insertStep(step)
             override suspend fun updateStep(step: SkillStepEntity) = skills.updateStep(step)
             override suspend fun deleteStep(id: Long) = skills.deleteStep(id)

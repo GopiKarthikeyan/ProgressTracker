@@ -128,6 +128,7 @@ class CardioTrackingService : android.app.Service() {
             override fun onDone(utteranceId: String?) = abandonFocus()
             @Deprecated("Deprecated in Java")
             override fun onError(utteranceId: String?) = abandonFocus()
+            override fun onError(utteranceId: String?, errorCode: Int) = abandonFocus()
         })
         speech?.speak(words, TextToSpeech.QUEUE_FLUSH, null, "cardio-km-${split.kilometer}")
     }

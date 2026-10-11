@@ -303,6 +303,7 @@ class DashboardViewModel @Inject constructor(
         val rows = biometrics.observeAll().first()
         val kept = _uiState.value
         _uiState.value = kept.copy(
+            calendarToday = today,
             heatmap = heatmap(completed, rests, today),
             records = exerciseRecords(sets, exerciseById),
             skills = skillLadders(sets, exerciseById),

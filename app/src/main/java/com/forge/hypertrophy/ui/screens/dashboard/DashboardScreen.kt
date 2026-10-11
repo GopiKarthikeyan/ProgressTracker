@@ -102,7 +102,7 @@ fun DashboardContent(
                 modifier = Modifier.weight(1f),
             )
         }
-        WeekChips(state.heatmap)
+        WeekChips(state.heatmap, state.calendarToday)
         StreakSection(state.currentStreak, state.bestStreak)
         TodaySection(state.today, onEvent, onOpenWorkout)
         RecordsSection(state.records)
@@ -152,8 +152,8 @@ private fun Notice(
 }
 
 @Composable
-private fun WeekChips(cells: List<HeatmapCell>) {
-    val today = java.time.LocalDate.now()
+private fun WeekChips(cells: List<HeatmapCell>, calendarToday: java.time.LocalDate?) {
+    val today = calendarToday ?: return
     val start = today.with(DayOfWeek.MONDAY)
     val byDate = cells.associateBy { it.date }
     val week = (0..6).map { offset ->

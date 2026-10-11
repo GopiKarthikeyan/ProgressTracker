@@ -82,6 +82,8 @@ enum class DashboardNotice {
 
 data class DashboardUiState(
     val today: TodayCard? = null,
+    /** Calendar date from the injected Clock (for week chips / history windows). */
+    val calendarToday: LocalDate? = null,
     val currentStreak: Int = 0,
     val bestStreak: Int = 0,
     val heatmap: List<HeatmapCell> = emptyList(),

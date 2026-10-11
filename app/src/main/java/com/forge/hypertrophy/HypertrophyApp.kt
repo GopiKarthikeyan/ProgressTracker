@@ -7,10 +7,8 @@ import java.time.Clock
 
 @HiltAndroidApp
 class HypertrophyApp : Application() {
-    @Suppress("DEPRECATION")
     override fun onCreate() {
         super.onCreate()
-        val version = packageManager.getPackageInfo(packageName, 0).versionName ?: "0"
-        DiagnosticsRegistry.install(this, Clock.systemDefaultZone(), version)
+        DiagnosticsRegistry.install(this, Clock.systemDefaultZone(), BuildConfig.VERSION_NAME)
     }
 }

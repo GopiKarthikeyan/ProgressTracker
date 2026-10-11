@@ -1,7 +1,7 @@
 package com.forge.hypertrophy.data.weather
 
 import java.net.HttpURLConnection
-import java.net.URL
+import java.net.URI
 import java.time.Clock
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -55,9 +55,9 @@ fun interface WeatherFetch {
 
 class HttpWeatherFetch : WeatherFetch {
     override fun fetch(latitude: Double, longitude: Double): WeatherReading? {
-        val url = URL(
+        val url = URI(
             "https://api.open-meteo.com/v1/forecast?latitude=$latitude&longitude=$longitude&current=temperature_2m,uv_index",
-        )
+        ).toURL()
         val connection = url.openConnection() as HttpURLConnection
         connection.connectTimeout = TIMEOUT_MS
         connection.readTimeout = TIMEOUT_MS
