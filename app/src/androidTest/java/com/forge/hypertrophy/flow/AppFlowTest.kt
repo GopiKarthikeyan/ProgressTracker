@@ -6,7 +6,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.v2.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -66,18 +66,30 @@ class AppFlowTest {
 
         openTab(context.getString(R.string.nav_settings))
         clickText(context.getString(R.string.settings_load_sample), scroll = true)
+        
+        // Wait for it to transition to ImportPreviewScreen
         composeRule.waitUntil(timeoutMillis = 20_000) {
-            composeRule.onAllNodesWithText(context.getString(R.string.import_confirm))
+            composeRule.onAllNodesWithText(context.getString(R.string.import_title)).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        composeRule.waitUntil(timeoutMillis = 20_000) {
+            composeRule.onAllNodesWithText(context.getString(R.string.import_confirm), substring = false)
                 .fetchSemanticsNodes().isNotEmpty() ||
-                composeRule.onAllNodesWithText(context.getString(R.string.import_unreadable))
+                composeRule.onAllNodesWithText(context.getString(R.string.import_unreadable), substring = false)
                     .fetchSemanticsNodes().isNotEmpty()
         }
         check(
-            composeRule.onAllNodesWithText(context.getString(R.string.import_unreadable))
+            composeRule.onAllNodesWithText(context.getString(R.string.import_unreadable), substring = false)
                 .fetchSemanticsNodes().isEmpty(),
         ) { "Sample import was unreadable" }
         clickText(context.getString(R.string.import_confirm), scroll = true)
-        clickText(context.getString(R.string.baseline_save), scroll = true)
+        
+        // Wait for it to transition to BaselineSetupScreen
+        composeRule.waitUntil(timeoutMillis = 20_000) {
+            composeRule.onAllNodesWithText(context.getString(R.string.baseline_title)).fetchSemanticsNodes().isNotEmpty()
+        }
+
+        clickText(context.getString(R.string.baseline_done), scroll = true)
         clickBack()
 
         openTab(context.getString(R.string.nav_today))
@@ -172,7 +184,7 @@ class AppFlowTest {
 
     private fun checkPrepItems() {
         composeRule.waitUntil(timeoutMillis = 10_000) {
-            composeRule.onAllNodesWithText(context.getString(R.string.workout_prep_title))
+            composeRule.onAllNodesWithText(context.getString(R.string.workout_prep_title), substring = false)
                 .fetchSemanticsNodes().isNotEmpty()
         }
         val start = context.getString(R.string.workout_start_first)
@@ -197,7 +209,7 @@ class AppFlowTest {
             "Scapular Push-ups",
         )
         for (label in prepLabels) {
-            if (composeRule.onAllNodesWithText(start).fetchSemanticsNodes().isNotEmpty()) break
+            if (composeRule.onAllNodesWithText(start, substring = false).fetchSemanticsNodes().isNotEmpty()) break
             val matcher = hasText(label) and hasClickAction()
             if (composeRule.onAllNodes(matcher).fetchSemanticsNodes().isEmpty()) continue
             runCatching { composeRule.onAllNodes(matcher)[0].performScrollTo() }
@@ -227,20 +239,19 @@ class AppFlowTest {
 
     private fun openTab(label: String) {
         // Bottom bar uses contentDescription = label.
-        val node = device.wait(Until.findObject(By.desc(label)), 5_000)
-        if (node != null) {
-            node.click()
-        } else {
-            clickText(label)
+        val matcher = hasContentDescription(label)
+        composeRule.waitUntil(timeoutMillis = 15_000) {
+            composeRule.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
         }
+        composeRule.onAllNodes(matcher)[0].performClick()
         composeRule.waitForIdle()
     }
 
     private fun clickText(text: String, index: Int = 0, scroll: Boolean = false) {
         composeRule.waitUntil(timeoutMillis = 15_000) {
-            composeRule.onAllNodesWithText(text, substring = false).fetchSemanticsNodes().size > index
+            composeRule.onAllNodesWithText(text, substring = false, ignoreCase = false).fetchSemanticsNodes().size > index
         }
-        val node = composeRule.onAllNodesWithText(text, substring = false)[index]
+        val node = composeRule.onAllNodesWithText(text, substring = false, ignoreCase = false)[index]
         if (scroll) {
             runCatching { node.performScrollTo() }
         }
@@ -281,7 +292,7 @@ class AppFlowTest {
     private fun waitForText(text: String, timeoutMs: Long): Boolean {
         val deadline = System.currentTimeMillis() + timeoutMs
         while (System.currentTimeMillis() < deadline) {
-            if (composeRule.onAllNodesWithText(text, substring = false).fetchSemanticsNodes().isNotEmpty()) {
+            if (composeRule.onAllNodesWithText(text, substring = false, ignoreCase = false).fetchSemanticsNodes().isNotEmpty()) {
                 return true
             }
             composeRule.waitForIdle()
