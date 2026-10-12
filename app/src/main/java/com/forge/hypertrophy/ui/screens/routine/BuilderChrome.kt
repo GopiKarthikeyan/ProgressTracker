@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -26,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -74,17 +76,38 @@ fun BuilderColumn(
     }
 }
 
+/**
+ * [selected] marks a chosen option in a choice group. It must not be expressed
+ * by disabling the button: a disabled control reads as unavailable, and
+ * TalkBack announces "disabled" rather than "selected". The selection is
+ * carried by a tonal container plus the `selected` semantics property, and the
+ * button stays enabled so re-selecting it is still a no-op tap rather than a
+ * dead target.
+ */
 @Composable
 fun EditorButton(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    selected: Boolean = false,
 ) {
+    val scheme = MaterialTheme.colorScheme
     TextButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.heightIn(min = TouchTargets.Editor),
+        modifier = modifier
+            .heightIn(min = TouchTargets.Editor)
+            .semantics { this.selected = selected },
+        shape = MaterialTheme.shapes.small,
+        colors = if (selected) {
+            ButtonDefaults.textButtonColors(
+                containerColor = scheme.primary,
+                contentColor = scheme.onPrimary,
+            )
+        } else {
+            ButtonDefaults.textButtonColors()
+        },
     ) {
         Text(label)
     }

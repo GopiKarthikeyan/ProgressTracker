@@ -218,7 +218,7 @@ fun SlotEditorScreen(
                     EditorButton(
                         label = step.name.ifBlank { stringResource(R.string.builder_skill_step) },
                         onClick = { viewModel.onEvent(SlotEditorEvent.TargetStep(step.id)) },
-                        enabled = state.targetSkillStepId != step.id,
+                        selected = state.targetSkillStepId == step.id,
                     )
                 }
             }
@@ -289,7 +289,7 @@ private fun ChoiceButtons(
             EditorButton(
                 label = label,
                 onClick = { onSelect(index) },
-                enabled = index != selected,
+                selected = index == selected,
             )
         }
     }

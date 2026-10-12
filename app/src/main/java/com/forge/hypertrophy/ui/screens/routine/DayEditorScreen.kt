@@ -73,7 +73,7 @@ fun DayEditorScreen(
                     EditorButton(
                         label = label,
                         onClick = { viewModel.onEvent(DayEditorEvent.Weekday(index + 1)) },
-                        enabled = !selected,
+                        selected = selected,
                     )
                 }
             }
@@ -117,7 +117,7 @@ fun DayEditorScreen(
                     EditorButton(
                         label = activityLabel(activity),
                         onClick = { viewModel.onEvent(DayEditorEvent.CardioActivityChanged(activity)) },
-                        enabled = state.cardioActivity != activity,
+                        selected = state.cardioActivity == activity,
                     )
                 }
             }
@@ -128,7 +128,7 @@ fun DayEditorScreen(
                         EditorButton(
                             label = styleLabel(style),
                             onClick = { viewModel.onEvent(DayEditorEvent.CardioStyleChanged(style)) },
-                            enabled = state.cardioStyle != style,
+                            selected = state.cardioStyle == style,
                         )
                     }
                 }

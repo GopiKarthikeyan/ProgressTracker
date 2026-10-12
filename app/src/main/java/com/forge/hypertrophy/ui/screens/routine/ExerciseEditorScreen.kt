@@ -41,7 +41,7 @@ fun ExerciseEditorScreen(
                     EditorButton(
                         label = equipment.name,
                         onClick = { viewModel.onEvent(ExerciseEditorEvent.EquipmentChanged(equipment)) },
-                        enabled = state.equipment != equipment,
+                        selected = state.equipment == equipment,
                     )
                 }
             }
@@ -107,7 +107,7 @@ fun ExerciseEditorScreen(
                     EditorButton(
                         label = skill.name,
                         onClick = { viewModel.onEvent(ExerciseEditorEvent.Skill(skill.id)) },
-                        enabled = state.skillId != skill.id,
+                        selected = state.skillId == skill.id,
                     )
                 }
             }
@@ -132,8 +132,14 @@ private fun MusclePicker(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         FlowRow(modifier = Modifier.fillMaxWidth()) {
+            // Chosen muscles render selected so they are distinguishable from
+            // the available ones; tapping one removes it.
             selected.forEach { token ->
-                EditorButton(label = token, onClick = { onRemove(token) })
+                EditorButton(
+                    label = token,
+                    onClick = { onRemove(token) },
+                    selected = true,
+                )
             }
             known.filter { it !in selected }.forEach { token ->
                 EditorButton(label = token, onClick = { onAdd(token) })
