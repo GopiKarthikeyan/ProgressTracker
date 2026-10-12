@@ -66,7 +66,6 @@ import com.forge.hypertrophy.ui.screens.transfer.ImportPreviewScreen
 import com.forge.hypertrophy.ui.screens.transfer.ImportPreviewViewModel
 import com.forge.hypertrophy.ui.theme.Charcoal
 import com.forge.hypertrophy.ui.theme.Rose
-import com.forge.hypertrophy.ui.theme.White
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -338,13 +337,27 @@ private fun FloatingTabBar(
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inverseSurface, CircleShape),
+                            .background(
+                                if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.inverseSurface
+                                },
+                                CircleShape,
+                            ),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector = destination.icon,
                             contentDescription = null,
-                            tint = White,
+                            // Selected sits on `primary`, unselected on
+                            // `inverseSurface`; each needs its own "on" role
+                            // or the icon vanishes in one of the two themes.
+                            tint = if (isSelected) {
+                                MaterialTheme.colorScheme.onPrimary
+                            } else {
+                                MaterialTheme.colorScheme.inverseOnSurface
+                            },
                         )
                     }
                 }

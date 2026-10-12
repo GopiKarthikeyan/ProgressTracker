@@ -37,7 +37,6 @@ import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.theme.Black
-import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.NeonAccent
 import java.util.Locale
 
@@ -72,7 +71,7 @@ fun CardioScreen(
             BackButton(onClick = onBack, size = TouchTargets.Workout)
             Text(
                 stringResource(R.string.cardio_title),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.headlineSmall,
             )
         }
@@ -112,15 +111,15 @@ private fun TrackingSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit
     Section(stringResource(R.string.cardio_gps)) {
         if (state.paused) Text(stringResource(R.string.cardio_paused), color = NeonAccent)
         Row {
-            Text(stringResource(R.string.cardio_distance), color = Ink, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.cardio_distance), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             NumericText(formatKm(state.liveDistanceM), color = NeonAccent)
         }
         Row {
-            Text(stringResource(R.string.cardio_duration), color = Ink, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.cardio_duration), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             NumericText(formatClock(state.liveMovingSec), color = NeonAccent)
         }
         if (state.livePoints.size < 2) {
-            Text(stringResource(R.string.cardio_route_empty), color = Ink)
+            Text(stringResource(R.string.cardio_route_empty), color = MaterialTheme.colorScheme.onSurface)
         }
         RouteCanvas(state.livePoints)
         WideButton(stringResource(R.string.cardio_stop)) { onEvent(CardioEvent.StopGps) }
@@ -135,14 +134,14 @@ private fun LogForm(
 ) {
     val spec = state.fieldSpec
     Section(if (state.editingId == null) stringResource(R.string.cardio_manual) else stringResource(R.string.cardio_edit)) {
-        Text(stringResource(R.string.cardio_activity), color = Ink)
+        Text(stringResource(R.string.cardio_activity), color = MaterialTheme.colorScheme.onSurface)
         CardioActivity.entries.forEach { activity ->
             WideButton(activityLabel(activity), enabled = state.activity != activity) {
                 onEvent(CardioEvent.ActivityChosen(activity))
             }
         }
         if (spec.showsStyle) {
-            Text(stringResource(R.string.cardio_style), color = Ink)
+            Text(stringResource(R.string.cardio_style), color = MaterialTheme.colorScheme.onSurface)
             RUNNING_STYLES.forEach { style ->
                 WideButton(styleLabel(style), enabled = state.style != style) {
                     onEvent(CardioEvent.StyleChosen(style))
@@ -180,7 +179,7 @@ private fun LogForm(
         if (spec.showsGear) {
             Text(
                 if (spec.gearIsShoe) stringResource(R.string.cardio_shoe) else stringResource(R.string.cardio_gear_item),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
             )
             WideButton(stringResource(R.string.cardio_shoe_none), enabled = state.gearId != null) {
                 onEvent(CardioEvent.GearChosen(null))
@@ -206,11 +205,11 @@ private fun LogForm(
 private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
     Section(stringResource(R.string.cardio_logs)) {
         if (state.logs.isEmpty()) {
-            Text(stringResource(R.string.cardio_logs_empty), color = Ink)
+            Text(stringResource(R.string.cardio_logs_empty), color = MaterialTheme.colorScheme.onSurface)
             return@Section
         }
         state.logs.forEach { log ->
-            Text(logTitle(log), color = Ink)
+            Text(logTitle(log), color = MaterialTheme.colorScheme.onSurface)
             Row {
                 Text(
                     if (log.source == CardioSource.GPS) {
@@ -218,7 +217,7 @@ private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
                     } else {
                         stringResource(R.string.cardio_source_manual)
                     },
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
                 NumericText(formatClock(log.durationSec), color = NeonAccent)
@@ -227,7 +226,7 @@ private fun LogsSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
                 NumericText(formatKm(log.distanceM), color = NeonAccent)
             }
             log.count?.let { NumericText(it.toString(), color = NeonAccent) }
-            log.gearName?.let { Text(it, color = Ink) }
+            log.gearName?.let { Text(it, color = MaterialTheme.colorScheme.onSurface) }
             WideButton(stringResource(R.string.cardio_edit)) { onEvent(CardioEvent.Edit(log.id)) }
         }
     }
@@ -242,17 +241,17 @@ private fun GearSection(state: CardioUiState, onEvent: (CardioEvent) -> Unit) {
         if (state.gear.isEmpty()) {
             Text(
                 if (shoe) stringResource(R.string.cardio_gear_empty) else stringResource(R.string.cardio_gear_generic_empty),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
             )
         }
         state.gear.forEach { item ->
-            Text(item.name, color = Ink)
+            Text(item.name, color = MaterialTheme.colorScheme.onSurface)
             Row {
-                Text(stringResource(R.string.cardio_used), color = Ink, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.cardio_used), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 NumericText(formatKm(item.usedM), color = NeonAccent)
             }
             Row {
-                Text(stringResource(R.string.cardio_limit), color = Ink, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.cardio_limit), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 NumericText(formatKm(item.limitM.toDouble()), color = NeonAccent)
             }
             if (item.retired) Text(stringResource(R.string.cardio_retire), color = NeonAccent)

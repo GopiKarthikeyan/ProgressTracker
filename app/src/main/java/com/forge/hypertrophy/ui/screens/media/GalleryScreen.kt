@@ -31,9 +31,6 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.media.POSE_ORDER
 import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.TouchTargets
-import com.forge.hypertrophy.ui.theme.Cream
-import com.forge.hypertrophy.ui.theme.Ink
-import com.forge.hypertrophy.ui.theme.Rose
 
 private const val IMPORT_PICK_MAX = 20
 
@@ -59,26 +56,26 @@ fun GalleryScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Cream)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             BackButton(onClick = onBack, size = TouchTargets.Workout)
-            Text(stringResource(R.string.media_gallery), color = Ink, style = MaterialTheme.typography.headlineSmall)
+            Text(stringResource(R.string.media_gallery), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall)
         }
         if (state.importing) {
-            Text(stringResource(R.string.media_importing), color = Ink)
+            Text(stringResource(R.string.media_importing), color = MaterialTheme.colorScheme.onSurface)
         }
         state.importedCount?.let { count ->
-            Text(pluralStringResource(R.plurals.media_imported, count, count), color = Ink)
+            Text(pluralStringResource(R.plurals.media_imported, count, count), color = MaterialTheme.colorScheme.onSurface)
             MediaButton(stringResource(R.string.dashboard_dismiss)) {
                 viewModel.onEvent(GalleryEvent.DismissImportResult)
             }
         }
         if (state.importFailed) {
-            Text(stringResource(R.string.media_import_failed), color = Rose)
+            Text(stringResource(R.string.media_import_failed), color = MaterialTheme.colorScheme.primary)
             MediaButton(stringResource(R.string.dashboard_dismiss)) {
                 viewModel.onEvent(GalleryEvent.DismissImportFailure)
             }
@@ -109,9 +106,9 @@ private fun ClipsSection(
     onCompare: (Long, Long) -> Unit,
     onImportClip: () -> Unit,
 ) {
-    Text(stringResource(R.string.media_clips), color = Rose, style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.media_clips), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
     if (state.exercises.isEmpty()) {
-        Text(stringResource(R.string.media_no_exercises), color = Ink)
+        Text(stringResource(R.string.media_no_exercises), color = MaterialTheme.colorScheme.onSurface)
         return
     }
     Row(
@@ -132,7 +129,7 @@ private fun ClipsSection(
     }
     val exerciseId = state.selectedExerciseId
     if (exerciseId == null) {
-        Text(stringResource(R.string.media_pick_exercise), color = Ink)
+        Text(stringResource(R.string.media_pick_exercise), color = MaterialTheme.colorScheme.onSurface)
         return
     }
     MediaButton(
@@ -141,14 +138,14 @@ private fun ClipsSection(
         onClick = onImportClip,
     )
     if (state.clips.isEmpty()) {
-        Text(stringResource(R.string.media_no_clips), color = Ink)
+        Text(stringResource(R.string.media_no_clips), color = MaterialTheme.colorScheme.onSurface)
         return
     }
     state.clips.forEach { clip ->
         val chosen = clip.id in state.compareIds
         Column(modifier = Modifier.fillMaxWidth()) {
-            Text(clip.label, color = if (chosen) Rose else Ink)
-            clip.dateLine?.let { Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium) }
+            Text(clip.label, color = if (chosen) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+            clip.dateLine?.let { Text(it, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.bodyMedium) }
             Row(modifier = Modifier.fillMaxWidth()) {
                 TextButton(
                     onClick = { onEvent(GalleryEvent.ToggleCompare(clip.id)) },
@@ -189,7 +186,7 @@ private fun PhysiqueSection(
     onPhysique: () -> Unit,
     onImportPhoto: () -> Unit,
 ) {
-    Text(stringResource(R.string.media_physique), color = Rose, style = MaterialTheme.typography.titleMedium)
+    Text(stringResource(R.string.media_physique), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
     MediaButton(stringResource(R.string.media_take_photos), onClick = onPhysique)
     MediaButton(
         label = stringResource(R.string.media_import_photo),
@@ -219,18 +216,18 @@ private fun PhysiqueSection(
         Row(modifier = Modifier.fillMaxWidth()) {
             Text(
                 state.before?.dateLine.orEmpty(),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f),
             )
             Text(
                 state.after?.dateLine.orEmpty(),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
     } else {
-        Text(stringResource(R.string.media_no_photos), color = Ink)
+        Text(stringResource(R.string.media_no_photos), color = MaterialTheme.colorScheme.onSurface)
     }
     val posePhotos = state.photos.filter { it.pose == state.sliderPose }
     posePhotos.forEach { photo ->
@@ -240,7 +237,7 @@ private fun PhysiqueSection(
         ) {
             Text(
                 photo.dateLine.orEmpty(),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.weight(1f),
             )
@@ -252,9 +249,9 @@ private fun PhysiqueSection(
             }
         }
     }
-    Text(stringResource(R.string.media_milestones), color = Ink)
+    Text(stringResource(R.string.media_milestones), color = MaterialTheme.colorScheme.onSurface)
     if (state.milestones.isEmpty()) {
-        Text(stringResource(R.string.media_no_milestones), color = Ink)
+        Text(stringResource(R.string.media_no_milestones), color = MaterialTheme.colorScheme.onSurface)
     }
     state.milestones.forEach { milestone ->
         val photoOn = milestone.photoOn

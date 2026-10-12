@@ -40,14 +40,8 @@ import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.screens.cardio.activityLabel
 import com.forge.hypertrophy.ui.screens.routine.formatKg
 import com.forge.hypertrophy.ui.theme.CardioBlue
-import com.forge.hypertrophy.ui.theme.Cream
-import com.forge.hypertrophy.ui.theme.Ink
-import com.forge.hypertrophy.ui.theme.Muted
 import com.forge.hypertrophy.ui.theme.RecoveryAmber
 import com.forge.hypertrophy.ui.theme.RestGray
-import com.forge.hypertrophy.ui.theme.Rose
-import com.forge.hypertrophy.ui.theme.Sand
-import com.forge.hypertrophy.ui.theme.White
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
@@ -86,12 +80,12 @@ fun DashboardContent(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Cream)
+            .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
-        Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.headlineMedium, color = Ink)
+        Text(stringResource(R.string.nav_dashboard), style = MaterialTheme.typography.headlineMedium, color = MaterialTheme.colorScheme.onSurface)
         Notice(state.notice, state.activeSessionId, onEvent, onOpenWorkout)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SecondaryButton(
@@ -139,8 +133,8 @@ private fun Notice(
         DashboardNotice.WEIGH_IN_INVALID -> R.string.dashboard_notice_invalid
         DashboardNotice.SCHEDULE_REJECTED -> R.string.dashboard_notice_rejected
     }
-    SurfaceCard(color = Sand) {
-        Text(stringResource(text), color = Rose)
+    SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
+        Text(stringResource(text), color = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (notice == DashboardNotice.WORKOUT_STARTED || notice == DashboardNotice.ALREADY_IN_PROGRESS) {
@@ -169,7 +163,7 @@ private fun WeekChips(cells: List<HeatmapCell>, calendarToday: java.time.LocalDa
         byDate[date] ?: HeatmapCell(date, null)
     }
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_week), color = Muted, style = MaterialTheme.typography.labelLarge)
+        Text(stringResource(R.string.dashboard_week), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(12.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -181,18 +175,18 @@ private fun WeekChips(cells: List<HeatmapCell>, calendarToday: java.time.LocalDa
                     Box(
                         modifier = Modifier
                             .size(44.dp)
-                            .background(if (trained) Rose else Sand, RoundedCornerShape(14.dp)),
+                            .background(if (trained) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp)),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
                             text = cell.date.dayOfMonth.toString(),
-                            color = if (trained) White else Ink,
+                            color = if (trained) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
                             style = MaterialTheme.typography.titleSmall,
                         )
                     }
                     Text(
                         text = cell.date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(3),
-                        color = Muted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         style = MaterialTheme.typography.labelSmall,
                         modifier = Modifier.padding(top = 4.dp),
                     )
@@ -208,27 +202,27 @@ private fun TodaySection(
     onEvent: (DashboardEvent) -> Unit,
     onOpenWorkout: (Long) -> Unit,
 ) {
-    SurfaceCard(color = Sand) {
-        Text(stringResource(R.string.dashboard_today), color = Muted, style = MaterialTheme.typography.labelLarge)
+    SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
+        Text(stringResource(R.string.dashboard_today), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
         if (today == null) {
-            Text(stringResource(R.string.dashboard_empty_program), color = Ink)
+            Text(stringResource(R.string.dashboard_empty_program), color = MaterialTheme.colorScheme.onSurface)
             return@SurfaceCard
         }
-        Text(today.label, color = Ink, style = MaterialTheme.typography.headlineSmall)
+        Text(today.label, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall)
         Text(
             if (today.mode == ScheduleMode.FIXED) {
                 stringResource(R.string.dashboard_mode_fixed)
             } else {
                 stringResource(R.string.dashboard_mode_rolling)
             },
-            color = Muted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         if (today.isRest) {
-            Text(stringResource(R.string.dashboard_rest_day), color = Rose)
+            Text(stringResource(R.string.dashboard_rest_day), color = MaterialTheme.colorScheme.primary)
         }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
-            Text(stringResource(R.string.dashboard_estimate), color = Ink, modifier = Modifier.weight(1f))
-            NumericText(formatDuration(today.estimatedSeconds), color = Rose)
+            Text(stringResource(R.string.dashboard_estimate), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+            NumericText(formatDuration(today.estimatedSeconds), color = MaterialTheme.colorScheme.primary)
         }
         PrimaryButton(
             label = if (today.startEnabled) stringResource(R.string.dashboard_start) else stringResource(R.string.dashboard_resume),
@@ -248,7 +242,7 @@ private fun TodaySection(
                 enabled = today.startEnabled,
                 modifier = Modifier.weight(1f),
             )
-            NumericText(formatDuration(today.shortEstimatedSeconds), color = Rose)
+            NumericText(formatDuration(today.shortEstimatedSeconds), color = MaterialTheme.colorScheme.primary)
         }
         Spacer(Modifier.height(8.dp))
         if (today.mode == ScheduleMode.ROLLING) {
@@ -276,25 +270,25 @@ private fun TodaySection(
 @Composable
 private fun StreakSection(current: Int, best: Int) {
     Column {
-        Text(stringResource(R.string.dashboard_streak), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_streak), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            SurfaceCard(modifier = Modifier.weight(1f), color = White) {
-                Text(stringResource(R.string.dashboard_streak_current), color = Muted, style = MaterialTheme.typography.labelLarge)
+            SurfaceCard(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surface) {
+                Text(stringResource(R.string.dashboard_streak_current), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(8.dp))
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     val progress = if (best <= 0) 0f else (current.toFloat() / best.toFloat()).coerceIn(0f, 1f)
                     ProgressRing(progress = progress, size = 88.dp, stroke = 8.dp) {
-                        NumericText(current.toString(), color = Ink, style = MaterialTheme.typography.headlineSmall)
+                        NumericText(current.toString(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall)
                     }
                 }
             }
-            SurfaceCard(modifier = Modifier.weight(1f), color = White) {
-                Text(stringResource(R.string.dashboard_streak_best), color = Muted, style = MaterialTheme.typography.labelLarge)
+            SurfaceCard(modifier = Modifier.weight(1f), color = MaterialTheme.colorScheme.surface) {
+                Text(stringResource(R.string.dashboard_streak_best), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
                 Spacer(Modifier.height(8.dp))
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     ProgressRing(progress = if (best > 0) 1f else 0f, size = 88.dp, stroke = 8.dp) {
-                        NumericText(best.toString(), color = Ink, style = MaterialTheme.typography.headlineSmall)
+                        NumericText(best.toString(), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall)
                     }
                 }
             }
@@ -305,10 +299,10 @@ private fun StreakSection(current: Int, best: Int) {
 @Composable
 private fun HeatmapSection(cells: List<HeatmapCell>) {
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_heatmap), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_heatmap), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         if (cells.none { it.kind != null }) {
-            Text(stringResource(R.string.dashboard_heatmap_empty), color = Muted)
+            Text(stringResource(R.string.dashboard_heatmap_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Row(
             modifier = Modifier.horizontalScroll(rememberScrollState()),
@@ -338,17 +332,17 @@ private fun HeatmapSection(cells: List<HeatmapCell>) {
 private fun Legend(kind: SessionKind, label: Int) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(modifier = Modifier.size(12.dp).background(kindColor(kind), RoundedCornerShape(3.dp)))
-        Text(stringResource(label), color = Ink)
+        Text(stringResource(label), color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
 @Composable
 private fun RecordsSection(records: List<ExerciseRecordUi>) {
     Column {
-        Text(stringResource(R.string.dashboard_records), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_records), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(12.dp))
         if (records.isEmpty()) {
-            SurfaceCard { Text(stringResource(R.string.dashboard_records_empty), color = Muted) }
+            SurfaceCard { Text(stringResource(R.string.dashboard_records_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             return
         }
         Row(
@@ -356,15 +350,15 @@ private fun RecordsSection(records: List<ExerciseRecordUi>) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             records.forEach { record ->
-                SurfaceCard(modifier = Modifier.width(200.dp), color = Sand) {
-                    Text(record.name, color = Ink, style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(R.string.dashboard_e1rm), color = Muted, style = MaterialTheme.typography.labelMedium)
+                SurfaceCard(modifier = Modifier.width(200.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                    Text(record.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.dashboard_e1rm), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelMedium)
                     NumericText(
                         record.bestE1rmKg?.let(::formatKg) ?: stringResource(R.string.dashboard_none),
-                        color = Rose,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.titleLarge,
                     )
-                    Text(weightReps(record), color = Muted, style = MaterialTheme.typography.bodyMedium)
+                    Text(weightReps(record), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -374,10 +368,10 @@ private fun RecordsSection(records: List<ExerciseRecordUi>) {
 @Composable
 private fun SkillsSection(skills: List<SkillLadderUi>) {
     Column {
-        Text(stringResource(R.string.dashboard_skills), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_skills), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(12.dp))
         if (skills.isEmpty()) {
-            SurfaceCard { Text(stringResource(R.string.dashboard_skills_empty), color = Muted) }
+            SurfaceCard { Text(stringResource(R.string.dashboard_skills_empty), color = MaterialTheme.colorScheme.onSurfaceVariant) }
             return
         }
         Row(
@@ -385,16 +379,16 @@ private fun SkillsSection(skills: List<SkillLadderUi>) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             skills.forEach { skill ->
-                SurfaceCard(modifier = Modifier.width(220.dp), color = Sand) {
-                    Text(skill.name, color = Ink, style = MaterialTheme.typography.titleMedium)
+                SurfaceCard(modifier = Modifier.width(220.dp), color = MaterialTheme.colorScheme.surfaceVariant) {
+                    Text(skill.name, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
                     Text(
                         stringResource(R.string.dashboard_stage) + " " + skill.stage,
-                        color = Rose,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyLarge,
                     )
                     Text(
                         skill.maxHoldSec?.let { "${it}s" } ?: stringResource(R.string.dashboard_none),
-                        color = Muted,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
@@ -405,23 +399,23 @@ private fun SkillsSection(skills: List<SkillLadderUi>) {
 @Composable
 private fun BodySection(state: DashboardUiState, onEvent: (DashboardEvent) -> Unit) {
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_body), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_body), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.dashboard_weight), color = Muted)
+        Text(stringResource(R.string.dashboard_weight), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (state.weight.samples.isEmpty()) {
-            Text(stringResource(R.string.dashboard_weight_empty), color = Ink)
+            Text(stringResource(R.string.dashboard_weight_empty), color = MaterialTheme.colorScheme.onSurface)
         } else {
             CompositionChart(state.weight.samples, state.weight.average)
         }
         Spacer(Modifier.height(8.dp))
-        Text(stringResource(R.string.dashboard_body_fat), color = Muted)
+        Text(stringResource(R.string.dashboard_body_fat), color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (state.bodyFat.samples.isEmpty()) {
-            Text(stringResource(R.string.dashboard_body_fat_empty), color = Ink)
+            Text(stringResource(R.string.dashboard_body_fat_empty), color = MaterialTheme.colorScheme.onSurface)
         } else {
             CompositionChart(state.bodyFat.samples, state.bodyFat.average)
         }
         Spacer(Modifier.height(12.dp))
-        Text(stringResource(R.string.dashboard_weigh_in), color = Ink, style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.dashboard_weigh_in), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall)
         OutlinedTextField(
             value = state.weightDraft,
             onValueChange = { onEvent(DashboardEvent.WeightDraft(it)) },
@@ -450,16 +444,16 @@ private fun BodySection(state: DashboardUiState, onEvent: (DashboardEvent) -> Un
 @Composable
 private fun VolumeSection(volume: List<MuscleVolumeUi>) {
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_volume), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_volume), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         if (volume.isEmpty()) {
-            Text(stringResource(R.string.dashboard_volume_empty), color = Muted)
+            Text(stringResource(R.string.dashboard_volume_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@SurfaceCard
         }
         volume.forEach { muscle ->
             Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                Text(muscle.muscle, color = Ink, modifier = Modifier.weight(1f))
-                NumericText(formatSets(muscle.sets), color = Rose)
+                Text(muscle.muscle, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                NumericText(formatSets(muscle.sets), color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -468,27 +462,27 @@ private fun VolumeSection(volume: List<MuscleVolumeUi>) {
 @Composable
 private fun CardioWeekSection(cardio: WeeklyCardioUi) {
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_cardio_week), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_cardio_week), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         if (cardio.sessions == 0) {
-            Text(stringResource(R.string.dashboard_cardio_empty), color = Muted)
+            Text(stringResource(R.string.dashboard_cardio_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@SurfaceCard
         }
         Row(modifier = Modifier.padding(vertical = 4.dp)) {
-            Text(stringResource(R.string.dashboard_cardio_sessions), color = Ink, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.dashboard_cardio_sessions), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             NumericText(cardio.sessions.toString(), color = CardioBlue)
         }
         Row(modifier = Modifier.padding(vertical = 4.dp)) {
-            Text(stringResource(R.string.dashboard_cardio_duration), color = Ink, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.dashboard_cardio_duration), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             NumericText(formatDuration(cardio.durationSec), color = CardioBlue)
         }
         Row(modifier = Modifier.padding(vertical = 4.dp)) {
-            Text(stringResource(R.string.dashboard_cardio_distance), color = Ink, modifier = Modifier.weight(1f))
+            Text(stringResource(R.string.dashboard_cardio_distance), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
             NumericText(formatKm(cardio.distanceM), color = CardioBlue)
         }
         cardio.byActivity.forEach { row ->
             Row(modifier = Modifier.padding(vertical = 4.dp)) {
-                Text(activityLabel(row.activity), color = Ink, modifier = Modifier.weight(1f))
+                Text(activityLabel(row.activity), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
                 NumericText(
                     breakdownLine(row.durationSec, row.distanceM),
                     color = CardioBlue,
@@ -514,14 +508,14 @@ private fun formatKm(meters: Double): String =
 @Composable
 private fun StallSection(stalls: List<String>) {
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_stalls), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_stalls), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         if (stalls.isEmpty()) {
-            Text(stringResource(R.string.dashboard_stalls_empty), color = Muted)
+            Text(stringResource(R.string.dashboard_stalls_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@SurfaceCard
         }
         stalls.forEach { name ->
-            Text(name, color = Rose)
+            Text(name, color = MaterialTheme.colorScheme.primary)
         }
     }
 }
@@ -529,10 +523,10 @@ private fun StallSection(stalls: List<String>) {
 @Composable
 private fun DeloadSection(deload: DeloadStatus?) {
     SurfaceCard {
-        Text(stringResource(R.string.dashboard_deload), color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.dashboard_deload), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
         if (deload == null) {
-            Text(stringResource(R.string.dashboard_deload_empty), color = Muted)
+            Text(stringResource(R.string.dashboard_deload_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
             return@SurfaceCard
         }
         Text(
@@ -541,12 +535,12 @@ private fun DeloadSection(deload: DeloadStatus?) {
             } else {
                 stringResource(R.string.dashboard_deload_active)
             },
-            color = Rose,
+            color = MaterialTheme.colorScheme.primary,
         )
         deload.startedOn?.let { started ->
             Row {
-                Text(stringResource(R.string.dashboard_started), color = Ink, modifier = Modifier.weight(1f))
-                NumericText(started.toString(), color = Rose)
+                Text(stringResource(R.string.dashboard_started), color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
+                NumericText(started.toString(), color = MaterialTheme.colorScheme.primary)
             }
         }
     }
@@ -559,12 +553,13 @@ private fun weightReps(record: ExerciseRecordUi): String {
     return stringResource(R.string.dashboard_weight_reps_value, formatKg(weight), reps)
 }
 
+@Composable
 private fun kindColor(kind: SessionKind?): Color = when (kind) {
-    SessionKind.GYM -> Rose
+    SessionKind.GYM -> MaterialTheme.colorScheme.primary
     SessionKind.CARDIO -> CardioBlue
     SessionKind.ACTIVE_RECOVERY -> RecoveryAmber
     SessionKind.REST -> RestGray
-    null -> Sand
+    null -> MaterialTheme.colorScheme.surfaceVariant
 }
 
 internal fun formatDuration(seconds: Int): String {

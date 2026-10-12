@@ -27,11 +27,6 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.components.PrimaryButton
 import com.forge.hypertrophy.ui.components.SecondaryButton
 import com.forge.hypertrophy.ui.components.SurfaceCard
-import com.forge.hypertrophy.ui.theme.Cream
-import com.forge.hypertrophy.ui.theme.Ink
-import com.forge.hypertrophy.ui.theme.Muted
-import com.forge.hypertrophy.ui.theme.Rose
-import com.forge.hypertrophy.ui.theme.Sand
 
 @Composable
 fun TodayScreen(
@@ -64,29 +59,29 @@ fun TodayScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(Cream)
+            .background(MaterialTheme.colorScheme.background)
             .padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Column {
             Text(
                 text = stringResource(R.string.nav_today),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.headlineMedium,
             )
             if (hasProgram && state.dayLabel != null) {
                 Text(
                     text = state.dayLabel!!,
-                    color = Muted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
         }
 
-        SurfaceCard(color = Sand) {
+        SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
             Text(
                 text = stringResource(R.string.today_workout_plan),
-                color = Muted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.labelLarge,
             )
             when {
@@ -119,7 +114,7 @@ fun TodayScreen(
                 state.isRestDay -> {
                     Text(
                         text = stringResource(R.string.today_rest_day),
-                        color = Rose,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(top = 8.dp),
                     )
@@ -127,7 +122,7 @@ fun TodayScreen(
                 else -> {
                     Text(
                         text = stringResource(R.string.today_no_program),
-                        color = Ink,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = MaterialTheme.typography.headlineSmall,
                         modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
                     )

@@ -24,7 +24,6 @@ import com.forge.hypertrophy.ui.components.SecondaryButton
 import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.screens.routine.formatKg
-import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -49,9 +48,9 @@ fun BaselineSetupContent(
     modifier: Modifier = Modifier,
 ) {
     BuilderColumn(title = stringResource(R.string.baseline_title), onBack = onBack, modifier = modifier) {
-        Text(stringResource(R.string.baseline_hint), color = Ink)
+        Text(stringResource(R.string.baseline_hint), color = MaterialTheme.colorScheme.onSurface)
         if (state.loaded && state.days.isEmpty()) {
-            Text(stringResource(R.string.baseline_empty), color = Ink)
+            Text(stringResource(R.string.baseline_empty), color = MaterialTheme.colorScheme.onSurface)
         }
         if (state.days.isNotEmpty()) {
             SecondaryButton(
@@ -80,7 +79,7 @@ private fun SlotRow(slot: BaselineSlotUi, onEvent: (BaselineSetupEvent) -> Unit)
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text(slot.exerciseName, color = Ink, style = MaterialTheme.typography.titleSmall)
+        Text(slot.exerciseName, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleSmall)
         if (slot.calibrate) {
             Text(stringResource(R.string.baseline_calibrating), color = NeonAccent)
         } else {
@@ -91,7 +90,7 @@ private fun SlotRow(slot: BaselineSlotUi, onEvent: (BaselineSetupEvent) -> Unit)
             ) {
                 Text(
                     text = stringResource(R.string.baseline_weight),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.widthIn(min = 40.dp),
                 )
                 EditorButton(
@@ -100,7 +99,7 @@ private fun SlotRow(slot: BaselineSlotUi, onEvent: (BaselineSetupEvent) -> Unit)
                 )
                 NumericText(
                     text = formatKg(slot.weightKg),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.widthIn(min = 40.dp),
                     textAlign = TextAlign.Center,
                 )
@@ -110,7 +109,7 @@ private fun SlotRow(slot: BaselineSlotUi, onEvent: (BaselineSetupEvent) -> Unit)
                 )
                 Text(
                     text = stringResource(R.string.baseline_reps),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.widthIn(min = 40.dp),
                 )
                 EditorButton(
@@ -119,7 +118,7 @@ private fun SlotRow(slot: BaselineSlotUi, onEvent: (BaselineSetupEvent) -> Unit)
                 )
                 NumericText(
                     text = slot.reps.toString(),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.widthIn(min = 32.dp),
                     textAlign = TextAlign.Center,
                 )

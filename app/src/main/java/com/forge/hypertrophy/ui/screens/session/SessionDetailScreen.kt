@@ -3,6 +3,7 @@ package com.forge.hypertrophy.ui.screens.session
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +20,6 @@ import com.forge.hypertrophy.ui.screens.routine.BuilderColumn
 import com.forge.hypertrophy.ui.screens.routine.EditorButton
 import com.forge.hypertrophy.ui.screens.routine.formatKg
 import com.forge.hypertrophy.ui.theme.NeonAccent
-import com.forge.hypertrophy.ui.theme.Ink
 
 @Composable
 fun SessionDetailScreen(
@@ -40,7 +40,7 @@ fun SessionDetailContent(
 ) {
     BuilderColumn(title = stringResource(R.string.session_detail_title), onBack = onBack, modifier = modifier) {
         if (state.missing) {
-            Text(stringResource(R.string.session_missing), color = Ink)
+            Text(stringResource(R.string.session_missing), color = MaterialTheme.colorScheme.onSurface)
             return@BuilderColumn
         }
         OutlinedTextField(
@@ -50,7 +50,7 @@ fun SessionDetailContent(
             modifier = Modifier.fillMaxWidth(),
         )
         if (state.dateInvalid) Text(stringResource(R.string.session_date_invalid), color = NeonAccent)
-        Text(stringResource(R.string.session_status), color = Ink)
+        Text(stringResource(R.string.session_status), color = MaterialTheme.colorScheme.onSurface)
         Row {
             SessionStatus.entries.forEach { status ->
                 EditorButton(
@@ -64,12 +64,12 @@ fun SessionDetailContent(
             Text(slot.exerciseName, color = NeonAccent)
             slot.sets.filter { !it.deleted }.forEach { set ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.session_set_number, set.setNumber), color = Ink)
+                    Text(stringResource(R.string.session_set_number, set.setNumber), color = MaterialTheme.colorScheme.onSurface)
                     EditorButton(stringResource(R.string.baseline_minus), { onEvent(SessionDetailEvent.StepWeight(set.id, -1)) })
-                    NumericText(formatKg(set.weightKg ?: 0.0), color = Ink)
+                    NumericText(formatKg(set.weightKg ?: 0.0), color = MaterialTheme.colorScheme.onSurface)
                     EditorButton(stringResource(R.string.baseline_plus), { onEvent(SessionDetailEvent.StepWeight(set.id, 1)) })
                     EditorButton(stringResource(R.string.baseline_minus), { onEvent(SessionDetailEvent.StepReps(set.id, -1)) })
-                    NumericText((set.reps ?: 0).toString(), color = Ink)
+                    NumericText((set.reps ?: 0).toString(), color = MaterialTheme.colorScheme.onSurface)
                     EditorButton(stringResource(R.string.baseline_plus), { onEvent(SessionDetailEvent.StepReps(set.id, 1)) })
                     EditorButton(
                         stringResource(R.string.session_delete_set),
@@ -86,7 +86,7 @@ fun SessionDetailContent(
             Text(warning, color = NeonAccent)
         }
         state.suggestions.forEach { note ->
-            Column { Text(note, color = Ink) }
+            Column { Text(note, color = MaterialTheme.colorScheme.onSurface) }
         }
         if (state.saved) Text(stringResource(R.string.session_saved), color = NeonAccent)
         EditorButton(label = stringResource(R.string.session_save), onClick = { onEvent(SessionDetailEvent.Save) })

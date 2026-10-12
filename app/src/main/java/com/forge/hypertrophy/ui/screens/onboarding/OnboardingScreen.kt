@@ -33,7 +33,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.components.PrimaryButton
 import com.forge.hypertrophy.ui.components.SecondaryButton
-import com.forge.hypertrophy.ui.theme.Cream
 
 @Composable
 fun OnboardingScreen(
@@ -71,7 +70,7 @@ fun OnboardingScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = Cream,
+        containerColor = MaterialTheme.colorScheme.background,
     ) { innerPadding ->
         Column(
             modifier = Modifier

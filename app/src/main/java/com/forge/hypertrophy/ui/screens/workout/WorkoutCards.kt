@@ -73,12 +73,6 @@ import com.forge.hypertrophy.ui.components.SurfaceCard
 import com.forge.hypertrophy.ui.components.ToggleChip
 import com.forge.hypertrophy.ui.components.TouchTargets
 import com.forge.hypertrophy.ui.screens.routine.formatKg
-import com.forge.hypertrophy.ui.theme.Ink
-import com.forge.hypertrophy.ui.theme.Muted
-import com.forge.hypertrophy.ui.theme.Rose
-import com.forge.hypertrophy.ui.theme.RoseSoft
-import com.forge.hypertrophy.ui.theme.Sand
-import com.forge.hypertrophy.ui.theme.White
 
 @Composable
 internal fun WorkoutHeader(
@@ -109,7 +103,7 @@ internal fun WorkoutHeader(
             }
             Text(
                 text = title,
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.titleLarge,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
@@ -118,12 +112,12 @@ internal fun WorkoutHeader(
             if (subtitle != null || etaSeconds != null) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (subtitle != null) {
-                        Text(subtitle, color = Muted, style = MaterialTheme.typography.bodyMedium)
+                        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                     }
                     if (etaSeconds != null) {
                         NumericText(
                             text = formatDuration(etaSeconds),
-                            color = Rose,
+                            color = MaterialTheme.colorScheme.primary,
                             style = MaterialTheme.typography.titleMedium,
                         )
                     }
@@ -135,7 +129,7 @@ internal fun WorkoutHeader(
                 Icon(
                     imageVector = Icons.Filled.MoreVert,
                     contentDescription = stringResource(R.string.workout_more),
-                    tint = Ink,
+                    tint = MaterialTheme.colorScheme.onSurface,
                 )
             }
         } else {
@@ -150,7 +144,7 @@ private fun RoundIconButton(onClick: () -> Unit, content: @Composable () -> Unit
         onClick = onClick,
         modifier = Modifier
             .size(TouchTargets.Workout)
-            .background(Sand, CircleShape),
+            .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
     ) {
         content()
     }
@@ -179,7 +173,7 @@ internal fun ReadinessCard(
     SurfaceCard {
         Text(
             stringResource(R.string.workout_readiness_scale),
-            color = Muted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodyMedium,
         )
         Spacer(Modifier.height(12.dp))
@@ -231,7 +225,7 @@ private fun ScoreRow(
     onSelect: (Int) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, color = Ink, style = MaterialTheme.typography.titleMedium)
+        Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             labels.forEachIndexed { index, label ->
                 val score = index + 1
@@ -259,11 +253,11 @@ private fun ScoreChip(
         shape = PillShape,
         border = BorderStroke(
             width = if (selected) 2.dp else 1.dp,
-            color = if (selected) Rose else Ink.copy(alpha = 0.28f),
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.28f),
         ),
         colors = ButtonDefaults.buttonColors(
-            containerColor = if (selected) Rose else White,
-            contentColor = if (selected) White else Ink,
+            containerColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
+            contentColor = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
         ),
     ) {
         Text(
@@ -301,7 +295,7 @@ private fun CheckRow(text: String, done: Boolean, onCheck: () -> Unit) {
             .fillMaxWidth()
             .heightIn(min = TouchTargets.Workout)
             .clip(MaterialTheme.shapes.large)
-            .background(if (done) RoseSoft.copy(alpha = 0.35f) else Sand)
+            .background(if (done) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surfaceVariant)
             .clickable(enabled = !done, onClick = onCheck)
             .padding(horizontal = 16.dp)
             .padding(vertical = 8.dp),
@@ -311,22 +305,22 @@ private fun CheckRow(text: String, done: Boolean, onCheck: () -> Unit) {
         Box(
             modifier = Modifier
                 .size(28.dp)
-                .border(2.dp, if (done) Rose else Muted, CircleShape)
-                .background(if (done) Rose else White, CircleShape),
+                .border(2.dp, if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                .background(if (done) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             if (done) {
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = White,
+                    tint = MaterialTheme.colorScheme.surface,
                     modifier = Modifier.size(18.dp),
                 )
             }
         }
         Text(
             text = text,
-            color = if (done) Muted else Ink,
+            color = if (done) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.titleMedium,
         )
     }
@@ -339,21 +333,21 @@ internal fun WorkingSetCard(
 ) {
     val readout = setReadout(pos.slot.prescription.metricType, pos.slot.equipment)
     val faded = pos.suggestion.fromPreviousSession
-    SurfaceCard(color = Sand) {
+    SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
         Text(
             stringResource(R.string.workout_set_label, pos.setNumber, pos.setCount),
-            color = Muted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelLarge,
         )
         if (pos.side != SetSide.BOTH) {
             Text(
                 stringResource(if (pos.side == SetSide.LEFT) R.string.workout_side_left else R.string.workout_side_right),
-                color = Rose,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.titleMedium,
             )
         }
         pos.slot.prescription.notes?.takeIf { it.isNotBlank() }?.let { notes ->
-            Text(notes, color = Muted, style = MaterialTheme.typography.bodyMedium)
+            Text(notes, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         }
         Spacer(Modifier.height(12.dp))
         if (readout.showsWeight()) {
@@ -393,7 +387,7 @@ internal fun WorkingSetCard(
         if (faded) {
             Text(
                 stringResource(R.string.workout_from_previous),
-                color = Muted,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -405,7 +399,7 @@ internal fun WorkingSetCard(
                     formatRpe(prompt.lastRpe),
                     formatKg(prompt.suggestedWeightKg),
                 ),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyLarge,
             )
             SecondaryButton(
@@ -431,7 +425,7 @@ private fun MetricStepper(
     onMinus: () -> Unit,
     onPlus: () -> Unit,
 ) {
-    val color = if (faded) Muted else Ink
+    val color = if (faded) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -468,7 +462,7 @@ internal fun RestCard(
     ) {
         if (readout.showsWeight() && lastSet != null) {
             SurfaceCard {
-                Text(stringResource(R.string.workout_rpe_prompt), color = Ink, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.workout_rpe_prompt), color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(8.0, 9.0, 10.0).forEach { rpe ->
@@ -488,25 +482,25 @@ internal fun RestCard(
 
 @Composable
 private fun NextUpCard(next: NextUp) {
-    SurfaceCard(color = Sand) {
-        Text(stringResource(R.string.workout_next_title), color = Muted, style = MaterialTheme.typography.labelLarge)
+    SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
+        Text(stringResource(R.string.workout_next_title), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             ExerciseSilhouette(exerciseName = next.exerciseName)
-            Text(next.exerciseName, color = Ink, style = MaterialTheme.typography.titleLarge)
+            Text(next.exerciseName, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
         }
         nextPrescriptionLine(next)?.let { line ->
-            Text(line, color = Ink, style = MaterialTheme.typography.titleMedium)
+            Text(line, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
         }
         PlatesLine(next.platesPerSideKg)
         if (next.warmup.isNotEmpty()) {
-            Text(stringResource(R.string.workout_warmup_title), color = Muted, style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.workout_warmup_title), color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelLarge)
             next.warmup.forEach { step ->
                 Text(
                     stringResource(R.string.workout_warmup_step, formatKg(step.weightKg), step.reps),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
@@ -540,16 +534,16 @@ internal fun WarmupCard(
     ) {
         Text(
             stringResource(R.string.workout_warmup_phase_title),
-            color = Muted,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.labelLarge,
         )
-        Text(pos.slot.exerciseName, color = Ink, style = MaterialTheme.typography.titleLarge)
+        Text(pos.slot.exerciseName, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleLarge)
         WarmupSteps(pos.steps)
         val fraction = blockProgress(pos.slot.sessionSlotId, timer.remainingMillis, timer.phase)
         ProgressRing(progress = fraction, size = 160.dp, stroke = 12.dp) {
             NumericText(
                 text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
             )
@@ -559,11 +553,11 @@ internal fun WarmupCard(
 
 @Composable
 private fun WarmupSteps(steps: List<WarmupStep>) {
-    SurfaceCard(color = Sand) {
+    SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
         steps.forEach { step ->
             Text(
                 stringResource(R.string.workout_warmup_step, formatKg(step.weightKg), step.reps),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
@@ -593,13 +587,13 @@ internal fun SlotStrip(items: List<SlotStripItem>) {
 @Composable
 private fun SlotChip(item: SlotStripItem) {
     val background = when (item.status) {
-        SlotStripStatus.CURRENT -> RoseSoft
-        SlotStripStatus.FINISHED -> Sand
-        SlotStripStatus.UPCOMING -> White
+        SlotStripStatus.CURRENT -> MaterialTheme.colorScheme.primaryContainer
+        SlotStripStatus.FINISHED -> MaterialTheme.colorScheme.surfaceVariant
+        SlotStripStatus.UPCOMING -> MaterialTheme.colorScheme.surface
     }
     val border = when (item.status) {
-        SlotStripStatus.CURRENT -> Rose
-        else -> Ink.copy(alpha = 0.15f)
+        SlotStripStatus.CURRENT -> MaterialTheme.colorScheme.primary
+        else -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f)
     }
     Column(
         modifier = Modifier
@@ -618,7 +612,7 @@ private fun SlotChip(item: SlotStripItem) {
         )
         Text(
             text = item.name,
-            color = if (item.status == SlotStripStatus.FINISHED) Muted else Ink,
+            color = if (item.status == SlotStripStatus.FINISHED) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.labelMedium,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
@@ -638,7 +632,7 @@ internal fun PracticeBlockCard(state: WorkoutUiState, slotId: Long) {
         ProgressRing(progress = fraction, size = 160.dp, stroke = 12.dp) {
             NumericText(
                 text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
-                color = Ink,
+                color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.headlineMedium,
                 textAlign = TextAlign.Center,
             )
@@ -665,16 +659,16 @@ internal fun SummaryCard(summary: WorkoutSummary?) {
             SurfaceCard {
                 Text(
                     stringResource(R.string.workout_pr_summary, pr.exerciseName, formatKg(pr.e1rmKg)),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
         }
         summary?.stagePrompts?.forEach { prompt ->
-            SurfaceCard(color = Sand) {
+            SurfaceCard(color = MaterialTheme.colorScheme.surfaceVariant) {
                 Text(
                     stringResource(R.string.workout_stage_summary, prompt.skillName, prompt.stage),
-                    color = Rose,
+                    color = MaterialTheme.colorScheme.primary,
                     style = MaterialTheme.typography.titleMedium,
                 )
             }
@@ -685,7 +679,7 @@ internal fun SummaryCard(summary: WorkoutSummary?) {
                 val line = note.weightKg?.let { weight ->
                     stringResource(R.string.workout_next_session_weight, note.exerciseName, action, formatKg(weight))
                 } ?: stringResource(R.string.workout_next_session_line, note.exerciseName, action)
-                Text(line, color = Ink, style = MaterialTheme.typography.titleMedium)
+                Text(line, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium)
             }
         }
     }
@@ -696,7 +690,7 @@ private fun PlatesLine(plates: List<Double>) {
     if (plates.isEmpty()) return
     Text(
         text = stringResource(R.string.workout_plates_per_side, plates.joinToString(" + ", transform = ::formatKg)),
-        color = Muted,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.bodyLarge,
     )
 }
@@ -717,8 +711,8 @@ internal fun WorkoutMoreSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = White,
-        contentColor = Ink,
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
         Column(
             modifier = Modifier
@@ -731,7 +725,7 @@ internal fun WorkoutMoreSheet(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     stringResource(R.string.workout_more),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.weight(1f),
                 )
@@ -773,7 +767,7 @@ internal fun WorkoutMoreSheet(
                 }
             }
             if (pos.slotCount > 1) {
-                Text(stringResource(R.string.workout_section_order), color = Muted)
+                Text(stringResource(R.string.workout_section_order), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SecondaryButton(
                         label = stringResource(R.string.workout_move_earlier),
@@ -796,7 +790,7 @@ internal fun WorkoutMoreSheet(
                 }
             }
             SetupNotes(pos, onEvent)
-            Text(stringResource(R.string.workout_section_joints), color = Muted)
+            Text(stringResource(R.string.workout_section_joints), color = MaterialTheme.colorScheme.onSurfaceVariant)
             JointFlags.all.chunked(2).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     row.forEach { flag ->
@@ -850,13 +844,13 @@ private fun SetupNotes(pos: WorkoutPosition.WorkingSet, onEvent: (WorkoutEvent) 
             .fillMaxWidth()
             .heightIn(min = TouchTargets.Workout),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = Ink,
-            unfocusedTextColor = Ink,
-            focusedBorderColor = Rose,
-            unfocusedBorderColor = Muted.copy(alpha = 0.4f),
-            focusedLabelColor = Rose,
-            unfocusedLabelColor = Muted,
-            cursorColor = Rose,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            cursorColor = MaterialTheme.colorScheme.primary,
         ),
     )
     if (notes != pos.slot.setupNotes) {
