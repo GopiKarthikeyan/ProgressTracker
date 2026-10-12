@@ -136,8 +136,8 @@ fun WorkoutContent(
         if (working == null) moreOpen = false
     }
 
-    val showHeroSilhouette = headerExerciseName(state.position) != null ||
-        headerCategory(state.position) != null
+    val showHeroSilhouette = state.position !is WorkoutPosition.Resting &&
+        (headerExerciseName(state.position) != null || headerCategory(state.position) != null)
     val showSlotStrip = state.position !is WorkoutPosition.Readiness &&
         state.position !is WorkoutPosition.Summary
 
@@ -308,6 +308,11 @@ private fun PrimaryAction(
                 )
             }
             pos is WorkoutPosition.WorkingSet -> {
+                CircleActionButton(
+                    label = stringResource(R.string.workout_log_set),
+                    onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+                    size = 128.dp,
+                )
                 SecondaryButton(
                     label = stringResource(R.string.workout_record_clip),
                     onClick = { onRecordClip(pos.slot.activeExerciseId, null) },
@@ -327,11 +332,6 @@ private fun PrimaryAction(
                         onClick = { onEvent(WorkoutEvent.RemoveSet) },
                     )
                 }
-                CircleActionButton(
-                    label = stringResource(R.string.workout_log_set),
-                    onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
-                    size = 128.dp,
-                )
             }
             pos is WorkoutPosition.Prep && pos.items.all { it.done } -> CircleActionButton(
                 label = stringResource(R.string.workout_start_first),

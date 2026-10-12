@@ -12,8 +12,6 @@ Additional hand-authored vector poses (not from workout-guide):
 sil_wrist_rocks, sil_9090_hip_swap, sil_ankle_dorsiflex, sil_front_lever,
 sil_windshield, sil_pigeon, sil_lat_overhead_stretch, sil_external_rotation,
 sil_muscle_up, sil_planche, sil_back_lever, sil_human_flag, sil_elbow_lever,
-sil_nordic, sil_leg_press, sil_leg_extension, sil_hspu, sil_abductor,
-sil_dragon_flag, sil_doorway_stretch.
+sil_leg_press, sil_leg_extension, sil_abductor.
 
-Thin workout-guide PNG exports were morphologically thickened into solid
-black silhouettes for readable tinting at thumbnail size.
+Workout-guide PNG exports keep light stroke thickening only (not solid fill).
