@@ -11,6 +11,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -44,15 +45,19 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.engine.ReadinessAdvice
 import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.workout.HandsFreeKeys
+import com.forge.hypertrophy.domain.workout.REST_ADJUST_STEP_MILLIS
 import com.forge.hypertrophy.domain.workout.TimerPhase
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
 import com.forge.hypertrophy.ui.components.CircleActionButton
+import com.forge.hypertrophy.ui.components.ExerciseSilhouette
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.PrimaryButton
 import com.forge.hypertrophy.ui.components.ProgressRing
 import com.forge.hypertrophy.ui.components.SecondaryButton
+import com.forge.hypertrophy.ui.components.StepperButton
 import com.forge.hypertrophy.ui.theme.Cream
 import com.forge.hypertrophy.ui.theme.Ink
+import com.forge.hypertrophy.ui.theme.Muted
 import com.forge.hypertrophy.ui.theme.Rose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -134,75 +139,115 @@ fun WorkoutContent(
         if (working == null) moreOpen = false
     }
 
+    val showHeroSilhouette = headerExerciseName(state.position) != null ||
+        headerCategory(state.position) != null
+    val showSlotStrip = state.position !is WorkoutPosition.Readiness &&
+        state.position !is WorkoutPosition.Summary
+
     Box(modifier = modifier.fillMaxSize().background(Cream)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 16.dp)
-                .padding(top = 8.dp, bottom = 24.dp),
+                .padding(top = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            WorkoutHeader(
-                title = headerTitle(state.position),
-                subtitle = headerSubtitle(state.position),
-                etaSeconds = if (
+            // Top chrome + hero silhouette
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                WorkoutHeader(
+                    title = headerTitle(state.position),
+                    subtitle = headerSubtitle(state.position),
+                    etaSeconds = if (
+                        state.position !is WorkoutPosition.Readiness &&
+                        state.position !is WorkoutPosition.Summary
+                    ) {
+                        state.etaSeconds
+                    } else {
+                        null
+                    },
+                    showMore = working != null,
+                    onBack = onBack,
+                    onMore = { moreOpen = true },
+                    exerciseName = headerExerciseName(state.position),
+                    category = headerCategory(state.position),
+                    showSilhouette = false,
+                )
+                if (showHeroSilhouette) {
+                    ExerciseSilhouette(
+                        exerciseName = headerExerciseName(state.position),
+                        category = headerCategory(state.position),
+                        size = 148.dp,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                    )
+                }
+            }
+
+            // Middle: everything else scrolls between hero and strip
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 8.dp, bottom = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                if (
+                    state.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS &&
                     state.position !is WorkoutPosition.Readiness &&
                     state.position !is WorkoutPosition.Summary
                 ) {
-                    state.etaSeconds
-                } else {
-                    null
-                },
-                showMore = working != null,
-                onBack = onBack,
-                onMore = { moreOpen = true },
-            )
-            if (
-                state.advice == ReadinessAdvice.SHORT_ON_TIME_HOLD_WEIGHTS &&
-                state.position !is WorkoutPosition.Readiness &&
-                state.position !is WorkoutPosition.Summary
-            ) {
-                Text(
-                    stringResource(R.string.workout_readiness_advice),
-                    color = Rose,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-            when (val pos = state.position) {
-                is WorkoutPosition.Readiness -> ReadinessCard(
-                    sessionReady = state.sessionId != null,
+                    Text(
+                        stringResource(R.string.workout_readiness_advice),
+                        color = Rose,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                when (val pos = state.position) {
+                    is WorkoutPosition.Readiness -> ReadinessCard(
+                        sessionReady = state.sessionId != null,
+                        onEvent = onEvent,
+                    )
+                    is WorkoutPosition.Prep -> PrepCard(pos, onEvent)
+                    is WorkoutPosition.PracticeBlock -> PracticeBlockCard(state, pos.slot.sessionSlotId)
+                    is WorkoutPosition.WorkingSet -> WorkingSetCard(pos, onEvent)
+                    is WorkoutPosition.Warmup -> WarmupCard(pos, state.timer)
+                    is WorkoutPosition.Resting -> RestCard(pos, state, onEvent)
+                    is WorkoutPosition.Cooldown -> CooldownCard(pos, onEvent)
+                    is WorkoutPosition.Summary -> SummaryCard(state.summary)
+                }
+                if (state.importingClip) {
+                    Text(stringResource(R.string.media_importing), color = Ink)
+                }
+                if (state.importFailed) {
+                    Text(stringResource(R.string.media_import_failed), color = Rose)
+                    SecondaryButton(
+                        label = stringResource(R.string.dashboard_dismiss),
+                        onClick = { onEvent(WorkoutEvent.DismissImportFailure) },
+                    )
+                }
+                PrimaryAction(
+                    state = state,
                     onEvent = onEvent,
-                )
-                is WorkoutPosition.Prep -> PrepCard(pos, onEvent)
-                is WorkoutPosition.PracticeBlock -> PracticeBlockCard(state, pos.slot.sessionSlotId)
-                is WorkoutPosition.WorkingSet -> WorkingSetCard(pos, onEvent)
-                is WorkoutPosition.Resting -> RestCard(pos, state, onEvent)
-                is WorkoutPosition.Cooldown -> CooldownCard(pos, onEvent)
-                is WorkoutPosition.Summary -> SummaryCard(state.summary)
-            }
-            if (state.importingClip) {
-                Text(stringResource(R.string.media_importing), color = Ink)
-            }
-            if (state.importFailed) {
-                Text(stringResource(R.string.media_import_failed), color = Rose)
-                SecondaryButton(
-                    label = stringResource(R.string.dashboard_dismiss),
-                    onClick = { onEvent(WorkoutEvent.DismissImportFailure) },
+                    onBack = onBack,
+                    onRecordClip = onRecordClip,
+                    onImportClip = onImportClip,
+                    onUndo = {
+                        view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                        onEvent(WorkoutEvent.Undo)
+                    },
                 )
             }
-            PrimaryAction(
-                state = state,
-                onEvent = onEvent,
-                onBack = onBack,
-                onRecordClip = onRecordClip,
-                onImportClip = onImportClip,
-                onUndo = {
-                    view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                    onEvent(WorkoutEvent.Undo)
-                },
-            )
+
+            // Bottom: horizontal exercise strip with silhouettes
+            if (showSlotStrip) {
+                SlotStrip(state.slotStrip)
+            }
         }
         if (moreOpen && working != null) {
             WorkoutMoreSheet(
@@ -253,51 +298,17 @@ private fun PrimaryAction(
         when {
             undo -> PrimaryButton(label = stringResource(R.string.workout_undo), onClick = onUndo)
             pos is WorkoutPosition.Resting -> {
-                val timer = state.timer
-                val fraction = restProgress(pos.slot.sessionSlotId to pos.round, timer)
-                ProgressRing(progress = fraction, size = 160.dp, stroke = 12.dp) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        NumericText(
-                            text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
-                            color = Ink,
-                            style = MaterialTheme.typography.headlineMedium,
-                        )
-                        Text(
-                            stringResource(R.string.workout_skip_rest),
-                            color = Rose,
-                            style = MaterialTheme.typography.labelLarge,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                }
-                // Whole ring area is tappable via the button below for 72dp accessibility.
+                RestTimerActions(pos, state, onEvent, onRecordClip, onImportClip)
+            }
+            pos is WorkoutPosition.Warmup -> {
                 PrimaryButton(
-                    label = stringResource(R.string.workout_skip_rest),
+                    label = stringResource(R.string.workout_warmup_start_work),
                     onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
                 )
-                val setId = state.lastLoggedSetId
-                val exerciseId = state.lastLoggedExerciseId
-                if (setId != null && exerciseId != null) {
-                    SecondaryButton(
-                        label = stringResource(R.string.workout_record_clip),
-                        onClick = { onRecordClip(exerciseId, setId) },
-                    )
-                    SecondaryButton(
-                        label = stringResource(R.string.workout_import_clip),
-                        onClick = { onImportClip(exerciseId, setId) },
-                        enabled = !state.importingClip,
-                    )
-                }
                 SecondaryButton(
-                    label = stringResource(R.string.workout_add_set),
-                    onClick = { onEvent(WorkoutEvent.AddSet) },
+                    label = stringResource(R.string.workout_skip_warmup),
+                    onClick = { onEvent(WorkoutEvent.Skip(SKIPPED_REASON)) },
                 )
-                if (state.canRemoveSet) {
-                    SecondaryButton(
-                        label = stringResource(R.string.workout_remove_set),
-                        onClick = { onEvent(WorkoutEvent.RemoveSet) },
-                    )
-                }
             }
             pos is WorkoutPosition.WorkingSet -> {
                 SecondaryButton(
@@ -346,6 +357,76 @@ private fun PrimaryAction(
 }
 
 @Composable
+private fun RestTimerActions(
+    pos: WorkoutPosition.Resting,
+    state: WorkoutUiState,
+    onEvent: (WorkoutEvent) -> Unit,
+    onRecordClip: (exerciseId: Long, setEntryId: Long?) -> Unit,
+    onImportClip: (exerciseId: Long, setEntryId: Long?) -> Unit,
+) {
+    val timer = state.timer
+    val fraction = restProgress(pos.slot.sessionSlotId to pos.round, timer)
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        StepperButton(
+            symbol = "−",
+            contentDescription = stringResource(R.string.workout_rest_minus),
+            onClick = { onEvent(WorkoutEvent.AdjustRest(-REST_ADJUST_STEP_MILLIS)) },
+        )
+        ProgressRing(progress = fraction, size = 160.dp, stroke = 12.dp) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                NumericText(
+                    text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
+                    color = Ink,
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                Text(
+                    stringResource(R.string.workout_rest_label),
+                    color = Muted,
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
+        }
+        StepperButton(
+            symbol = "+",
+            contentDescription = stringResource(R.string.workout_rest_plus),
+            onClick = { onEvent(WorkoutEvent.AdjustRest(REST_ADJUST_STEP_MILLIS)) },
+        )
+    }
+    PrimaryButton(
+        label = stringResource(R.string.workout_skip_rest),
+        onClick = { onEvent(WorkoutEvent.Primary(EntryMethod.SCREEN)) },
+    )
+    val setId = state.lastLoggedSetId
+    val exerciseId = state.lastLoggedExerciseId
+    if (setId != null && exerciseId != null) {
+        SecondaryButton(
+            label = stringResource(R.string.workout_record_clip),
+            onClick = { onRecordClip(exerciseId, setId) },
+        )
+        SecondaryButton(
+            label = stringResource(R.string.workout_import_clip),
+            onClick = { onImportClip(exerciseId, setId) },
+            enabled = !state.importingClip,
+        )
+    }
+    SecondaryButton(
+        label = stringResource(R.string.workout_add_set),
+        onClick = { onEvent(WorkoutEvent.AddSet) },
+    )
+    if (state.canRemoveSet) {
+        SecondaryButton(
+            label = stringResource(R.string.workout_remove_set),
+            onClick = { onEvent(WorkoutEvent.RemoveSet) },
+        )
+    }
+}
+
+@Composable
 private fun restProgress(key: Any, timer: com.forge.hypertrophy.domain.workout.TimerSnapshot): Float {
     var ceiling by remember(key) { mutableStateOf(0L) }
     if (
@@ -365,6 +446,7 @@ private fun headerTitle(position: WorkoutPosition): String = when (position) {
     is WorkoutPosition.Readiness -> stringResource(R.string.workout_readiness_title)
     is WorkoutPosition.Prep -> stringResource(R.string.workout_prep_title)
     is WorkoutPosition.WorkingSet -> position.slot.exerciseName
+    is WorkoutPosition.Warmup -> stringResource(R.string.workout_warmup_phase_title)
     is WorkoutPosition.Resting -> stringResource(R.string.workout_resting_title)
     is WorkoutPosition.PracticeBlock -> position.slot.exerciseName
     is WorkoutPosition.Cooldown -> stringResource(R.string.workout_cooldown_title)
@@ -374,8 +456,25 @@ private fun headerTitle(position: WorkoutPosition): String = when (position) {
 @Composable
 private fun headerSubtitle(position: WorkoutPosition): String? = when (position) {
     is WorkoutPosition.WorkingSet -> stringResource(R.string.workout_set_label, position.setNumber, position.setCount)
+    is WorkoutPosition.Warmup -> position.slot.exerciseName
     is WorkoutPosition.Resting -> position.slot.exerciseName
     is WorkoutPosition.PracticeBlock -> stringResource(R.string.workout_timed_block)
+    else -> null
+}
+
+private fun headerExerciseName(position: WorkoutPosition): String? = when (position) {
+    is WorkoutPosition.WorkingSet -> position.slot.exerciseName
+    is WorkoutPosition.Warmup -> position.slot.exerciseName
+    is WorkoutPosition.Resting -> position.slot.exerciseName
+    is WorkoutPosition.PracticeBlock -> position.slot.exerciseName
+    else -> null
+}
+
+private fun headerCategory(position: WorkoutPosition): com.forge.hypertrophy.domain.model.SlotCategory? = when (position) {
+    is WorkoutPosition.WorkingSet -> position.slot.prescription.category
+    is WorkoutPosition.Warmup -> position.slot.prescription.category
+    is WorkoutPosition.Resting -> position.slot.prescription.category
+    is WorkoutPosition.PracticeBlock -> position.slot.prescription.category
     else -> null
 }
 

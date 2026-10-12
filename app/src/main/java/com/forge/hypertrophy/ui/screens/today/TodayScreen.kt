@@ -38,6 +38,7 @@ fun TodayScreen(
     onOpenCardio: () -> Unit,
     onOpenGallery: () -> Unit,
     onOpenRoutine: () -> Unit,
+    onOpenDayPlan: () -> Unit,
     onOpenWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: TodayViewModel = hiltViewModel(),
@@ -95,6 +96,11 @@ fun TodayScreen(
                         label = stringResource(R.string.workout_resume),
                         onClick = { onOpenWorkout(state.activeSessionId ?: 0L) },
                     )
+                    Spacer(Modifier.height(12.dp))
+                    SecondaryButton(
+                        label = stringResource(R.string.dayplan_open_plan),
+                        onClick = onOpenDayPlan,
+                    )
                 }
                 state.scheduledDayId != null && !state.isRestDay -> {
                     SpacerBelowLabel()
@@ -103,6 +109,11 @@ fun TodayScreen(
                             if (state.completedToday) R.string.workout_restart else R.string.workout_start,
                         ),
                         onClick = { viewModel.onEvent(TodayEvent.StartWorkout) },
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    SecondaryButton(
+                        label = stringResource(R.string.dayplan_open_plan),
+                        onClick = onOpenDayPlan,
                     )
                 }
                 state.isRestDay -> {

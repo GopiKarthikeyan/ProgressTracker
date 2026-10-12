@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,9 +14,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.MoreVert
@@ -49,14 +55,17 @@ import androidx.compose.ui.unit.dp
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.model.ProgressionAction
 import com.forge.hypertrophy.domain.model.SetSide
+import com.forge.hypertrophy.domain.model.WarmupStep
 import com.forge.hypertrophy.domain.workout.JointFlags
 import com.forge.hypertrophy.domain.workout.TimerPhase
+import com.forge.hypertrophy.domain.workout.TimerSnapshot
 import com.forge.hypertrophy.domain.workout.WorkoutPosition
 import com.forge.hypertrophy.domain.workout.setReadout
 import com.forge.hypertrophy.domain.workout.showsHold
 import com.forge.hypertrophy.domain.workout.showsReps
 import com.forge.hypertrophy.domain.workout.showsWeight
 import com.forge.hypertrophy.ui.components.CardShape
+import com.forge.hypertrophy.ui.components.ExerciseSilhouette
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.ProgressRing
 import com.forge.hypertrophy.ui.components.SecondaryButton
@@ -80,6 +89,9 @@ internal fun WorkoutHeader(
     showMore: Boolean,
     onBack: () -> Unit,
     onMore: () -> Unit,
+    exerciseName: String? = null,
+    category: com.forge.hypertrophy.domain.model.SlotCategory? = null,
+    showSilhouette: Boolean = false,
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -88,6 +100,14 @@ internal fun WorkoutHeader(
     ) {
         BackButton(onClick = onBack, size = TouchTargets.Workout)
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (showSilhouette && (exerciseName != null || category != null)) {
+                ExerciseSilhouette(
+                    exerciseName = exerciseName,
+                    category = category,
+                    size = 56.dp,
+                )
+                Spacer(Modifier.height(8.dp))
+            }
             Text(
                 text = title,
                 color = Ink,
@@ -471,7 +491,16 @@ internal fun RestCard(
 private fun NextUpCard(next: NextUp) {
     SurfaceCard(color = Sand) {
         Text(stringResource(R.string.workout_next_title), color = Muted, style = MaterialTheme.typography.labelLarge)
-        Text(next.exerciseName, color = Ink, style = MaterialTheme.typography.titleLarge)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            ExerciseSilhouette(exerciseName = next.exerciseName)
+            Text(next.exerciseName, color = Ink, style = MaterialTheme.typography.titleLarge)
+        }
+        nextPrescriptionLine(next)?.let { line ->
+            Text(line, color = Ink, style = MaterialTheme.typography.titleMedium)
+        }
         PlatesLine(next.platesPerSideKg)
         if (next.warmup.isNotEmpty()) {
             Text(stringResource(R.string.workout_warmup_title), color = Muted, style = MaterialTheme.typography.labelLarge)
@@ -483,6 +512,119 @@ private fun NextUpCard(next: NextUp) {
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun nextPrescriptionLine(next: NextUp): String? {
+    val weight = next.weightKg ?: return null
+    val target = when {
+        next.holdSec != null -> stringResource(R.string.workout_next_hold, next.holdSec)
+        next.repsLow != null && next.repsHigh != null && next.repsLow != next.repsHigh ->
+            stringResource(R.string.workout_next_reps_range, next.repsLow, next.repsHigh)
+        next.repsLow != null -> stringResource(R.string.workout_next_reps_single, next.repsLow)
+        next.repsHigh != null -> stringResource(R.string.workout_next_reps_single, next.repsHigh)
+        else -> null
+    } ?: return null
+    return stringResource(R.string.workout_next_prescription, formatKg(weight), target)
+}
+
+@Composable
+internal fun WarmupCard(
+    pos: WorkoutPosition.Warmup,
+    timer: TimerSnapshot,
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            stringResource(R.string.workout_warmup_phase_title),
+            color = Muted,
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Text(pos.slot.exerciseName, color = Ink, style = MaterialTheme.typography.titleLarge)
+        WarmupSteps(pos.steps)
+        val fraction = blockProgress(pos.slot.sessionSlotId, timer.remainingMillis, timer.phase)
+        ProgressRing(progress = fraction, size = 160.dp, stroke = 12.dp) {
+            NumericText(
+                text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
+                color = Ink,
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WarmupSteps(steps: List<WarmupStep>) {
+    SurfaceCard(color = Sand) {
+        steps.forEach { step ->
+            Text(
+                stringResource(R.string.workout_warmup_step, formatKg(step.weightKg), step.reps),
+                color = Ink,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+        }
+    }
+}
+
+@Composable
+internal fun SlotStrip(items: List<SlotStripItem>) {
+    if (items.isEmpty()) return
+    val listState = rememberLazyListState()
+    val currentIndex = items.indexOfFirst { it.status == SlotStripStatus.CURRENT }
+    LaunchedEffect(currentIndex) {
+        if (currentIndex >= 0) listState.animateScrollToItem(currentIndex)
+    }
+    LazyRow(
+        state = listState,
+        modifier = Modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        items(items, key = { it.sessionSlotId }) { item ->
+            SlotChip(item)
+        }
+    }
+}
+
+@Composable
+private fun SlotChip(item: SlotStripItem) {
+    val background = when (item.status) {
+        SlotStripStatus.CURRENT -> RoseSoft
+        SlotStripStatus.FINISHED -> Sand
+        SlotStripStatus.UPCOMING -> White
+    }
+    val border = when (item.status) {
+        SlotStripStatus.CURRENT -> Rose
+        else -> Ink.copy(alpha = 0.15f)
+    }
+    Column(
+        modifier = Modifier
+            .heightIn(min = TouchTargets.Workout)
+            .widthIn(min = 88.dp, max = 120.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(background)
+            .border(BorderStroke(1.dp, border), RoundedCornerShape(12.dp))
+            .padding(horizontal = 10.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        ExerciseSilhouette(
+            exerciseName = item.name,
+            size = 40.dp,
+        )
+        Text(
+            text = item.name,
+            color = if (item.status == SlotStripStatus.FINISHED) Muted else Ink,
+            style = MaterialTheme.typography.labelMedium,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 

@@ -54,7 +54,10 @@ data class TimerSnapshot(
 }
 
 const val REST_WARNING_MILLIS = 15_000L
+const val REST_TEN_SECOND_MILLIS = 10_000L
 const val TIMER_STEP_MILLIS = 30_000L
+/** In-app and notification rest adjust step (±30s). */
+const val REST_ADJUST_STEP_MILLIS = TIMER_STEP_MILLIS
 
 fun projectTimer(spec: TimerSpec?, nowElapsedRealtime: Long): TimerSnapshot {
     if (spec == null) return TimerSnapshot.Idle

@@ -19,6 +19,8 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
 import com.forge.hypertrophy.domain.model.SlotCategory
+import com.forge.hypertrophy.ui.components.ExercisePickItem
+import com.forge.hypertrophy.ui.components.ExercisePickerList
 import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
@@ -30,20 +32,23 @@ fun SlotEditorScreen(
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     BuilderColumn(title = stringResource(R.string.builder_slots), onBack = onBack, modifier = modifier) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(stringResource(R.string.builder_exercise))
-            ChoiceButtons(
-                labels = state.exercises.map { it.name },
-                selected = state.exercises.indexOfFirst { it.id == state.exerciseId },
-                onSelect = { index -> viewModel.onEvent(SlotEditorEvent.Exercise(state.exercises[index].id)) },
-            )
-        }
-
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.builder_category))
             ChoiceButtons(
                 labels = SlotCategory.entries.map { it.name },
                 selected = SlotCategory.entries.indexOf(state.category),
                 onSelect = { viewModel.onEvent(SlotEditorEvent.Category(SlotCategory.entries[it])) },
+            )
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(R.string.builder_exercise))
+            ExercisePickerList(
+                items = state.filteredExercises.map {
+                    ExercisePickItem(it.id, it.name, it.primaryMuscles)
+                },
+                selectedId = state.exerciseId,
+                category = state.category,
+                onSelect = { viewModel.onEvent(SlotEditorEvent.Exercise(it)) },
             )
         }
 
@@ -232,17 +237,16 @@ fun SlotEditorScreen(
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.builder_alternatives))
-            FlowRow(modifier = Modifier.fillMaxWidth()) {
-                state.exercises.filter { it.id != state.exerciseId }.forEach { exercise ->
-                    EditorButton(
-                        label = exercise.name,
-                        onClick = { viewModel.onEvent(SlotEditorEvent.ToggleAlternative(exercise.id)) },
-                    )
-                }
-            }
-            state.exercises.filter { it.id in state.alternativeExerciseIds }.forEach { exercise ->
-                Text(exercise.name, color = NeonAccent)
-            }
+            ExercisePickerList(
+                items = state.filteredExercises
+                    .filter { it.id != state.exerciseId }
+                    .map { ExercisePickItem(it.id, it.name, it.primaryMuscles) },
+                selectedId = 0,
+                category = state.category,
+                onSelect = { viewModel.onEvent(SlotEditorEvent.ToggleAlternative(it)) },
+                selectedIds = state.alternativeExerciseIds,
+                multiSelect = true,
+            )
         }
 
         val error = state.validationError

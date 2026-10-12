@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- back lever: body horizontal under bar, face down, arms behind -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,8h36v3H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20,11h8v6h-8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M8,20h32v5H8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M38,18c-2,0 -3.5,1.5 -3.5,3.5S36,25 38,25s3.5,-1.5 3.5,-3.5S40,18 38,18z" />
+</vector>

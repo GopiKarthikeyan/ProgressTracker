@@ -241,6 +241,14 @@ class AppDatabaseMigrationTest {
         migrated.close()
     }
 
+    @Test
+    fun migratesVersion7To8ForMobilityCategoryRelease() {
+        helper.createDatabase(DB, 7).close()
+        val migrated = helper.runMigrationsAndValidate(DB, 8, true, MIGRATION_7_8)
+        assertEquals(8, migrated.version)
+        migrated.close()
+    }
+
     /**
      * Smoke test for the harness. Creates version 1 from the exported schema and
      * validates that same database against the same schema, with no migration in

@@ -73,6 +73,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import com.forge.hypertrophy.domain.workout.dismissWarmup
+import com.forge.hypertrophy.domain.workout.warmupDurationSeconds
+import com.forge.hypertrophy.domain.workout.warmupKey
+import com.forge.hypertrophy.domain.workout.warmupTimer
 
 const val SKIPPED_REASON = "skipped"
 
@@ -80,6 +84,22 @@ data class NextUp(
     val exerciseName: String,
     val platesPerSideKg: List<Double>,
     val warmup: List<WarmupStep>,
+    val weightKg: Double? = null,
+    val repsLow: Int? = null,
+    val repsHigh: Int? = null,
+    val holdSec: Int? = null,
+)
+
+enum class SlotStripStatus {
+    FINISHED,
+    CURRENT,
+    UPCOMING,
+}
+
+data class SlotStripItem(
+    val sessionSlotId: Long,
+    val name: String,
+    val status: SlotStripStatus,
 )
 
 data class PrNote(
@@ -124,6 +144,7 @@ data class WorkoutUiState(
     val lastLoggedExerciseId: Long? = null,
     val importingClip: Boolean = false,
     val importFailed: Boolean = false,
+    val slotStrip: List<SlotStripItem> = emptyList(),
 )
 
 sealed interface WorkoutEvent {
@@ -133,6 +154,8 @@ sealed interface WorkoutEvent {
     data class CheckOff(val itemId: Long) : WorkoutEvent
     data class Primary(val method: EntryMethod) : WorkoutEvent
     data class Adjust(val weightDeltaKg: Double = 0.0, val repDelta: Int = 0, val holdDelta: Int = 0) : WorkoutEvent
+    /** Positive lengthens rest; negative shortens. Typical UI step is ±15s. */
+    data class AdjustRest(val deltaMillis: Long) : WorkoutEvent
     data class Skip(val reason: String) : WorkoutEvent
     data class ChooseAlternative(val exerciseId: Long?) : WorkoutEvent
     data class MoveSlot(val from: Int, val to: Int) : WorkoutEvent
@@ -182,6 +205,9 @@ class WorkoutViewModel @Inject constructor(
     private var handsFreePulse = 0
     private var lastLoggedSetId: Long? = null
     private var lastLoggedExerciseId: Long? = null
+    /** Cached plate inventory so publish/nextUp unused don't await preferences each tick. */
+    private var plateInventoryKg: List<Double> = emptyList()
+    private var plateInventoryLoaded = false
 
     /**
      * Events run one at a time. [machine] is mutated across suspension points
@@ -204,8 +230,15 @@ class WorkoutViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
+            preferences.plateInventoryKg.collect { inventory ->
+                plateInventoryKg = inventory
+                plateInventoryLoaded = true
+            }
+        }
+        viewModelScope.launch {
             timer.snapshot.collect { snap ->
                 _uiState.update { it.copy(timer = snap) }
+                maybeAutoAdvance(snap)
             }
         }
         viewModelScope.launch {
@@ -243,6 +276,7 @@ class WorkoutViewModel @Inject constructor(
                 machine = adjustDraft(machine, event.weightDeltaKg, event.repDelta, event.holdDelta)
                 publish()
             }
+            is WorkoutEvent.AdjustRest -> adjustRest(event.deltaMillis)
             is WorkoutEvent.Skip -> skip(event.reason)
             is WorkoutEvent.ChooseAlternative -> choose(event.exerciseId)
             is WorkoutEvent.MoveSlot -> move(event.from, event.to)
@@ -342,6 +376,13 @@ class WorkoutViewModel @Inject constructor(
                 publish()
                 true
             }
+            is WorkoutPosition.Warmup -> {
+                machine = dismissWarmup(machine)
+                armed = null
+                timer.stop()
+                publish()
+                true
+            }
             else -> false
         }
         if (acted && method == EntryMethod.HARDWARE_KEY) {
@@ -384,12 +425,22 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun skip(reason: String) {
-        if (workoutPosition(machine) is WorkoutPosition.Resting) {
-            machine = dismissRest(machine)
-            armed = null
-            timer.stop()
-            publish()
-            return
+        when (workoutPosition(machine)) {
+            is WorkoutPosition.Resting -> {
+                machine = dismissRest(machine)
+                armed = null
+                timer.stop()
+                publish()
+                return
+            }
+            is WorkoutPosition.Warmup -> {
+                machine = dismissWarmup(machine)
+                armed = null
+                timer.stop()
+                publish()
+                return
+            }
+            else -> Unit
         }
         val slot = currentSlot() ?: return
         machine = skipSlot(machine, slot.sessionSlotId, reason)
@@ -397,6 +448,53 @@ class WorkoutViewModel @Inject constructor(
         armed = null
         timer.stop()
         publish()
+    }
+
+    private suspend fun adjustRest(deltaMillis: Long) {
+        val resting = workoutPosition(machine) as? WorkoutPosition.Resting ?: return
+        if (resting.kind == RestKind.AS_NEEDED || deltaMillis == 0L) return
+        val remaining = timer.snapshot.value.remainingMillis
+        val clamped = when {
+            deltaMillis > 0L -> deltaMillis
+            else -> maxOf(deltaMillis, -remaining)
+        }
+        if (clamped == 0L) return
+        timer.adjust(clamped)
+        _uiState.update { it.copy(timer = timer.snapshot.value) }
+    }
+
+    private fun maybeAutoAdvance(snap: TimerSnapshot) {
+        if (snap.phase != TimerPhase.FINISHED) return
+        val position = workoutPosition(machine)
+        val shouldAdvance = when (position) {
+            is WorkoutPosition.Resting -> position.kind != RestKind.AS_NEEDED
+            is WorkoutPosition.Warmup -> true
+            else -> false
+        }
+        if (!shouldAdvance) return
+        viewModelScope.launch {
+            events.withLock {
+                val current = workoutPosition(machine)
+                when (current) {
+                    is WorkoutPosition.Resting -> {
+                        if (current.kind == RestKind.AS_NEEDED) return@withLock
+                        if (timer.snapshot.value.phase != TimerPhase.FINISHED) return@withLock
+                        machine = dismissRest(machine)
+                        armed = null
+                        timer.stop()
+                        publish()
+                    }
+                    is WorkoutPosition.Warmup -> {
+                        if (timer.snapshot.value.phase != TimerPhase.FINISHED) return@withLock
+                        machine = dismissWarmup(machine)
+                        armed = null
+                        timer.stop()
+                        publish()
+                    }
+                    else -> Unit
+                }
+            }
+        }
     }
 
     private suspend fun choose(exerciseId: Long?) {
@@ -567,6 +665,7 @@ class WorkoutViewModel @Inject constructor(
     }
 
     private suspend fun publish() {
+        ensurePlateInventory()
         val open = workouts.findSession(sessionId)
         if (
             machine.started &&
@@ -579,6 +678,7 @@ class WorkoutViewModel @Inject constructor(
         }
         val session = workouts.findSession(sessionId)
         val finished = session?.status == SessionStatus.COMPLETED
+        skipEmptyWarmups()
         val position = if (finished) WorkoutPosition.Summary else workoutPosition(machine)
         if (!accept(position)) return
         val shown = decorate(position)
@@ -620,7 +720,24 @@ class WorkoutViewModel @Inject constructor(
             canRemoveSet = removeFloor != null && canRemoveExtraSet(machine, removeFloor),
             lastLoggedSetId = lastLoggedSetId,
             lastLoggedExerciseId = lastLoggedExerciseId,
+            slotStrip = slotStrip(shown),
         )
+    }
+
+    /** Barbell compounds without a loadable ramp skip warm-up guidance. */
+    private fun skipEmptyWarmups() {
+        while (true) {
+            val warmup = workoutPosition(machine) as? WorkoutPosition.Warmup ?: return
+            val steps = rampFor(warmup.slot)
+            if (steps.isNotEmpty()) return
+            machine = dismissWarmup(machine)
+        }
+    }
+
+    private suspend fun ensurePlateInventory() {
+        if (plateInventoryLoaded) return
+        plateInventoryKg = preferences.plateInventoryKg.first()
+        plateInventoryLoaded = true
     }
 
     private fun accept(next: WorkoutPosition, resetSession: Boolean = false): Boolean {
@@ -638,6 +755,18 @@ class WorkoutViewModel @Inject constructor(
                 if (armed != key) {
                     armed = key
                     timer.start(restTimer(position, now, machine.transitionRestSeconds, cueFor(position.next), cuesEnabled))
+                } else {
+                    timer.refresh(now)
+                }
+            }
+            is WorkoutPosition.Warmup -> {
+                val key = warmupKey(position.slot.sessionSlotId)
+                if (armed != key) {
+                    armed = key
+                    val cue = position.steps.firstOrNull()?.let { step ->
+                        "Warm-up: ${step.weightKg} kg × ${step.reps}"
+                    } ?: position.slot.exerciseName
+                    timer.start(warmupTimer(position, now, cue, cuesEnabled))
                 } else {
                     timer.refresh(now)
                 }
@@ -691,6 +820,7 @@ class WorkoutViewModel @Inject constructor(
     private fun refreshClock() {
         val now = elapsed.elapsedRealtime()
         timer.refresh(now)
+        maybeAutoAdvance(timer.snapshot.value)
         val until = handsFree.undoUntilElapsedRealtime ?: return
         if (now <= until) return
         handsFree.clearUndo()
@@ -714,25 +844,64 @@ class WorkoutViewModel @Inject constructor(
         )
     }
 
-    private suspend fun nextUp(position: WorkoutPosition): NextUp? {
+    private fun nextUp(position: WorkoutPosition): NextUp? {
         val slot = (position as? WorkoutPosition.Resting)?.next ?: return null
         val suggestion = suggested(slot)
         val weight = suggestion.weightKg
-        val inventory = preferences.plateInventoryKg.first()
         val bar = slot.barWeightKg ?: 20.0
-        val load = platesPerSide(weight, bar, inventory)
-        val warmup = if (weight == null) {
-            emptyList()
-        } else {
-            warmups.ramp(slot.equipment, slot.prescription.category, weight, bar, inventory)
-        }
-        return NextUp(slot.exerciseName, load, warmup)
+        val load = platesPerSide(weight, bar, plateInventoryKg)
+        val warmup = rampFor(slot)
+        return NextUp(
+            exerciseName = slot.exerciseName,
+            platesPerSideKg = load,
+            warmup = warmup,
+            weightKg = weight,
+            repsLow = slot.prescription.repsLow,
+            repsHigh = slot.prescription.repsHigh,
+            holdSec = suggestion.holdSec,
+        )
     }
 
-    private suspend fun decorate(position: WorkoutPosition): WorkoutPosition {
-        val plated = withPlates(position)
-        val working = plated as? WorkoutPosition.WorkingSet ?: return plated
+    private fun decorate(position: WorkoutPosition): WorkoutPosition {
+        val enriched = when (position) {
+            is WorkoutPosition.Warmup -> {
+                val steps = rampFor(position.slot)
+                position.copy(steps = steps, durationSec = warmupDurationSeconds(steps.size))
+            }
+            else -> withPlates(position)
+        }
+        val working = enriched as? WorkoutPosition.WorkingSet ?: return enriched
         return working.copy(regulation = regulationFor(working))
+    }
+
+    private fun rampFor(slot: WorkoutSlot): List<WarmupStep> {
+        val weight = suggested(slot).weightKg ?: return emptyList()
+        val bar = slot.barWeightKg ?: 20.0
+        return warmups.ramp(slot.equipment, slot.prescription.category, weight, bar, plateInventoryKg)
+    }
+
+    private fun slotStrip(position: WorkoutPosition): List<SlotStripItem> {
+        val ordered = machine.slots.filter { !it.skipped }.sortedBy { it.sortOrder }
+        if (ordered.isEmpty()) return emptyList()
+        if (position is WorkoutPosition.Summary || position is WorkoutPosition.Cooldown) {
+            return ordered.map { SlotStripItem(it.sessionSlotId, it.exerciseName, SlotStripStatus.FINISHED) }
+        }
+        val currentId = when (position) {
+            is WorkoutPosition.WorkingSet -> position.slot.sessionSlotId
+            is WorkoutPosition.Resting -> position.slot.sessionSlotId
+            is WorkoutPosition.Warmup -> position.slot.sessionSlotId
+            is WorkoutPosition.PracticeBlock -> position.slot.sessionSlotId
+            else -> return emptyList()
+        }
+        val currentIndex = ordered.indexOfFirst { it.sessionSlotId == currentId }.coerceAtLeast(0)
+        return ordered.mapIndexed { index, slot ->
+            val status = when {
+                index < currentIndex -> SlotStripStatus.FINISHED
+                index == currentIndex -> SlotStripStatus.CURRENT
+                else -> SlotStripStatus.UPCOMING
+            }
+            SlotStripItem(slot.sessionSlotId, slot.exerciseName, status)
+        }
     }
 
     private fun regulationFor(working: WorkoutPosition.WorkingSet): RegulationPrompt? {
@@ -752,11 +921,10 @@ class WorkoutViewModel @Inject constructor(
         suggestedWeightKg = suggestedWeightKg,
     )
 
-    private suspend fun withPlates(position: WorkoutPosition): WorkoutPosition {
+    private fun withPlates(position: WorkoutPosition): WorkoutPosition {
         val working = position as? WorkoutPosition.WorkingSet ?: return position
-        val inventory = preferences.plateInventoryKg.first()
         val bar = working.slot.barWeightKg ?: 20.0
-        return working.copy(requiredPlates = platesPerSide(working.suggestion.weightKg, bar, inventory))
+        return working.copy(requiredPlates = platesPerSide(working.suggestion.weightKg, bar, plateInventoryKg))
     }
 
     private fun platesPerSide(weightKg: Double?, barKg: Double, inventoryKg: List<Double>): List<Double> {
@@ -791,6 +959,7 @@ class WorkoutViewModel @Inject constructor(
         is WorkoutPosition.WorkingSet -> position.slot
         is WorkoutPosition.PracticeBlock -> position.slot
         is WorkoutPosition.Resting -> position.slot
+        is WorkoutPosition.Warmup -> position.slot
         else -> null
     }
 

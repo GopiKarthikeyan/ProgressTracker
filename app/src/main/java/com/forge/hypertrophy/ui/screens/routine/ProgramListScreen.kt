@@ -35,6 +35,7 @@ fun ProgramListScreen(
     onOpenProgram: (Long) -> Unit,
     onOpenExercises: () -> Unit,
     onOpenSkills: () -> Unit,
+    onOpenDayPlan: () -> Unit,
     onImport: (uri: String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -70,6 +71,11 @@ fun ProgramListScreen(
                 label = stringResource(R.string.builder_import),
                 onClick = { importLauncher.launch(OpenableMimeTypes) },
                 modifier = Modifier.fillMaxWidth()
+            )
+            EditorButton(
+                label = stringResource(R.string.dayplan_open_plan),
+                onClick = onOpenDayPlan,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
 

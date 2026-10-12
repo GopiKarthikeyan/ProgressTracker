@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- standing knee-over-toe dorsiflex: front knee driven forward, rear foot -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M28,4c-2.2,0 -4,1.8 -4,4s1.8,4 4,4 4,-1.8 4,-4 -1.8,-4 -4,-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M24,12h8v10h-8z" />
+    <!-- front shin angled / knee forward -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20,22h6v14h-6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M16,36h12v4H16z" />
+    <!-- rear leg extended back -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M30,24h4v12h-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M30,36h10v4H30z" />
+    <!-- wall cue -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M8,8h3v32H8z" />
+</vector>

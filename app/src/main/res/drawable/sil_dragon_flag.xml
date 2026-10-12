@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- dragon flag: shoulders anchored, rigid body diagonal up -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,36h12v4H4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,20h5v20H4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,30h10v6H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M14,26l22,-16 3,4 -22,16z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M32,8l8,-2 2,4 -8,4z" />
+</vector>

@@ -18,6 +18,7 @@ class WorkoutPositionTransitionValidator {
         PREP,
         PRACTICE_BLOCK,
         WORKING_SET,
+        WARMUP,
         RESTING,
         COOLDOWN,
         SUMMARY,
@@ -28,6 +29,7 @@ class WorkoutPositionTransitionValidator {
         is WorkoutPosition.Prep -> Phase.PREP
         is WorkoutPosition.PracticeBlock -> Phase.PRACTICE_BLOCK
         is WorkoutPosition.WorkingSet -> Phase.WORKING_SET
+        is WorkoutPosition.Warmup -> Phase.WARMUP
         is WorkoutPosition.Resting -> Phase.RESTING
         is WorkoutPosition.Cooldown -> Phase.COOLDOWN
         WorkoutPosition.Summary -> Phase.SUMMARY
@@ -40,6 +42,7 @@ class WorkoutPositionTransitionValidator {
                 Phase.PREP,
                 Phase.PRACTICE_BLOCK,
                 Phase.WORKING_SET,
+                Phase.WARMUP,
                 Phase.RESTING,
                 Phase.COOLDOWN,
                 Phase.SUMMARY,
@@ -48,17 +51,28 @@ class WorkoutPositionTransitionValidator {
                 Phase.PREP,
                 Phase.PRACTICE_BLOCK,
                 Phase.WORKING_SET,
+                Phase.WARMUP,
                 Phase.COOLDOWN,
                 Phase.SUMMARY,
             ),
             Phase.PRACTICE_BLOCK to setOf(
                 Phase.PRACTICE_BLOCK,
                 Phase.WORKING_SET,
+                Phase.WARMUP,
                 Phase.RESTING,
                 Phase.COOLDOWN,
                 Phase.SUMMARY,
             ),
             Phase.WORKING_SET to setOf(
+                Phase.WORKING_SET,
+                Phase.PRACTICE_BLOCK,
+                Phase.WARMUP,
+                Phase.RESTING,
+                Phase.COOLDOWN,
+                Phase.SUMMARY,
+            ),
+            Phase.WARMUP to setOf(
+                Phase.WARMUP,
                 Phase.WORKING_SET,
                 Phase.PRACTICE_BLOCK,
                 Phase.RESTING,
@@ -68,6 +82,7 @@ class WorkoutPositionTransitionValidator {
             Phase.RESTING to setOf(
                 Phase.RESTING,
                 Phase.WORKING_SET,
+                Phase.WARMUP,
                 Phase.PRACTICE_BLOCK,
                 Phase.COOLDOWN,
                 Phase.SUMMARY,

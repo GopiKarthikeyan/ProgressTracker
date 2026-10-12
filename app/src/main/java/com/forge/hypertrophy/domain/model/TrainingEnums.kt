@@ -23,6 +23,7 @@ enum class ChecklistPhase {
 
 enum class SlotCategory {
     PREP,
+    MOBILITY,
     SKILL,
     COMPOUND,
     ISOLATION,

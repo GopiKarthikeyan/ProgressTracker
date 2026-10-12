@@ -21,6 +21,7 @@ import com.forge.hypertrophy.domain.workout.SkillHoldHint
 import com.forge.hypertrophy.domain.workout.WorkoutMachineState
 import com.forge.hypertrophy.domain.workout.WorkoutSlot
 import com.forge.hypertrophy.domain.workout.restoredDismissedRests
+import com.forge.hypertrophy.domain.workout.restoredDismissedWarmups
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
@@ -51,6 +52,7 @@ class LoadWorkoutUseCase @Inject constructor(
             leftPrep = progressed,
             leftCooldown = session.status == SessionStatus.COMPLETED,
             dismissedRests = restoredDismissedRests(workoutSlots),
+            dismissedWarmups = restoredDismissedWarmups(workoutSlots),
             transitionRestSeconds = preferences.transitionRestSeconds.first(),
             previousByExercise = previousSets(sessionId, workoutSlots),
             ownHistoryBySessionSlot = ownHistory(sessionId, workoutSlots),

@@ -56,6 +56,7 @@ import java.util.Locale
 fun DashboardScreen(
     onOpenWeeklyReview: () -> Unit,
     onOpenSessions: () -> Unit,
+    onOpenDayPlan: () -> Unit,
     onOpenWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = hiltViewModel(),
@@ -66,6 +67,7 @@ fun DashboardScreen(
         onEvent = viewModel::onEvent,
         onOpenWeeklyReview = onOpenWeeklyReview,
         onOpenSessions = onOpenSessions,
+        onOpenDayPlan = onOpenDayPlan,
         onOpenWorkout = onOpenWorkout,
         modifier = modifier,
     )
@@ -77,6 +79,7 @@ fun DashboardContent(
     onEvent: (DashboardEvent) -> Unit,
     onOpenWeeklyReview: () -> Unit,
     onOpenSessions: () -> Unit,
+    onOpenDayPlan: () -> Unit,
     onOpenWorkout: (Long) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -102,6 +105,11 @@ fun DashboardContent(
                 modifier = Modifier.weight(1f),
             )
         }
+        SecondaryButton(
+            label = stringResource(R.string.dayplan_open_plan),
+            onClick = onOpenDayPlan,
+            modifier = Modifier.fillMaxWidth(),
+        )
         WeekChips(state.heatmap, state.calendarToday)
         StreakSection(state.currentStreak, state.bestStreak)
         TodaySection(state.today, onEvent, onOpenWorkout)

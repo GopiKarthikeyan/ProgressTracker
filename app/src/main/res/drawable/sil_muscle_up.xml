@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- muscle-up: torso above bar, arms pressing down, legs hanging -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,14h40v3H4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18,4c-2.5,0 -4.5,2 -4.5,4.5S15.5,13 18,13s4.5,-2 4.5,-4.5S20.5,4 18,4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M12,10h16v12H12z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10,14h6v8h-6zM26,14h6v8h-6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M16,20h10v22H16z" />
+</vector>

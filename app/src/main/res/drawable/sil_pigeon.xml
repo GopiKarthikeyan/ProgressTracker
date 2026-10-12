@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- pigeon: front shin across, rear leg extended back, torso upright -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18,8c-2.5,0 -4.5,2 -4.5,4.5S15.5,17 18,17s4.5,-2 4.5,-4.5S20.5,8 18,8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M14,16h10v14H14z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M8,30h22v5H8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M28,28h14v5H28z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M36,20h5v10h-5z" />
+</vector>

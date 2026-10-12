@@ -21,6 +21,7 @@ import com.forge.hypertrophy.ui.screens.routine.SkillLibraryScreen
 import com.forge.hypertrophy.ui.screens.routine.SkillLibraryViewModel
 import com.forge.hypertrophy.ui.screens.routine.SlotEditorScreen
 import com.forge.hypertrophy.ui.screens.routine.SlotEditorViewModel
+import com.forge.hypertrophy.ui.screens.dayplan.DayPlanScreen
 
 fun NavGraphBuilder.routineGraph(navController: NavHostController) {
     navigation<RoutineRoute>(startDestination = ProgramListRoute) {
@@ -31,7 +32,17 @@ fun NavGraphBuilder.routineGraph(navController: NavHostController) {
                 onOpenProgram = { navController.navigate(ProgramEditorRoute(it)) },
                 onOpenExercises = { navController.navigate(ExerciseLibraryRoute) },
                 onOpenSkills = { navController.navigate(SkillLibraryRoute) },
+                onOpenDayPlan = { navController.navigate(DayPlanRoute) },
                 onImport = { uri -> navController.navigate(ImportPreviewRoute(uri = uri)) },
+            )
+        }
+        composable<DayPlanRoute> {
+            DayPlanScreen(
+                onBack = { navController.popBackStack() },
+                onOpenSettings = { navController.navigate(SettingsRoute) },
+                onOpenWorkout = { navController.navigate(WorkoutRoute(it)) },
+                onOpenDayEditor = { navController.navigate(DayEditorRoute(it)) },
+                onOpenSlotEditor = { navController.navigate(SlotEditorRoute(it)) },
             )
         }
         composable<ProgramEditorRoute> {

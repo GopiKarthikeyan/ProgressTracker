@@ -4,7 +4,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 const val DATABASE_NAME = "hypertrophy.db"
-const val SCHEMA_VERSION = 7
+const val SCHEMA_VERSION = 8
 
 val MIGRATION_1_2 = object : Migration(1, 2) {
     override fun migrate(db: SupportSQLiteDatabase) {
@@ -79,6 +79,16 @@ val MIGRATION_6_7 = object : Migration(6, 7) {
     }
 }
 
+/**
+ * App-level SlotCategory.MOBILITY addition. Category is stored as TEXT; the
+ * table shape is unchanged, but the schema version advances with the release.
+ */
+val MIGRATION_7_8 = object : Migration(7, 8) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        // No structural change — MOBILITY is a new SlotCategory enum value.
+    }
+}
+
 /** Real migrations only. An empty list never falls back to a destructive rebuild. */
 object DatabaseMigrations {
     val ALL: Array<Migration> = arrayOf(
@@ -88,5 +98,6 @@ object DatabaseMigrations {
         MIGRATION_4_5,
         MIGRATION_5_6,
         MIGRATION_6_7,
+        MIGRATION_7_8,
     )
 }

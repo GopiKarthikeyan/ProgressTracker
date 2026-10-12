@@ -157,6 +157,31 @@ class WorkoutViewModelTest {
     }
 
     @Test
+    fun finishedRestAutoAdvancesToTheNextWorkingSet() = workoutTest {
+        workoutRobot(sets = 2) {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            logSet()
+            assertState<WorkoutPosition.Resting>()
+            advanceRestPastFinish()
+            assertState<WorkoutPosition.WorkingSet>()
+        }
+    }
+
+    @Test
+    fun restCardShowsNextPrescription() = workoutTest {
+        workoutRobot(sets = 2) {
+            startSession()
+            skipReadiness()
+            checkOffPrep()
+            adjustWeight(60.0)
+            logSet()
+            assertNextUp(weightKg = 60.0, repsLow = 5, repsHigh = 8)
+        }
+    }
+
+    @Test
     fun restoreResumesALiveRestAndSkipsAFinishedOne() = workoutTest {
         workoutRobot {
             startSession()
@@ -311,7 +336,7 @@ class WorkoutViewModelTest {
     ) {
         private val preferences = FakePreferences()
         private val elapsed = SchedulerElapsedClock(scope)
-        private var timer = FakeWorkoutTimer()
+        private var timer = FakeWorkoutTimer(elapsed)
         private var viewModel = newViewModel()
         private var sessionId: Long = 0
         private var routineExerciseId: Long = 0
@@ -368,7 +393,12 @@ class WorkoutViewModelTest {
                 val prep = it.position as? WorkoutPosition.Prep
                 prep != null && prep.items.all { step -> step.done }
             }
-            after(WorkoutEvent.Primary(EntryMethod.SCREEN)) { it.position is WorkoutPosition.WorkingSet }
+            after(WorkoutEvent.Primary(EntryMethod.SCREEN)) {
+                it.position is WorkoutPosition.WorkingSet || it.position is WorkoutPosition.Warmup
+            }
+            if (viewModel.uiState.value.position is WorkoutPosition.Warmup) {
+                after(WorkoutEvent.Primary(EntryMethod.SCREEN)) { it.position is WorkoutPosition.WorkingSet }
+            }
         }
 
         suspend fun skipRest() {
@@ -409,6 +439,16 @@ class WorkoutViewModelTest {
         fun advanceRest(seconds: Long) {
             scope.advanceTimeBy(seconds * 1_000)
             scope.runCurrent()
+        }
+
+        /** Past rest max (90s) so the timer reaches FINISHED and auto-dismisses. */
+        suspend fun advanceRestPastFinish() {
+            val end = timer.spec?.overtimeEndElapsedRealtime ?: timer.spec?.anchorElapsedRealtime ?: return
+            seekElapsed(end + 1)
+            viewModel.onEvent(WorkoutEvent.Tick)
+            scope.runCurrent()
+            scope.advanceUntilIdle()
+            awaitCollected { it.position is WorkoutPosition.WorkingSet || it.position is WorkoutPosition.Summary }
         }
 
         suspend fun undo() {
@@ -646,13 +686,22 @@ class WorkoutViewModelTest {
             assertTrue(state.position is T)
         }
 
+        suspend fun assertNextUp(weightKg: Double, repsLow: Int, repsHigh: Int) {
+            val state = awaitCollected { it.position is WorkoutPosition.Resting && it.nextUp != null }
+            val next = state.nextUp!!
+            assertEquals("press", next.exerciseName)
+            assertEquals(weightKg, next.weightKg!!, 0.001)
+            assertEquals(repsLow, next.repsLow)
+            assertEquals(repsHigh, next.repsHigh)
+        }
+
         private fun setsForCurrentSlot(): List<SetEntryEntity> {
             val slotId = sessionRepo.slots.values.first { it.sessionId == sessionId }.id
             return sessionRepo.sets.values.filter { it.sessionSlotId == slotId }
         }
 
         private fun reopen() {
-            timer = FakeWorkoutTimer()
+            timer = FakeWorkoutTimer(elapsed)
             viewModel = newViewModel(sessionId)
         }
 
@@ -813,7 +862,9 @@ private class SchedulerElapsedClock(
     }
 }
 
-private class FakeWorkoutTimer : WorkoutTimer {
+private class FakeWorkoutTimer(
+    private val clock: ElapsedRealtimeClock,
+) : WorkoutTimer {
     private val _snapshot = MutableStateFlow(TimerSnapshot.Idle)
     override val snapshot: StateFlow<TimerSnapshot> = _snapshot.asStateFlow()
     private val _commands = MutableSharedFlow<TimerCommand>(extraBufferCapacity = 4)
@@ -822,12 +873,12 @@ private class FakeWorkoutTimer : WorkoutTimer {
 
     override suspend fun start(spec: TimerSpec) {
         this.spec = spec
-        refresh(spec.anchorElapsedRealtime)
+        refresh(clock.elapsedRealtime())
     }
 
     override suspend fun adjust(deltaMillis: Long) {
         spec = spec?.adjust(deltaMillis)
-        refresh(spec?.anchorElapsedRealtime ?: 0)
+        refresh(clock.elapsedRealtime())
     }
 
     override suspend fun stop() {

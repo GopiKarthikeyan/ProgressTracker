@@ -19,6 +19,7 @@ import android.os.VibratorManager
 import android.speech.tts.TextToSpeech
 import com.forge.hypertrophy.R
 import com.forge.hypertrophy.domain.workout.ElapsedRealtimeClock
+import com.forge.hypertrophy.domain.workout.REST_TEN_SECOND_MILLIS
 import com.forge.hypertrophy.domain.workout.TimerCommand
 import com.forge.hypertrophy.domain.workout.TimerKind
 import com.forge.hypertrophy.domain.workout.TimerPhase
@@ -50,6 +51,9 @@ class WorkoutTimerService : Service() {
     private var tickJob: Job? = null
     private var wakeLock: PowerManager.WakeLock? = null
     private var warnedForAnchor: Long? = null
+    private var tenSecondForAnchor: Long? = null
+    private var beepedSecondsForAnchor: Long? = null
+    private var beepedSeconds: Set<Int> = emptySet()
     private var spokenForAnchor: Long? = null
     private var speech: TextToSpeech? = null
     private var speechReady = false
@@ -72,6 +76,10 @@ class WorkoutTimerService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_PLUS_30 -> scope.launch { timer.adjust(PLUS_MILLIS) }
+            ACTION_MINUS_30 -> scope.launch {
+                val remaining = projectTimer(timer.currentSpec(), clock.elapsedRealtime()).remainingMillis
+                timer.adjust(-minOf(PLUS_MILLIS, remaining))
+            }
             ACTION_SKIP -> timer.emit(TimerCommand.SKIP)
             ACTION_COMPLETE -> timer.emit(TimerCommand.COMPLETE_SET)
             ACTION_STOP -> stopClock()
@@ -100,8 +108,9 @@ class WorkoutTimerService : Service() {
         if (snapshot.phase == TimerPhase.WARNING && warnedForAnchor != spec.anchorElapsedRealtime) {
             warnedForAnchor = spec.anchorElapsedRealtime
             dualPulse()
-            chime()
+            chime(ToneGenerator.TONE_PROP_BEEP)
         }
+        playCountdownCues(spec, snapshot)
         // Wait for the engine instead of marking the cue spoken while TTS is still initialising.
         if (speechReady && spec.speak && !spec.cue.isNullOrBlank() && spokenForAnchor != spec.anchorElapsedRealtime) {
             spokenForAnchor = spec.anchorElapsedRealtime
@@ -159,7 +168,31 @@ class WorkoutTimerService : Service() {
         vibrator.vibrate(VibrationEffect.createWaveform(longArrayOf(0, 80, 60, 80), -1))
     }
 
-    private fun chime() {
+    private fun playCountdownCues(spec: TimerSpec, snapshot: com.forge.hypertrophy.domain.workout.TimerSnapshot) {
+        if (spec.kind != TimerKind.COUNTDOWN) return
+        val remaining = snapshot.remainingMillis
+        if (remaining <= 0L) return
+        val anchor = spec.anchorElapsedRealtime
+        if (
+            remaining <= REST_TEN_SECOND_MILLIS &&
+            remaining > 5_000L &&
+            tenSecondForAnchor != anchor
+        ) {
+            tenSecondForAnchor = anchor
+            chime(ToneGenerator.TONE_PROP_ACK)
+        }
+        val wholeSec = (remaining / 1_000L).toInt()
+        if (wholeSec !in 1..5) return
+        if (beepedSecondsForAnchor != anchor) {
+            beepedSecondsForAnchor = anchor
+            beepedSeconds = emptySet()
+        }
+        if (wholeSec in beepedSeconds) return
+        beepedSeconds = beepedSeconds + wholeSec
+        chime(ToneGenerator.TONE_CDMA_PIP, SHORT_BEEP_MILLIS)
+    }
+
+    private fun chime(toneType: Int, durationMillis: Int = TONE_MILLIS) {
         val audio = getSystemService(AUDIO_SERVICE) as AudioManager
         val attributes = AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
@@ -170,9 +203,9 @@ class WorkoutTimerService : Service() {
             .build()
         audio.requestAudioFocus(focus)
         val tone = ToneGenerator(AudioManager.STREAM_NOTIFICATION, TONE_VOLUME)
-        tone.startTone(ToneGenerator.TONE_PROP_BEEP, TONE_MILLIS)
+        tone.startTone(toneType, durationMillis)
         scope.launch {
-            delay(TONE_MILLIS.toLong())
+            delay(durationMillis.toLong())
             tone.release()
             audio.abandonAudioFocusRequest(focus)
         }
@@ -198,6 +231,7 @@ class WorkoutTimerService : Service() {
 
     companion object {
         const val ACTION_PLUS_30 = "com.forge.hypertrophy.timer.PLUS_30"
+        const val ACTION_MINUS_30 = "com.forge.hypertrophy.timer.MINUS_30"
         const val ACTION_SKIP = "com.forge.hypertrophy.timer.SKIP"
         const val ACTION_COMPLETE = "com.forge.hypertrophy.timer.COMPLETE"
         const val ACTION_STOP = "com.forge.hypertrophy.timer.STOP"
@@ -206,6 +240,7 @@ class WorkoutTimerService : Service() {
         private const val PLUS_MILLIS = 30_000L
         private const val TICK_MILLIS = 1_000L
         private const val TONE_MILLIS = 180
+        private const val SHORT_BEEP_MILLIS = 90
         private const val TONE_VOLUME = 80
     }
 }

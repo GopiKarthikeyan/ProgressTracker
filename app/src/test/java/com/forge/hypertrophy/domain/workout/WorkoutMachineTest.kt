@@ -1,6 +1,7 @@
 package com.forge.hypertrophy.domain.workout
 
 import com.forge.hypertrophy.domain.model.EntryMethod
+import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
 import com.forge.hypertrophy.domain.model.SetSide
@@ -81,6 +82,27 @@ class WorkoutMachineTest {
     fun emptyPrepSkipsStraightToWork() {
         val state = started(slot(1, 0, null, sets = 1))
         assertTrue(workoutPosition(state) is WorkoutPosition.WorkingSet)
+    }
+
+    @Test
+    fun barbellCompoundStartsOnWarmupUntilDismissed() {
+        val barbell = slot(1, 0, null, sets = 1).copy(equipment = Equipment.BARBELL)
+        var state = started(barbell)
+        assertTrue(workoutPosition(state) is WorkoutPosition.Warmup)
+        state = dismissWarmup(state)
+        assertTrue(workoutPosition(state) is WorkoutPosition.WorkingSet)
+        assertEquals(90, warmupDurationSeconds(0))
+        assertEquals(150, warmupDurationSeconds(2))
+    }
+
+    @Test
+    fun warmupIsRestoredAsDismissedOnceASetIsLogged() {
+        val barbell = slot(1, 0, null, sets = 1).copy(
+            equipment = Equipment.BARBELL,
+            sets = listOf(recorded(1, 1)),
+        )
+        val state = started(barbell).copy(dismissedWarmups = restoredDismissedWarmups(listOf(barbell)))
+        assertTrue(workoutPosition(state) is WorkoutPosition.Resting)
     }
 
     @Test
@@ -291,6 +313,8 @@ class WorkoutMachineTest {
         exerciseName = "slot-$id",
         setupNotes = "",
         unilateral = unilateral,
+        // Machine tests cover work/rest flow; barbell compounds add a Warmup phase.
+        equipment = Equipment.DUMBBELL,
     )
 
     private fun holdSlot(holdTargetSec: Int? = null, skillHold: SkillHoldHint? = null) = WorkoutSlot(

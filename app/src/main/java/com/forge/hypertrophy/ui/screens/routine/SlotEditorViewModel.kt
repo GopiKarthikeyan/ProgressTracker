@@ -8,6 +8,8 @@ import com.forge.hypertrophy.data.entity.SlotAlternativeEntity
 import com.forge.hypertrophy.data.repository.ExerciseRepository
 import com.forge.hypertrophy.data.repository.RoutineRepository
 import com.forge.hypertrophy.data.repository.SkillRepository
+import com.forge.hypertrophy.domain.exercise.ExerciseCategoryAffinity
+import com.forge.hypertrophy.domain.exercise.MuscleGroupOrder
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.ProgressionRule
 import com.forge.hypertrophy.domain.model.SlotCategory
@@ -24,6 +26,7 @@ data class ExerciseChoice(
     val id: Long,
     val name: String,
     val skillId: Long?,
+    val primaryMuscles: List<String> = emptyList(),
 )
 
 data class StepChoice(
@@ -48,6 +51,7 @@ data class SlotEditorUiState(
     val ready: Boolean = false,
     val exerciseId: Long = 0,
     val exercises: List<ExerciseChoice> = emptyList(),
+    val filteredExercises: List<ExerciseChoice> = emptyList(),
     val category: SlotCategory = SlotCategory.COMPOUND,
     val metricType: MetricType = MetricType.WEIGHT_REPS,
     val setsMin: Int = 0,
@@ -120,7 +124,7 @@ class SlotEditorViewModel @Inject constructor(
     fun onEvent(event: SlotEditorEvent) {
         when (event) {
             is SlotEditorEvent.Exercise -> selectExercise(event.id)
-            is SlotEditorEvent.Category -> _uiState.update { it.copy(category = event.value) }
+            is SlotEditorEvent.Category -> applyCategory(event.value)
             is SlotEditorEvent.Metric -> _uiState.update { it.copy(metricType = event.value) }
             is SlotEditorEvent.SetsMin -> _uiState.update { it.copy(setsMin = event.value) }
             is SlotEditorEvent.SetsMax -> _uiState.update { it.copy(setsMax = event.value) }
@@ -148,7 +152,10 @@ class SlotEditorViewModel @Inject constructor(
 
     private suspend fun reload() {
         val slot = routines.getSlot(slotId) ?: return
-        val library = exercises.observeActive().first().map { ExerciseChoice(it.id, it.name, it.skillId) }
+        val library = exercises.observeActive().first().map {
+            ExerciseChoice(it.id, it.name, it.skillId, it.primaryMuscleGroups)
+        }
+        val filtered = filterForCategory(library, slot.category)
         val skillId = library.firstOrNull { it.id == slot.exerciseId }?.skillId
         val steps = skillId?.let { skills.getSteps(it) }.orEmpty().map { StepChoice(it.id, it.name) }
         val alternatives = routines.observeAlternatives(slotId).first().map { it.exerciseId }.toSet()
@@ -167,6 +174,7 @@ class SlotEditorViewModel @Inject constructor(
                 ready = true,
                 exerciseId = slot.exerciseId,
                 exercises = library,
+                filteredExercises = filtered,
                 category = slot.category,
                 metricType = slot.metricType,
                 setsMin = slot.setsMin,
@@ -195,6 +203,32 @@ class SlotEditorViewModel @Inject constructor(
         }
     }
 
+    private fun applyCategory(category: SlotCategory) {
+        viewModelScope.launch {
+            val state = _uiState.value
+            val filtered = filterForCategory(state.exercises, category)
+            val keepCurrent = filtered.any { it.id == state.exerciseId }
+            val nextExercise = if (keepCurrent) {
+                state.exerciseId
+            } else {
+                filtered.firstOrNull()?.id ?: state.exerciseId
+            }
+            val choice = state.exercises.firstOrNull { it.id == nextExercise }
+            val steps = choice?.skillId?.let { skills.getSteps(it) }.orEmpty().map { StepChoice(it.id, it.name) }
+            _uiState.update {
+                it.copy(
+                    category = category,
+                    filteredExercises = filtered,
+                    exerciseId = nextExercise,
+                    skillSteps = steps,
+                    targetSkillStepId = it.targetSkillStepId?.takeIf { stepId ->
+                        steps.any { step -> step.id == stepId }
+                    },
+                )
+            }
+        }
+    }
+
     private fun selectExercise(id: Long) {
         viewModelScope.launch {
             val choice = _uiState.value.exercises.firstOrNull { it.id == id } ?: return@launch
@@ -206,6 +240,27 @@ class SlotEditorViewModel @Inject constructor(
                     targetSkillStepId = it.targetSkillStepId?.takeIf { stepId -> steps.any { step -> step.id == stepId } },
                 )
             }
+        }
+    }
+
+    companion object {
+        internal fun filterForCategory(
+            library: List<ExerciseChoice>,
+            category: SlotCategory,
+        ): List<ExerciseChoice> {
+            return library
+                .filter {
+                    ExerciseCategoryAffinity.matches(
+                        category = category,
+                        name = it.name,
+                        skillId = it.skillId,
+                        primaryMuscles = it.primaryMuscles,
+                    )
+                }
+                .sortedWith(
+                    compareBy<ExerciseChoice> { MuscleGroupOrder.primarySortKey(it.primaryMuscles) }
+                        .thenBy { it.name.lowercase() },
+                )
         }
     }
 

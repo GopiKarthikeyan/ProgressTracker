@@ -16,17 +16,18 @@ import org.robolectric.annotation.Config
 @Config(application = Application::class, sdk = [29])
 class TimerNotificationTest {
     @Test
-    fun notificationCountsDownAndExposesTheThreeActions() {
+    fun notificationCountsDownAndExposesPlusMinusSkipAndComplete() {
         val context = ApplicationProvider.getApplicationContext<Application>()
         val notification = workoutTimerNotification(
             context,
             TimerSnapshot(phase = TimerPhase.COUNTDOWN, remainingMillis = 45_000, cue = "rest"),
             whenMillis = 1_000,
         )
-        assertEquals(3, notification.actions.size)
-        assertEquals("+30s", notification.actions[0].title.toString())
-        assertEquals("Skip", notification.actions[1].title.toString())
-        assertEquals("Complete Set", notification.actions[2].title.toString())
+        assertEquals(4, notification.actions.size)
+        assertEquals("−30s", notification.actions[0].title.toString())
+        assertEquals("+30s", notification.actions[1].title.toString())
+        assertEquals("Skip", notification.actions[2].title.toString())
+        assertEquals("Complete Set", notification.actions[3].title.toString())
         assertTrue(notification.extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER))
         assertTrue(notification.extras.getBoolean("android.chronometerCountDown"))
     }

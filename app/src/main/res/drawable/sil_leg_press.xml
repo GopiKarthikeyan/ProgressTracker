@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- leg press: seated reclined, legs pressing a plate forward/up -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,22h14v16H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M8,16c-2.5,0 -4.5,2 -4.5,4.5S5.5,25 8,25s4.5,-2 4.5,-4.5S10.5,16 8,16z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18,18h18v6H18z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M34,10h8v22h-8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,36h18v4H4z" />
+</vector>

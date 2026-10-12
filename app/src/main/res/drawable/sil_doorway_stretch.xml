@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- doorway pec stretch: frame + arms at 90 on jambs, torso leaning through -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,4h4v40H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M38,4h4v40h-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,4h36v4H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M20,10c-2.5,0 -4.5,2 -4.5,4.5S17.5,19 20,19s4.5,-2 4.5,-4.5S22.5,10 20,10z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M16,18h10v14H16z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10,16h8v4h-8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M10,14h4v10h-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M30,16h8v4h-8z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M34,14h4v10h-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M16,30h5v14h-5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M23,30h5v14h-5z" />
+</vector>

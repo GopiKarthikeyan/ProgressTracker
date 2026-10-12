@@ -11,6 +11,12 @@ val RoseSoft = Color(0xFFE8B4B6)
 val Charcoal = Color(0xFF2C2C2E)
 val White = Color(0xFFFFFFFF)
 
+/** AMOLED dark surfaces. */
+val AmoledBlack = Color(0xFF000000)
+val DarkSurface = Color(0xFF121212)
+val DarkMuted = Color(0xFF9E9E9E)
+val DarkOutline = Color(0xFF2A2A2A)
+
 /** Page background alias used across older screens. */
 val Black = Cream
 

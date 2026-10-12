@@ -17,17 +17,19 @@ class WorkoutPositionTransitionValidatorTest {
         "Prep" to WorkoutPosition.Prep(emptyList()),
         "PracticeBlock" to WorkoutPosition.PracticeBlock(slot()),
         "WorkingSet" to workingSet(),
+        "Warmup" to WorkoutPosition.Warmup(slot(), emptyList(), durationSec = 90),
         "Resting" to WorkoutPosition.Resting(slot(), RestKind.BETWEEN_SETS, round = 1, next = null),
         "Cooldown" to WorkoutPosition.Cooldown(emptyList()),
         "Summary" to WorkoutPosition.Summary,
     )
 
     private val allowed = mapOf(
-        "Readiness" to setOf("Readiness", "Prep", "PracticeBlock", "WorkingSet", "Resting", "Cooldown", "Summary"),
-        "Prep" to setOf("Prep", "PracticeBlock", "WorkingSet", "Cooldown", "Summary"),
-        "PracticeBlock" to setOf("PracticeBlock", "WorkingSet", "Resting", "Cooldown", "Summary"),
-        "WorkingSet" to setOf("WorkingSet", "PracticeBlock", "Resting", "Cooldown", "Summary"),
-        "Resting" to setOf("Resting", "WorkingSet", "PracticeBlock", "Cooldown", "Summary"),
+        "Readiness" to setOf("Readiness", "Prep", "PracticeBlock", "WorkingSet", "Warmup", "Resting", "Cooldown", "Summary"),
+        "Prep" to setOf("Prep", "PracticeBlock", "WorkingSet", "Warmup", "Cooldown", "Summary"),
+        "PracticeBlock" to setOf("PracticeBlock", "WorkingSet", "Warmup", "Resting", "Cooldown", "Summary"),
+        "WorkingSet" to setOf("WorkingSet", "PracticeBlock", "Warmup", "Resting", "Cooldown", "Summary"),
+        "Warmup" to setOf("Warmup", "WorkingSet", "PracticeBlock", "Resting", "Cooldown", "Summary"),
+        "Resting" to setOf("Resting", "WorkingSet", "Warmup", "PracticeBlock", "Cooldown", "Summary"),
         "Cooldown" to setOf("Cooldown", "Summary"),
         "Summary" to setOf("Summary"),
     )

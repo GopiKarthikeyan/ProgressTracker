@@ -12,6 +12,7 @@ import com.forge.hypertrophy.domain.workout.TimerSnapshot
 
 const val WORKOUT_TIMER_CHANNEL_ID = "workout_timer"
 private const val REQUEST_PLUS = 1
+private const val REQUEST_MINUS = 5
 private const val REQUEST_SKIP = 2
 private const val REQUEST_COMPLETE = 3
 private const val REQUEST_CONTENT = 4
@@ -32,6 +33,7 @@ fun workoutTimerNotification(
         .setChronometerCountDown(countingDown)
         .setWhen(whenMillis)
         .setContentIntent(activityIntent(context))
+        .addAction(0, context.getString(R.string.workout_timer_minus), serviceIntent(context, WorkoutTimerService.ACTION_MINUS_30, REQUEST_MINUS))
         .addAction(0, context.getString(R.string.workout_timer_plus), serviceIntent(context, WorkoutTimerService.ACTION_PLUS_30, REQUEST_PLUS))
         .addAction(0, context.getString(R.string.workout_timer_skip), serviceIntent(context, WorkoutTimerService.ACTION_SKIP, REQUEST_SKIP))
         .addAction(0, context.getString(R.string.workout_timer_complete), serviceIntent(context, WorkoutTimerService.ACTION_COMPLETE, REQUEST_COMPLETE))

@@ -111,6 +111,9 @@ data object DiagnosticsRoute
 @Serializable
 data class WorkoutRoute(val sessionId: Long = 0L)
 
+@Serializable
+data object DayPlanRoute
+
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface BreadcrumbEntryPoint {
@@ -208,6 +211,7 @@ fun MainScaffold(
                             restoreState = true
                         }
                     },
+                    onOpenDayPlan = { navController.navigate(DayPlanRoute) },
                     onOpenWorkout = { navController.navigate(WorkoutRoute(it)) },
                 )
             }
@@ -235,6 +239,7 @@ fun MainScaffold(
                 DashboardScreen(
                     onOpenWeeklyReview = { navController.navigate(WeeklyReviewRoute) },
                     onOpenSessions = { navController.navigate(SessionListRoute) },
+                    onOpenDayPlan = { navController.navigate(DayPlanRoute) },
                     onOpenWorkout = { navController.navigate(WorkoutRoute(it)) },
                 )
             }

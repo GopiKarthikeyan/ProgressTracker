@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- elbow lever: torso balanced on elbows, body horizontal -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,16h28v6H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,14c-2,0 -3.5,1.5 -3.5,3.5S2,21 4,21s3.5,-1.5 3.5,-3.5S6,14 4,14z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18,22h5v10h-5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M26,22h5v10h-5z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M16,30h8v4h-8zM24,30h8v4h-8z" />
+</vector>

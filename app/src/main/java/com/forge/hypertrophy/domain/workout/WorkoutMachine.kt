@@ -1,11 +1,25 @@
 package com.forge.hypertrophy.domain.workout
 
+import com.forge.hypertrophy.domain.engine.WarmupRampGenerator
 import com.forge.hypertrophy.domain.model.EntryMethod
 import com.forge.hypertrophy.domain.model.Equipment
 import com.forge.hypertrophy.domain.model.MetricType
 import com.forge.hypertrophy.domain.model.SetSide
 import com.forge.hypertrophy.domain.model.SlotCategory
 import com.forge.hypertrophy.domain.model.SlotPrescription
+import com.forge.hypertrophy.domain.model.WarmupStep
+
+/** Base warm-up window before per-step padding. */
+const val WARMUP_BASE_SECONDS = 90
+/** Extra seconds per ramp step. */
+const val WARMUP_PER_STEP_SECONDS = 30
+
+fun warmupDurationSeconds(stepCount: Int): Int =
+    WARMUP_BASE_SECONDS + WARMUP_PER_STEP_SECONDS * stepCount.coerceAtLeast(0)
+
+fun warmupKey(slotId: Long): String = "warmup:$slotId"
+
+private val warmupEligibility = WarmupRampGenerator()
 
 data class RecordedSet(
     val id: Long,
@@ -78,6 +92,8 @@ data class WorkoutMachineState(
     val transitionRestSeconds: Int = 120,
     val draft: SetSuggestion? = null,
     val dismissedRests: Set<String> = emptySet(),
+    /** Warm-up guidance phases dismissed for a session slot (not logged sets). */
+    val dismissedWarmups: Set<String> = emptySet(),
     val previousByExercise: Map<Long, RecordedSet> = emptyMap(),
     /** Last working set logged on this routine slot, excluding the open session. */
     val ownHistoryBySessionSlot: Map<Long, RecordedSet> = emptyMap(),
@@ -115,6 +131,16 @@ sealed interface WorkoutPosition {
         val next: WorkoutSlot?,
     ) : WorkoutPosition
 
+    /**
+     * Timed warm-up guidance before the first working set of a barbell/EZ compound.
+     * Not logged — [steps] are shown for the athlete; duration is a countdown.
+     */
+    data class Warmup(
+        val slot: WorkoutSlot,
+        val steps: List<WarmupStep>,
+        val durationSec: Int,
+    ) : WorkoutPosition
+
     data class Cooldown(val items: List<ChecklistStep>) : WorkoutPosition
 
     data object Summary : WorkoutPosition
@@ -135,6 +161,8 @@ enum class RestKind {
 private sealed interface AgendaItem {
     data class Block(val slot: WorkoutSlot) : AgendaItem
 
+    data class Warmup(val slot: WorkoutSlot) : AgendaItem
+
     data class Work(val slot: WorkoutSlot, val setNumber: Int, val side: SetSide) : AgendaItem
 
     data class Rest(val slot: WorkoutSlot, val kind: RestKind, val round: Int) : AgendaItem
@@ -146,7 +174,7 @@ fun workoutPosition(state: WorkoutMachineState): WorkoutPosition {
     // Start First Exercise is reachable. Empty prep skips this phase.
     if (state.prep.isNotEmpty() && !state.leftPrep) return WorkoutPosition.Prep(state.prep)
     val agenda = agenda(state.slots)
-    val index = currentIndex(agenda, state.dismissedRests)
+    val index = currentIndex(agenda, state.dismissedRests, state.dismissedWarmups)
     if (index == null) {
         return if (state.cooldown.isNotEmpty() && !state.leftCooldown) {
             WorkoutPosition.Cooldown(state.cooldown)
@@ -156,6 +184,11 @@ fun workoutPosition(state: WorkoutMachineState): WorkoutPosition {
     }
     return when (val item = agenda[index]) {
         is AgendaItem.Block -> WorkoutPosition.PracticeBlock(item.slot)
+        is AgendaItem.Warmup -> WorkoutPosition.Warmup(
+            slot = item.slot,
+            steps = emptyList(),
+            durationSec = WARMUP_BASE_SECONDS,
+        )
         is AgendaItem.Work -> {
             val suggestion = state.draft ?: suggestionFor(
                 item.slot,
@@ -184,6 +217,7 @@ fun workoutPosition(state: WorkoutMachineState): WorkoutPosition {
                 when (upcoming) {
                     is AgendaItem.Work -> upcoming.slot
                     is AgendaItem.Block -> upcoming.slot
+                    is AgendaItem.Warmup -> upcoming.slot
                     is AgendaItem.Rest -> null
                 }
             },
@@ -215,12 +249,19 @@ fun restoredDismissedRests(slots: List<WorkoutSlot>): Set<String> {
             when (later) {
                 is AgendaItem.Work -> later.slot.sets.any { it.setNumber == later.setNumber && it.side == later.side }
                 is AgendaItem.Block -> later.slot.sets.isNotEmpty()
+                is AgendaItem.Warmup -> false
                 is AgendaItem.Rest -> false
             }
         }
         if (passed) restKey(rest.slot.sessionSlotId, rest.round, rest.kind) else null
     }.toSet()
 }
+
+/** Warm-ups already past when a working set (or block) of that slot is logged. */
+fun restoredDismissedWarmups(slots: List<WorkoutSlot>): Set<String> =
+    slots.mapNotNull { slot ->
+        if (slot.sets.isNotEmpty()) warmupKey(slot.sessionSlotId) else null
+    }.toSet()
 
 fun checkOff(state: WorkoutMachineState, itemId: Long): WorkoutMachineState = state.copy(
     prep = state.prep.mark(itemId),
@@ -241,6 +282,30 @@ fun dismissRest(state: WorkoutMachineState): WorkoutMachineState {
         draft = null,
     )
 }
+
+fun dismissWarmup(state: WorkoutMachineState): WorkoutMachineState {
+    val warmup = workoutPosition(state) as? WorkoutPosition.Warmup ?: return state
+    return state.copy(
+        dismissedWarmups = state.dismissedWarmups + warmupKey(warmup.slot.sessionSlotId),
+        draft = null,
+    )
+}
+
+fun offersWarmupPhase(slot: WorkoutSlot): Boolean =
+    warmupEligibility.isBarbellCompound(slot.equipment, slot.prescription.category)
+
+fun warmupTimer(
+    warmup: WorkoutPosition.Warmup,
+    nowElapsedRealtime: Long,
+    cue: String?,
+    speak: Boolean,
+): TimerSpec = countdownSpec(
+    nowElapsedRealtime,
+    warmup.durationSec,
+    warmup.durationSec,
+    cue,
+    speak,
+)
 
 /**
  * Adds one working set to the exercise on screen, for this session only.
@@ -487,6 +552,9 @@ private fun agenda(slots: List<WorkoutSlot>): List<AgendaItem> {
             val members = group.filter { round <= it.prescription.setsMax }
             if (members.isEmpty()) continue
             members.forEach { slot ->
+                if (round == 1 && offersWarmupPhase(slot)) {
+                    items += AgendaItem.Warmup(slot)
+                }
                 sides(slot).forEach { side -> items += AgendaItem.Work(slot, round, side) }
             }
             val lastRound = members.all { round >= it.prescription.setsMax }
@@ -503,16 +571,23 @@ private fun agenda(slots: List<WorkoutSlot>): List<AgendaItem> {
     return items
 }
 
-private fun currentIndex(agenda: List<AgendaItem>, dismissed: Set<String>): Int? {
+private fun currentIndex(
+    agenda: List<AgendaItem>,
+    dismissedRests: Set<String>,
+    dismissedWarmups: Set<String>,
+): Int? {
     agenda.forEachIndexed { index, item ->
         when (item) {
             is AgendaItem.Work -> if (!item.slot.sets.any { it.setNumber == item.setNumber && it.side == item.side }) {
                 return index
             }
             is AgendaItem.Block -> if (item.slot.sets.isEmpty()) return index
+            is AgendaItem.Warmup -> {
+                if (warmupKey(item.slot.sessionSlotId) !in dismissedWarmups) return index
+            }
             is AgendaItem.Rest -> {
                 val key = restKey(item.slot.sessionSlotId, item.round, item.kind)
-                if (key !in dismissed) return index
+                if (key !in dismissedRests) return index
             }
         }
     }

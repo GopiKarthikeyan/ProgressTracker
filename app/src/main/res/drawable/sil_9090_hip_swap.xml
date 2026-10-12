@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- asymmetric 90/90: torso upright, front shin forward, rear shin to side -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M18,4c-2.2,0 -4,1.8 -4,4s1.8,4 4,4 4,-1.8 4,-4 -1.8,-4 -4,-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M14,12h8v14h-8z" />
+    <!-- front thigh/shin: knee bent, shin across forward (left) -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M6,26h12v4H6z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M4,26h4v12H4z" />
+    <!-- rear hip: thigh back-right, shin parallel to side -->
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M22,24h10v4H22z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M28,28h4v12h-4z" />
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M28,36h12v4H28z" />
+</vector>

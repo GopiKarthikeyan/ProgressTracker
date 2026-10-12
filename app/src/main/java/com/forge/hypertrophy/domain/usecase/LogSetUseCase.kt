@@ -10,6 +10,12 @@ import com.forge.hypertrophy.domain.workout.SetSuggestion
 import java.time.Clock
 import javax.inject.Inject
 
+/**
+ * Set inserts go through Room's suspend API (already off the main thread via
+ * Room's query executor). Avoid [kotlinx.coroutines.Dispatchers.IO] here so
+ * unit tests on a paused [kotlinx.coroutines.test.StandardTestDispatcher] can
+ * advance without hanging.
+ */
 class LogSetUseCase @Inject constructor(
     private val sessions: SessionRepository,
     private val clock: Clock,

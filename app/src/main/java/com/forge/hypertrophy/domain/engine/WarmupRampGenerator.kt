@@ -44,7 +44,7 @@ class WarmupRampGenerator(
         return steps
     }
 
-    private fun isBarbellCompound(equipment: Equipment, category: SlotCategory): Boolean {
+    fun isBarbellCompound(equipment: Equipment, category: SlotCategory): Boolean {
         val barbell = equipment == Equipment.BARBELL || equipment == Equipment.EZ_BAR
         return barbell && category == SlotCategory.COMPOUND
     }

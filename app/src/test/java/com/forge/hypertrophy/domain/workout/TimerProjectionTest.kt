@@ -26,6 +26,15 @@ class TimerProjectionTest {
     }
 
     @Test
+    fun restAdjustStepShortensRemainingWithoutGoingNegative() {
+        val spec = countdownSpec(0, 60, 60)
+        val shortened = spec.adjust(-REST_ADJUST_STEP_MILLIS)
+        assertEquals(30_000L, projectTimer(shortened, 0).remainingMillis)
+        val drained = shortened.adjust(-60_000L)
+        assertEquals(TimerPhase.FINISHED, projectTimer(drained, 0).phase)
+    }
+
+    @Test
     fun asNeededIsAStopwatchAndIgnoresAdjust() {
         val spec = stopwatchSpec(500)
         assertEquals(TimerPhase.STOPWATCH, projectTimer(spec, 2_500).phase)
