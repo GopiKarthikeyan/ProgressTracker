@@ -1,11 +1,14 @@
 package com.forge.hypertrophy.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 private val WarmColorScheme = lightColorScheme(
     primary = Rose,
@@ -71,6 +74,26 @@ private val DarkColorScheme = darkColorScheme(
     onErrorContainer = Color(0xFFF9DEDC),
 )
 
+/**
+ * Card and sheet radii. The 24dp `large` radius is the one the hand-built
+ * cards already used, promoted from a loose constant so components can read
+ * it from the theme.
+ */
+private val ForgeShapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(32.dp),
+)
+
+/**
+ * Material 3 Expressive (`MaterialExpressiveTheme` / `MotionScheme`) ships
+ * inside material3 1.4.0 but is `internal` in its Kotlin metadata, so it
+ * cannot be called from here. Motion therefore uses the stable animation
+ * APIs with shared specs from [ForgeMotion]. Revisit when 1.5.0 makes the
+ * expressive theme public.
+ */
 @Composable
 fun HypertrophyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -79,6 +102,7 @@ fun HypertrophyTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColorScheme else WarmColorScheme,
         typography = Typography,
+        shapes = ForgeShapes,
         content = content,
     )
 }

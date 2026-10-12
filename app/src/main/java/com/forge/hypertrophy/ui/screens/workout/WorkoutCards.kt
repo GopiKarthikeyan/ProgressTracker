@@ -64,7 +64,6 @@ import com.forge.hypertrophy.domain.workout.setReadout
 import com.forge.hypertrophy.domain.workout.showsHold
 import com.forge.hypertrophy.domain.workout.showsReps
 import com.forge.hypertrophy.domain.workout.showsWeight
-import com.forge.hypertrophy.ui.components.CardShape
 import com.forge.hypertrophy.ui.components.ExerciseSilhouette
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.ProgressRing
@@ -301,7 +300,7 @@ private fun CheckRow(text: String, done: Boolean, onCheck: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = TouchTargets.Workout)
-            .clip(CardShape)
+            .clip(MaterialTheme.shapes.large)
             .background(if (done) RoseSoft.copy(alpha = 0.35f) else Sand)
             .clickable(enabled = !done, onClick = onCheck)
             .padding(horizontal = 16.dp)

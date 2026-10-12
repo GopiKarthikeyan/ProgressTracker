@@ -55,10 +55,7 @@ import com.forge.hypertrophy.ui.components.PrimaryButton
 import com.forge.hypertrophy.ui.components.ProgressRing
 import com.forge.hypertrophy.ui.components.SecondaryButton
 import com.forge.hypertrophy.ui.components.StepperButton
-import com.forge.hypertrophy.ui.theme.Cream
-import com.forge.hypertrophy.ui.theme.Ink
 import com.forge.hypertrophy.ui.theme.Muted
-import com.forge.hypertrophy.ui.theme.Rose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -144,7 +141,7 @@ fun WorkoutContent(
     val showSlotStrip = state.position !is WorkoutPosition.Readiness &&
         state.position !is WorkoutPosition.Summary
 
-    Box(modifier = modifier.fillMaxSize().background(Cream)) {
+    Box(modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -204,7 +201,7 @@ fun WorkoutContent(
                 ) {
                     Text(
                         stringResource(R.string.workout_readiness_advice),
-                        color = Rose,
+                        color = MaterialTheme.colorScheme.primary,
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
@@ -222,10 +219,10 @@ fun WorkoutContent(
                     is WorkoutPosition.Summary -> SummaryCard(state.summary)
                 }
                 if (state.importingClip) {
-                    Text(stringResource(R.string.media_importing), color = Ink)
+                    Text(stringResource(R.string.media_importing), color = MaterialTheme.colorScheme.onSurface)
                 }
                 if (state.importFailed) {
-                    Text(stringResource(R.string.media_import_failed), color = Rose)
+                    Text(stringResource(R.string.media_import_failed), color = MaterialTheme.colorScheme.primary)
                     SecondaryButton(
                         label = stringResource(R.string.dashboard_dismiss),
                         onClick = { onEvent(WorkoutEvent.DismissImportFailure) },
@@ -291,7 +288,7 @@ private fun PrimaryAction(
         if (!undo && working?.suggestSkip == true) {
             Text(
                 stringResource(R.string.workout_suggest_skip),
-                color = Rose,
+                color = MaterialTheme.colorScheme.primary,
                 style = MaterialTheme.typography.bodyMedium,
             )
         }
@@ -380,7 +377,7 @@ private fun RestTimerActions(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 NumericText(
                     text = clockText(timer.phase, timer.remainingMillis, timer.elapsedMillis),
-                    color = Ink,
+                    color = MaterialTheme.colorScheme.onSurface,
                     style = MaterialTheme.typography.headlineMedium,
                 )
                 Text(

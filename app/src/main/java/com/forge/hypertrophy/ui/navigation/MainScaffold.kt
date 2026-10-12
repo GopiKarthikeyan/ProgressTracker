@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -64,7 +65,6 @@ import com.forge.hypertrophy.ui.screens.today.TodayScreen
 import com.forge.hypertrophy.ui.screens.transfer.ImportPreviewScreen
 import com.forge.hypertrophy.ui.screens.transfer.ImportPreviewViewModel
 import com.forge.hypertrophy.ui.theme.Charcoal
-import com.forge.hypertrophy.ui.theme.Cream
 import com.forge.hypertrophy.ui.theme.Rose
 import com.forge.hypertrophy.ui.theme.White
 import dagger.hilt.EntryPoint
@@ -169,7 +169,7 @@ fun MainScaffold(
 
     Scaffold(
         modifier = modifier,
-        containerColor = Cream,
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             if (showBottomBar) {
                 FloatingTabBar(
@@ -316,7 +316,7 @@ private fun FloatingTabBar(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(PillShape)
-                .background(Charcoal)
+                .background(MaterialTheme.colorScheme.inverseSurface)
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
@@ -338,7 +338,7 @@ private fun FloatingTabBar(
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .background(if (isSelected) Rose else Charcoal, CircleShape),
+                            .background(if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inverseSurface, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(

@@ -30,26 +30,23 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.forge.hypertrophy.ui.theme.Ink
-import com.forge.hypertrophy.ui.theme.Muted
-import com.forge.hypertrophy.ui.theme.Rose
-import com.forge.hypertrophy.ui.theme.RoseSoft
-import com.forge.hypertrophy.ui.theme.Sand
-import com.forge.hypertrophy.ui.theme.White
 
-val CardShape = RoundedCornerShape(24.dp)
+/**
+ * Kept as a constant because Material3 has no "pill" shape token. Card radii
+ * come from `MaterialTheme.shapes.large` instead of a constant.
+ */
 val PillShape = RoundedCornerShape(999.dp)
 
 @Composable
 fun SurfaceCard(
     modifier: Modifier = Modifier.fillMaxWidth(),
-    color: Color = White,
+    color: Color = MaterialTheme.colorScheme.surface,
     contentPadding: PaddingValues = PaddingValues(16.dp),
     content: @Composable () -> Unit,
 ) {
     Column(
         modifier = modifier
-            .background(color, CardShape)
+            .background(color, MaterialTheme.shapes.large)
             .padding(contentPadding),
     ) {
         content()
@@ -62,8 +59,8 @@ fun ProgressRing(
     modifier: Modifier = Modifier,
     size: Dp = 96.dp,
     stroke: Dp = 10.dp,
-    trackColor: Color = RoseSoft,
-    progressColor: Color = Rose,
+    trackColor: Color = MaterialTheme.colorScheme.primaryContainer,
+    progressColor: Color = MaterialTheme.colorScheme.primary,
     content: @Composable () -> Unit = {},
 ) {
     Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
@@ -110,10 +107,10 @@ fun PrimaryButton(
             .heightIn(min = 80.dp),
         shape = PillShape,
         colors = ButtonDefaults.buttonColors(
-            containerColor = Rose,
-            contentColor = White,
-            disabledContainerColor = Rose.copy(alpha = 0.35f),
-            disabledContentColor = White.copy(alpha = 0.7f),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
         ),
     ) {
         Text(
@@ -133,8 +130,9 @@ fun SecondaryButton(
     enabled: Boolean = true,
     accent: Boolean = false,
 ) {
-    val border = if (accent) Rose else Ink.copy(alpha = if (enabled) 0.2f else 0.1f)
-    val content = if (accent) Rose else Ink
+    val scheme = MaterialTheme.colorScheme
+    val border = if (accent) scheme.primary else scheme.outline
+    val content = if (accent) scheme.primary else scheme.onSurface
     OutlinedButton(
         onClick = onClick,
         enabled = enabled,
@@ -144,9 +142,9 @@ fun SecondaryButton(
         shape = PillShape,
         border = BorderStroke(1.dp, border),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = White,
+            containerColor = scheme.surface,
             contentColor = content,
-            disabledContentColor = Muted,
+            disabledContentColor = scheme.onSurfaceVariant,
         ),
     ) {
         Text(
@@ -173,8 +171,8 @@ fun ToggleChip(
                 .heightIn(min = TouchTargets.Workout),
             shape = PillShape,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Rose,
-                contentColor = White,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
             ),
         ) {
             ChipLabel(label)
@@ -187,8 +185,8 @@ fun ToggleChip(
                 .heightIn(min = TouchTargets.Workout),
             shape = PillShape,
             colors = ButtonDefaults.buttonColors(
-                containerColor = Sand,
-                contentColor = Ink,
+                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         ) {
             ChipLabel(label)
@@ -222,11 +220,11 @@ fun StepperButton(
             .semantics { this.contentDescription = contentDescription },
         shape = CircleShape,
         contentPadding = PaddingValues(0.dp),
-        border = BorderStroke(1.dp, Ink.copy(alpha = if (enabled) 0.2f else 0.1f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = White,
-            contentColor = Ink,
-            disabledContentColor = Muted,
+            containerColor = MaterialTheme.colorScheme.surface,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
         ),
     ) {
         Text(text = symbol, style = MaterialTheme.typography.headlineMedium)
@@ -248,10 +246,10 @@ fun CircleActionButton(
         shape = CircleShape,
         contentPadding = PaddingValues(12.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = Rose,
-            contentColor = White,
-            disabledContainerColor = Rose.copy(alpha = 0.35f),
-            disabledContentColor = White.copy(alpha = 0.7f),
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
+            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+            disabledContentColor = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
         ),
     ) {
         Text(

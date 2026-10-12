@@ -36,9 +36,6 @@ import com.forge.hypertrophy.R
 import com.forge.hypertrophy.ui.components.BackButton
 import com.forge.hypertrophy.ui.components.NumericText
 import com.forge.hypertrophy.ui.components.TouchTargets
-import com.forge.hypertrophy.ui.theme.Cream
-import com.forge.hypertrophy.ui.theme.Ink
-import com.forge.hypertrophy.ui.theme.NeonAccent
 
 @Composable
 fun BuilderColumn(
@@ -51,7 +48,7 @@ fun BuilderColumn(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Cream),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(
             modifier = Modifier
@@ -105,7 +102,7 @@ fun DeleteIconButton(
             .sizeIn(minWidth = TouchTargets.Editor, minHeight = TouchTargets.Editor)
             .semantics { contentDescription = description },
     ) {
-        Icon(Icons.Filled.Close, contentDescription = null, tint = NeonAccent)
+        Icon(Icons.Filled.Close, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
     }
 }
 
@@ -123,7 +120,7 @@ fun NumericEntry(
     ) {
         Text(
             text = label,
-            color = Ink,
+            color = MaterialTheme.colorScheme.onSurface,
             style = MaterialTheme.typography.bodyLarge,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -135,7 +132,7 @@ fun NumericEntry(
         )
         NumericText(
             text = value?.toString() ?: stringResource(R.string.builder_none),
-            color = NeonAccent,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.widthIn(min = 48.dp),
             textAlign = TextAlign.Center,
         )
@@ -160,7 +157,7 @@ fun KgEntry(
         Text(label)
         NumericText(
             text = value?.let(::formatKg) ?: stringResource(R.string.builder_none),
-            color = NeonAccent,
+            color = MaterialTheme.colorScheme.primary,
         )
         OutlinedTextField(
             value = value?.let(::formatKg).orEmpty(),
